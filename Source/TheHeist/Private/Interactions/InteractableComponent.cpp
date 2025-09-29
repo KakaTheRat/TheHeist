@@ -15,27 +15,27 @@ UInteractableComponent::UInteractableComponent()
 }
 
 
-void UInteractableComponent::Interact_Implementation(USceneComponent* HitComponent)
+void UInteractableComponent::RunInteraction(USceneComponent* HitComponent,UInteractionData* Data)
 {
-	//
+	if (HitComponent && Data)
+	{
+		CurrentlyChosenComponent = HitComponent;
+	}
 }
+
 
 void UInteractableComponent::FindAttachedComponent()
 {
-	if (AActor* Owner = GetOwner())
+	if (Owner)
 	{
 		TArray<USceneComponent*> Components;
 		Owner->GetComponents<USceneComponent>(Components);
 
 		for (USceneComponent* Component : Components)
 		{
-			for (const FString& NameOfComponent : NamesOfComponents)
+			if (NamesOfComponents.Contains(Component->GetName()))
 			{
-				if (Component->GetName() == NameOfComponent)
-				{
-					AttachedComponent = Component;
-					return;
-				}
+				AttachedComponents.Add(Component);
 			}
 		}
 	}
@@ -46,7 +46,9 @@ void UInteractableComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	FindAttachedComponent();
+	Owner = GetOwner();
+	
+	//FindAttachedComponent();
 	
 }
 
@@ -59,33 +61,5 @@ void UInteractableComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	// ...
 }
 
-#if WITH_EDITOR
-void UInteractableComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
-{
-	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	FName PropertyName = (PropertyChangedEvent.Property != nullptr) 
-		? PropertyChangedEvent.Property->GetFName() 
-		: NAME_None;
-
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UInteractableComponent, AmountComponents))
-	{
-		int32 CurrentSize = NamesOfComponents.Num();
-
-		if (AmountComponents > CurrentSize)
-		{
-			// Add blank entries
-			for (int32 i = CurrentSize; i < AmountComponents; ++i)
-			{
-				NamesOfComponents.Add(TEXT(""));
-			}
-		}
-		else if (AmountComponents < CurrentSize)
-		{
-			// Cut the list
-			NamesOfComponents.SetNum(AmountComponents);
-		}
-	}
-}
-#endif
 

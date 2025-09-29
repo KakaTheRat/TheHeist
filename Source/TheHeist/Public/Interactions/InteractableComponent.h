@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "InteractionInterface.h"
 #include "Components/ActorComponent.h"
+#include "../Structures/Interactions/InteractionData.h"
 #include "InteractableComponent.generated.h"
 
 
@@ -15,50 +16,68 @@ class THEHEIST_API UInteractableComponent : public UActorComponent, public IInte
 
 public:
 
-	// Amount of attached components.
-	UPROPERTY(EditAnywhere, Category="Interactable")
-	int32 AmountComponents = 0;
-
 	// List of names for every component attached (depending on the NumComponent)
 	UPROPERTY(EditAnywhere, Category="Interactable")
 	TArray<FString> NamesOfComponents;
 
 	//Text printed when interacted with
-	UPROPERTY(EditAnywhere, Category="Interactable")
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Interactable")
 	FString InteractText;
-	
-	// Sets default values for this component's properties
-	UInteractableComponent();
 
 protected:
 
-	//**Variables**//
+	//VARIABLES
+	
+	//Scene components which are accessing to this component
+	UPROPERTY(Blueprintable,BlueprintReadWrite,  Category=Interactable)
+	TArray<USceneComponent*>  AttachedComponents;
 
+	//Actor owning the component
+	UPROPERTY()
+	const AActor* Owner;
 
-	//Scene component which is accessing to this component
-	UPROPERTY(Blueprintable, Category=Interactable, EditAnywhere)
-	USceneComponent* AttachedComponent;
-
+	//Component targeted by the player
+	UPROPERTY(BlueprintReadWrite, Category="Interactable")
+	USceneComponent* CurrentlyChosenComponent;
 
 	
-	
+	//FUNCTIONS
 	
 	// Called when the game starts
 	virtual void BeginPlay() override;
+	
 
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	//Interact override function
-	virtual void Interact_Implementation(USceneComponent* HitComponent) override;
-
+private :
+	
 	//Finds the attached component
 	void FindAttachedComponent();
+
+public:
 	
-#if WITH_EDITOR
-	// Called when a property is modified within the editor
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-#endif
-		
+	// Sets default values for this component's properties
+	UInteractableComponent();
+	
+	// Called every frame
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	
+	//Logic to run an interaction
+	UFUNCTION(BlueprintCallable, Category="Interaction")
+	virtual void RunInteraction(USceneComponent* HitComponent, UInteractionData* Data);
+
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category="Interactions")
+	TArray<UInteractionData*> Interactions;
+	
+	// Cherche une interaction par le nom du component
+	UFUNCTION(BlueprintCallable, Category="Interactions")
+	UInteractionData* GetInteractionByComponentName(FString HitComponentName)
+	{
+		for (UInteractionData* Data : Interactions)
+		{
+			if (Data && Data->AttachedComponentName == HitComponentName)
+			{
+				return Data;
+			}
+		}
+		return nullptr;
+	}
 };
