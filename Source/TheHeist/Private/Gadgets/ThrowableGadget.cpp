@@ -3,3 +3,7 @@
 
 #include "Gadgets/ThrowableGadget.h"
 
+AThrowableGadget::AThrowableGadget()
+{
+	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovement");	
+}

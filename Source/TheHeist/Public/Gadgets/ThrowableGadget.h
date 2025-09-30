@@ -17,6 +17,8 @@ class THEHEIST_API AThrowableGadget : public AGadgets
 
 public:
 
+	AThrowableGadget();
+	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Gadgets")
 	UProjectileMovementComponent* ProjectileMovement;
 	
