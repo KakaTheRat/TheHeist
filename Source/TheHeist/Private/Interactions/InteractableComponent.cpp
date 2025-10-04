@@ -3,6 +3,8 @@
 
 #include "Interactions/InteractableComponent.h"
 
+#include "LandscapeGizmoActiveActor.h"
+
 
 // Sets default values for this component's properties
 UInteractableComponent::UInteractableComponent()
@@ -14,31 +16,79 @@ UInteractableComponent::UInteractableComponent()
 	// ...
 }
 
-
-void UInteractableComponent::RunInteraction(USceneComponent* HitComponent,UInteractionData* Data)
+//Interaction interface interact function
+void UInteractableComponent::Interact_Implementation(USceneComponent* HitComponent)
 {
-	if (HitComponent && Data)
+	IInteractionInterface::Interact_Implementation(HitComponent);
+	
+	
+	CurrentlyChosenComponent = HitComponent;
+
+	if (InteractionWidgetClass && GetWorld())
 	{
-		CurrentlyChosenComponent = HitComponent;
-	}
-}
-
-
-void UInteractableComponent::FindAttachedComponent()
-{
-	if (Owner)
-	{
-		TArray<USceneComponent*> Components;
-		Owner->GetComponents<USceneComponent>(Components);
-
-		for (USceneComponent* Component : Components)
+		//Destroys Widget attached
+		if (WidgetInstance)
 		{
-			if (NamesOfComponents.Contains(Component->GetName()))
+			WidgetInstance->Destroy();
+			WidgetInstance = nullptr;
+		}
+
+		FActorSpawnParameters SpawnParams;
+
+		//Creates a new widget 
+		WidgetInstance = GetWorld()->SpawnActor<AInteractionWidgetActor>(
+		InteractionWidgetClass,
+		FVector(Owner->GetActorLocation().X,Owner->GetActorLocation().Y,100  + Owner->GetActorLocation().Z),   // position
+		FRotator::ZeroRotator,
+		SpawnParams
+	);
+	}
+
+	//Widget setup (creating different interactions)
+	for (FInteractionEntry& Entry : InteractionsConfig)
+	{
+		if (Entry.ComponentName == CurrentlyChosenComponent->GetName())
+		{
+			CurrentEntry = &Entry;
+			
+			for (UInteractionData* Data : Entry.Interactions)
 			{
-				AttachedComponents.Add(Component);
+				if (Data)
+				{
+					//Allows to add options for the widget
+					WidgetInstance->AddInteractionEntry(Data->InteractText);
+				}
 			}
 		}
 	}
+
+	//Subscribe to the onclick event of the widget
+	WidgetInstance->MyWidget->OnInteractionClicked.AddDynamic(this, &UInteractableComponent::InteractWithObject);
+}
+
+//Execute interaction based on the type
+void UInteractableComponent::InteractWithObject(const FString m_InteractText)
+{
+	for (UInteractionData* Data : CurrentEntry->Interactions)
+	{
+		if (Data && Data->InteractText == m_InteractText)
+		{
+				// Execute interaction
+				Data->ExecuteInteraction(Owner, CurrentlyChosenComponent);
+				break;
+
+		}
+
+	}
+	
+	//Widget instance destroyed 
+	if (WidgetInstance)
+	{
+		WidgetInstance->Destroy();
+		WidgetInstance = nullptr;
+	}
+	
+	
 }
 
 // Called when the game starts
@@ -47,9 +97,6 @@ void UInteractableComponent::BeginPlay()
 	Super::BeginPlay();
 
 	Owner = GetOwner();
-	
-	//FindAttachedComponent();
-	
 }
 
 
@@ -58,7 +105,14 @@ void UInteractableComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
+	//Allows Interactions Datas to tick (empty function overrided, means empty by default)
+	for (UInteractionData* Data : Interactions)
+	{
+		if (Data)
+		{
+			Data->Tick(DeltaTime);
+		}
+	}
 }
 
 

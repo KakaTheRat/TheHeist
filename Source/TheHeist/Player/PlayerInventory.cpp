@@ -32,8 +32,38 @@ void UPlayerInventory::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	// ...
 }
 
-void UPlayerInventory::StartUseItem(TSubclassOf<AGadgets> ItemClass)
+void UPlayerInventory::AddItem(TSubclassOf<AGadgets> ItemClass)
 {
+	{
+		for (FInventorySlot& Slot : Items)
+		{
+			if (Slot.ItemClass == ItemClass)
+			{
+				Slot.Quantity++;
+				OnInventoryUpdated.Broadcast(Items);
+				return;
+			}
+		}
+
+		
+		FInventorySlot NewSlot;
+		NewSlot.ItemClass = ItemClass;
+		NewSlot.Quantity = 1;
+		Items.Add(NewSlot);
+
+		OnInventoryUpdated.Broadcast(Items);
+	}
+}
+
+void UPlayerInventory::StartUseItem()
+{
+	TSubclassOf<AGadgets> ItemClass = Items[CurrentItemIndex].ItemClass;
+	UE_LOG(LogTemp, Warning, TEXT("Item is on cooldown: %d sec left"),Items[CurrentItemIndex].Quantity );
+	if (Items[CurrentItemIndex].Quantity <= 0)
+	{
+		return;
+	}
+	
 	if (ActiveCooldowns.Contains(ItemClass))
 	{
 		float Remaining = ActiveCooldowns[ItemClass];
@@ -116,19 +146,37 @@ void UPlayerInventory::OnGadgetUsed(AGadgets* GadgetUsed)
 		if (Cooldown > 0.f)
 		{
 			ActiveCooldowns.Add(UsedClass, Cooldown);
-			
-			FTimerHandle TimerHandle;
+
+			FTimerHandle& TimerHandle = CooldownTimers.FindOrAdd(UsedClass);
 			GetWorld()->GetTimerManager().SetTimer(
 				TimerHandle,
 				[this, UsedClass]()
 				{
 					ActiveCooldowns.Remove(UsedClass);
+					CooldownTimers.Remove(UsedClass); // cleanup
 				},
 				Cooldown,
 				false
 			);
 		}
 	}
+	OnInventoryUpdated.Broadcast(Items);
+}
+
+void UPlayerInventory::ModifyCurrentIndex(int m_Value)
+{
+	CurrentItemIndex += m_Value;
+
+	if (CurrentItemIndex >= Items.Num())
+	{
+		CurrentItemIndex = 0;
+	}
+	if (CurrentItemIndex < 0)
+	{
+		CurrentItemIndex = Items.Num() - 1;
+	}
+
+	OnInventoryUpdated.Broadcast(Items);
 }
 
 

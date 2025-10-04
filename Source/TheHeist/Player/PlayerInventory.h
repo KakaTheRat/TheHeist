@@ -20,6 +20,8 @@ struct FInventorySlot
 	int32 Quantity = 1;
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryUpdated, const TArray<FInventorySlot>&, Items);
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class THEHEIST_API UPlayerInventory : public UActorComponent
 {
@@ -29,6 +31,10 @@ public:
 	// Sets default values for this component's properties
 	UPlayerInventory();
 
+	//Event dispatcher, each time a gadget slot is updated
+	UPROPERTY(BlueprintAssignable, Category="Inventory")
+	FOnInventoryUpdated OnInventoryUpdated;
+	
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -36,6 +42,12 @@ protected:
 	//keeps track of object's cooldowns
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Inventory")
 	TMap<TSubclassOf<AGadgets>, float> ActiveCooldowns;
+
+	TMap<TSubclassOf<AGadgets>, FTimerHandle> CooldownTimers;
+
+	//Index to determine the item currently being used
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Inventory")
+	int CurrentItemIndex = 0;
 
 public:	
 	// Called every frame
@@ -45,31 +57,22 @@ public:
 	TArray<FInventorySlot> Items;
 	
 	UFUNCTION(BlueprintCallable)
-	void AddItem(TSubclassOf<AGadgets> ItemClass)
-	
-	{
-		for (FInventorySlot& Slot : Items)
-		{
-			if (Slot.ItemClass == ItemClass)
-			{
-				Slot.Quantity++;
-				return;
-			}
-		}
+	void AddItem(TSubclassOf<AGadgets> ItemClass);
 
-		
-		FInventorySlot NewSlot;
-		NewSlot.ItemClass = ItemClass;
-		NewSlot.Quantity = 1;
-		Items.Add(NewSlot);
-	}
+	//Called when gadget's use input pressed
 	UFUNCTION(BlueprintCallable)
-	void StartUseItem(TSubclassOf<AGadgets> ItemClass);
+	void StartUseItem();
+
+	//Called when gadget's use input released
 	UFUNCTION(BlueprintCallable)
 	void RelaseUseItem();
 	
 	AGadgets* CurrentGadget;
 
+	//Called whenever a gadget is used. Commonly called after the gadget's use dispatcher
 	UFUNCTION(BlueprintCallable)
 	void OnGadgetUsed(AGadgets* GadgetUsed);
+
+	UFUNCTION(BlueprintCallable)
+	void ModifyCurrentIndex(int m_Value);
 };
