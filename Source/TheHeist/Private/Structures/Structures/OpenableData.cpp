@@ -7,7 +7,6 @@ UOpenableData::UOpenableData()
 
 void UOpenableData::ExecuteInteraction_Implementation(AActor* Owner, USceneComponent* Target)
 {
-	GEngine->AddOnScreenDebugMessage(1, 5, FColor::Red, "AA");
 	Super::ExecuteInteraction_Implementation(Owner, Target);
 	LinkedComponent = Target;
 	
@@ -29,9 +28,7 @@ void UOpenableData::ExecuteInteraction_Implementation(AActor* Owner, USceneCompo
         
 		// Start timeline
 		TimelineComp->PlayTimeline(Curve, Duration, bIsOpened);
-        
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, 
-			bIsOpened ? TEXT("🔙 Timeline Reverse") : TEXT("🔛 Timeline Forward"));
+		
 	}
 
 	// Set new state
@@ -46,9 +43,6 @@ void UOpenableData::OnTimelineProgress(float Value)
 
 void UOpenableData::HandleProgress(float Value)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Magenta, 
-		FString::Printf(TEXT("🎬 Progress: %.2f"), Value));
-    
 	if (LinkedComponent)
 	{
 		// Animation

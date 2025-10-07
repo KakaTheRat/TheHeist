@@ -85,7 +85,7 @@ void UPlayerInventory::StartUseItem()
 			SpawnParams.Owner = GetOwner();
 			SpawnParams.Instigator = Cast<APawn>(GetOwner());
 
-			// Spawn l'Actor à la position du joueur
+			// Spawn actor
 			AActor* SpawnedActor = World->SpawnActor<AActor>(
 				Slot.ItemClass, 
 				GetOwner()->GetActorLocation(), 

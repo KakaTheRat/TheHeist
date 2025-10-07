@@ -78,6 +78,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")
 	TArray<FInteractionEntry> InteractionsConfig;
 
+	//Array of interactions config created so far with the perception activated
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")
+	TArray<FInteractionEntry> InteractionsConfigPerceptionAI;
+
 
 	//WIDGET
 	
@@ -101,6 +105,8 @@ protected:
 	//Implementation for the interact interface function
 	virtual void Interact_Implementation(USceneComponent* HitComponent) override;
 
+	//Implementation for the interact AI interface function
+	virtual void InteractAI_Implementation() override;
 	
 
 public:

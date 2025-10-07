@@ -66,6 +66,30 @@ void UInteractableComponent::Interact_Implementation(USceneComponent* HitCompone
 	WidgetInstance->MyWidget->OnInteractionClicked.AddDynamic(this, &UInteractableComponent::InteractWithObject);
 }
 
+void UInteractableComponent::InteractAI_Implementation()
+{
+	IInteractionInterface::InteractAI_Implementation();
+	
+	for (FInteractionEntry& Entry : InteractionsConfigPerceptionAI)
+	{
+		USceneComponent* TargetComponent = nullptr;
+		for (USceneComponent* Comp : AttachedComponents)
+		{
+			if (Comp && Comp->GetName() == Entry.ComponentName.ToString())
+			{
+				TargetComponent = Comp;
+				break;
+			}
+		}
+		if (!TargetComponent) continue;
+
+		for (UInteractionData* Data : Entry.Interactions)
+		{
+			if (Data) Data->ExecuteInteraction(Owner, TargetComponent);
+		}
+	}
+}
+
 //Execute interaction based on the type
 void UInteractableComponent::InteractWithObject(const FString m_InteractText)
 {
@@ -97,6 +121,36 @@ void UInteractableComponent::BeginPlay()
 	Super::BeginPlay();
 
 	Owner = GetOwner();
+
+	
+	AttachedComponents.Empty();
+	TArray<USceneComponent*> Components;
+	Owner->GetComponents<USceneComponent>(Components);
+	for (USceneComponent* Comp : Components)
+	{
+		if (Comp)
+		{
+			AttachedComponents.Add(Comp);
+		}
+	}
+
+	InteractionsConfigPerceptionAI.Empty();
+	for (FInteractionEntry& Entry : InteractionsConfig)
+	{
+		FInteractionEntry AIEntry;
+		AIEntry.ComponentName = Entry.ComponentName;
+		for (UInteractionData* Data : Entry.Interactions)
+		{
+			if (Data && Data->bCanAlertGuards)
+			{
+				AIEntry.Interactions.Add(Data);
+			}
+		}
+		if (AIEntry.Interactions.Num() > 0)
+		{
+			InteractionsConfigPerceptionAI.Add(AIEntry);
+		}
+	}
 }
 
 
