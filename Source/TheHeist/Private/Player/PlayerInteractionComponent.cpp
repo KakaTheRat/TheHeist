@@ -32,3 +32,11 @@ void UPlayerInteractionComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	// ...
 }
 
+void UPlayerInteractionComponent::Shout()
+{
+		FVector PlayerLocation = GetOwner()->GetActorLocation();
+
+		// Broadcast for each guard
+		OnPlayerShout.Broadcast(PlayerLocation);
+}
+

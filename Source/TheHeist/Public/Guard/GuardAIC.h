@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "TheHeistCharacter.h"
+#include "Kismet/GameplayStatics.h"
 #include "GuardAIC.generated.h"
 
 /**
@@ -24,5 +26,10 @@ public:
 	//Event property, called whenever the guard reaches max stress level
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FOnMaxLevelStress OnMaxLevelStress;
-	
+
+	protected:
+
+	void BeginPlay() override;
+
+	void OnPlayerShout(FVector Location);
 };

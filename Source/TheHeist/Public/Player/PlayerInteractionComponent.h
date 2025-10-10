@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "PlayerInteractionComponent.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerShout, FVector);
 
 UCLASS(Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class THEHEIST_API UPlayerInteractionComponent : public UActorComponent
@@ -32,5 +33,17 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void QuitHiding();
 
+	
+	FOnPlayerShout OnPlayerShout;
+
+	//Function called whenever the player presses the shouting key
+	void Shout();
+
+	UFUNCTION(BlueprintCallable)
+	void InputShout()
+	{
+		Shout();
+	}
+	
 		
 };
