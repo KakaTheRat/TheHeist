@@ -54,5 +54,8 @@ void UActivableData::ActivateSound(AActor* Owner)
 			UGameplayStatics::SpawnSoundAttached(Sound, AudioComp);
 		}
 		bIsActivated = !bIsActivated;
+
+		
 	}
+	OnInteractionEnded.ExecuteIfBound();
 }

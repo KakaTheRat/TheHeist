@@ -6,3 +6,7 @@
 void UInteractionWindowWidget::AddInteraction_Implementation(const FString& m_InteractText)
 {
 }
+void UInteractionWindowWidget::TriggerInteraction(const FString m_InteractionName)
+{
+	OnInteractionClicked.ExecuteIfBound(m_InteractionName);
+}

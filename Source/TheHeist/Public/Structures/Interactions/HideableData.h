@@ -7,41 +7,60 @@
 #include "Player/PlayerInteractionComponent.h"
 #include "HideableData.generated.h"
 
-UCLASS(Blueprintable, EditInlineNew)
+UCLASS(Blueprintable, EditInlineNew, DisplayName="Hiding Interaction")
 class THEHEIST_API UHideableData : public UInteractionData
 {
     GENERATED_BODY()
 
 public:
 
+    //-------------Functions
+    
     UHideableData();
-        
-    //Hidding state
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hideable")
+
+    virtual void ExecuteInteraction_Implementation(AActor* Owner, USceneComponent* Target) override;
+
+
+    //--------------Properties
+    
+    //Hidding state (is a user currently hiding
+    UPROPERTY(BlueprintReadWrite)
     bool bIsUsed;
 
     //String for the arrow component used for the hidding position
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hideable")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hiding")
     FString HiddenArrowName;
 
     //String for the arrow component used for the quitting position
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hideable")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hiding")
     FString QuitArrowName;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hideable")
+    //Tick rate for the hiding movement (used for the set timer, less means more fluid)
     float HideTickRate = 0.02f;
         
-    virtual void ExecuteInteraction_Implementation(AActor* Owner, USceneComponent* Target) override;
+    
 
 private:
+
+
+    //---------------Properties
     
+    //Timer 
     FTimerHandle HideTimerHandle;
+    
     FVector HiddenLocation;
     FVector QuitLocation;
 
+
+    //Weak reference to the player
     TWeakObjectPtr<APawn> PlayerRef;
     TWeakObjectPtr<class UPlayerInteractionComponent> PlayerComp;
 
+
+    //----------------Functions
+
+    
+    //Interpolates the player's position over time
     void HideStep(AActor* Owner);
         
 };

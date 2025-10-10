@@ -24,12 +24,12 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	// Event que le BP peut implémenter pour gérer l'entrée dans la cachette
-	UFUNCTION(BlueprintImplementableEvent, Category="Hiding")
+	// Event to handle the hiding state of the player
+	UFUNCTION(BlueprintImplementableEvent)
 	void Hide();
 
-	// Event que le BP peut implémenter pour gérer la sortie de la cachette
-	UFUNCTION(BlueprintImplementableEvent, Category="Hiding")
+	// Event to handle the unhiding state of the player
+	UFUNCTION(BlueprintImplementableEvent)
 	void QuitHiding();
 
 		

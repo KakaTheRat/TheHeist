@@ -8,6 +8,8 @@ UHideableData::UHideableData()
 
 void UHideableData::ExecuteInteraction_Implementation(AActor* Owner, USceneComponent* Target)
 {
+	Super::ExecuteInteraction_Implementation(Owner, Target);
+	
 	if (!Owner) return;
 
 	APlayerController* PC = Owner->GetWorld()->GetFirstPlayerController();
@@ -74,5 +76,6 @@ void UHideableData::HideStep(AActor* Owner)
 		
 
 		bIsUsed = !bIsUsed;
+		OnInteractionEnded.ExecuteIfBound();
 	}
 }

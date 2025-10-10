@@ -13,30 +13,36 @@ class THEHEIST_API AInteractionWidgetActor : public AActor
 {
 	GENERATED_BODY()
 	
-public:	
+public:
+
+	//------------Functions--------------//
+
+	virtual void Tick(float DeltaTime) override;
+	
 	// Sets default values for this actor's properties
 	AInteractionWidgetActor();
 
-	// Returns widget
+	// Returns widget. Widget's Getter
 	UUserWidget* GetWidget() const { return WidgetComp ? WidgetComp->GetWidget() : nullptr; }
 
-	UFUNCTION(BlueprintImplementableEvent,BlueprintCallable, Category="Interaction")
+	//Adds a new interaction button to the widget whenever is called. Is expecting an interaction text
+	UFUNCTION(BlueprintImplementableEvent,BlueprintCallable)
 	void AddInteractionEntry(const FString& Entry);
 
-protected:
 	
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
 
-public:
-
-	virtual void Tick(float DeltaTime) override;
+	//----------------Properties--------------//
 	
 	// Widget Component
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UWidgetComponent* WidgetComp;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")
+	//Reference to the attached widget
+	UPROPERTY(BlueprintReadWrite, Category="Interaction")
 	UInteractionWindowWidget* MyWidget;
-
+	
+protected:
+	
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
 };

@@ -40,7 +40,18 @@ void UTimelinesComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
     if (Timeline.IsPlaying())
     {
+        GEngine->AddOnScreenDebugMessage(
+        -1,
+        3.f,
+        FColor::Black,
+        FString::Printf(TEXT("O")));
         Timeline.TickTimeline(DeltaTime);
+        bHasFinished = false;
+    }
+    if (!Timeline.IsPlaying() && !bHasFinished && Timeline.GetPlaybackPosition() >= Timeline.GetTimelineLength())
+    {
+        OnTimelineFinished.Broadcast();
+        bHasFinished = true; 
     }
 }
 

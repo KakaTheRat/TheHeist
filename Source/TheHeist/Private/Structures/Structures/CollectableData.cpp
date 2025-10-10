@@ -25,4 +25,6 @@ void UCollectableData::ExecuteInteraction_Implementation(AActor* Owner, USceneCo
  	{
  		UE_LOG(LogTemp, Warning, TEXT("No Inventory found on %s"), *PlayerRef->GetName());
  	}
+
+	OnInteractionEnded.ExecuteIfBound();
  }

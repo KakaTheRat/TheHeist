@@ -22,6 +22,9 @@ class THEHEIST_API IInteractionInterface
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
+
+	//-----------Functions
+
 	//Interact Function, called whenever an object is being interacted with.
 	//Takes the hit component as an input
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Interaction")
@@ -35,6 +38,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void IsCurrentlyActive(bool& IsActive);
 	*/
-	//Interact Function, called whenever an object is being interacted with.
-	//Takes the hit component as an input
+
+	//-----------Properties
+	
+	
+	
+	
+
 };

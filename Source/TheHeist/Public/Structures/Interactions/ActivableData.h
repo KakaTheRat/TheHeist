@@ -9,37 +9,53 @@
 #include "Enumerators/Interactions/InteractionsEnum.h"
 #include "ActivableData.generated.h"
 
-UCLASS(Blueprintable, EditInlineNew)
+UCLASS(Blueprintable, EditInlineNew, DisplayName="Activating Interaction")
 class THEHEIST_API UActivableData : public UInteractionData
 {
 	GENERATED_BODY()
 
 public:
 
+	//---------Functions--------------//
+	
 	UActivableData();
-        
-	//Light intensity
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Activable")
-	float LightIntensity = 1.f;
-        
+
+	virtual void ExecuteInteraction_Implementation(AActor* Owner, USceneComponent* Target) override;
+
+
+	//----------Properties--------------//
+
 	//Activation state
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Activable")
+	UPROPERTY(BlueprintReadWrite)
 	bool bIsActivated;
         
 	//Allow to choose the type of activation wanted
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Activable")
 	EActivableType ActivationType;
-        
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Activable")
+	
+	
+	//--------Light related properties--------------//
+	
+	//Light intensity
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Activable",meta=(EditCondition="ActivationType==EActivableType::Light", EditConditionHides))
+	float LightIntensity = 1.f;
+	
+
+	//-----------Sound related properties--------------//
+
+	//Sound asset
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Activable",meta=(EditCondition="ActivationType==EActivableType::Sound", EditConditionHides))
 	USoundBase* Sound;
 
-	virtual void ExecuteInteraction_Implementation(AActor* Owner, USceneComponent* Target) override;
+	
 
 protected:
 
+	//Activation for the light
 	UFUNCTION()
 	void ActivateLight(AActor* Owner);
 
+	//Activation for the sound
 	UFUNCTION()
 	void ActivateSound(AActor* Owner);
 };
