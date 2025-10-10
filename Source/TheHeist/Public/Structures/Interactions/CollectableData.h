@@ -17,7 +17,7 @@ public:
     
     UCollectableData();
     
-    virtual void ExecuteInteraction_Implementation(AActor* Owner, USceneComponent* Target) override;
+    virtual void ExecuteInteraction(AActor* Owner, USceneComponent* Target) override;
 
 
     //-----------Properties

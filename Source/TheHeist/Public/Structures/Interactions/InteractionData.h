@@ -25,8 +25,7 @@
         FOnInteractionEnded OnInteractionEnded;
 
         //Interaction execution. Must be overrided by each interaction type
-        UFUNCTION(BlueprintNativeEvent)
-        void ExecuteInteraction(AActor* Owner, USceneComponent* Target);
+        virtual void ExecuteInteraction(AActor* Owner, USceneComponent* Target);
 
         //Virtual function, to tick the UObject into the interaction component. Override this to make is happen
         virtual void Tick(float DeltaTime) {}

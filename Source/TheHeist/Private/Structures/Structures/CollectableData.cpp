@@ -5,9 +5,9 @@ UCollectableData::UCollectableData()
 	InteractText = "Collect";
 }
 
-void UCollectableData::ExecuteInteraction_Implementation(AActor* Owner, USceneComponent* Target)
+void UCollectableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target)
  {
- 	Super::ExecuteInteraction_Implementation(Owner, Target);
+ 	Super::ExecuteInteraction(Owner, Target);
  
  	if (!Owner) return;
 

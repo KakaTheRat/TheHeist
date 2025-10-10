@@ -2,7 +2,7 @@
 
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 
-inline void UInteractionData::ExecuteInteraction_Implementation(AActor* Owner, USceneComponent* Target)
+inline void UInteractionData::ExecuteInteraction(AActor* Owner, USceneComponent* Target)
 {
     
 }

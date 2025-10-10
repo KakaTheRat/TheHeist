@@ -112,7 +112,7 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText)
 
 	if (!bFoundCascade)
 	{
-		// Interaction normale (hors cascade)
+		// Normal interaction (no cascade)
 		for (UInteractionData* Data : CurrentEntry->Interactions)
 		{
 			if (Data && Data->InteractText == m_InteractText)
@@ -123,7 +123,7 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText)
 		}
 	}
 
-	// Détruit le widget
+	// Destroy widget
 	if (WidgetInstance)
 	{
 		WidgetInstance->Destroy();
@@ -177,13 +177,15 @@ void UInteractableComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	//Allows Interactions Datas to tick (empty function overrided, means empty by default)
-	for (UInteractionData* Data : Interactions)
+	for (const FInteractionEntry& Entry : InteractionsConfig)
 	{
-		if (Data)
+		for (UInteractionData* Data : Entry.Interactions)
 		{
-			Data->Tick(DeltaTime);
+			if (Data)
+				Data->Tick(DeltaTime);
 		}
 	}
+
 }
 
 TArray<FName> UInteractableComponent::GetAvailableInteractionComponents()
@@ -327,6 +329,7 @@ TArray<FName> UInteractableComponent::GetAvailableCascadeNames()
 
 void UInteractableComponent::ExecuteNextCascadeInteraction()
 {
+	
 	if (!CurrentCascade) return;
     
 	if (!CurrentCascade->InteractionCascades.IsValidIndex(CurrentCascadeIndex)) 
@@ -338,12 +341,11 @@ void UInteractableComponent::ExecuteNextCascadeInteraction()
 
 	FInteractionCascadeSlot& Slot = CurrentCascade->InteractionCascades[CurrentCascadeIndex];
     
-	// D'abord incrémenter l'index
+	
 	CurrentCascadeIndex++;
     
 	if (Slot.InteractionData)
 	{
-		// Lier le callback pour l'interaction SUIVANTE
 		Slot.InteractionData->OnInteractionEnded.BindUObject(this, &UInteractableComponent::ExecuteNextCascadeInteraction);
 		Slot.InteractionData->ExecuteInteraction(Owner, CurrentlyChosenComponent);
 	}

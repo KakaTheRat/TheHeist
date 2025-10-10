@@ -5,9 +5,12 @@ UOpenableData::UOpenableData()
 	InteractText = "Open";
 }
 
-void UOpenableData::ExecuteInteraction_Implementation(AActor* Owner, USceneComponent* Target)
+void UOpenableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target)
 {
-	Super::ExecuteInteraction_Implementation(Owner, Target);
+	Super::ExecuteInteraction(Owner, Target);
+
+	if (!Owner || !Target || !Curve) return;
+	
 	LinkedComponent = Target;
 	
 	GEngine->AddOnScreenDebugMessage(
@@ -15,116 +18,96 @@ void UOpenableData::ExecuteInteraction_Implementation(AActor* Owner, USceneCompo
 		3.f,
 		FColor::Black,
 		FString::Printf(TEXT("Oué")));
-	// Find Timeline component on the actor
-	UTimelinesComponent* TimelineComp = Owner->FindComponentByClass<UTimelinesComponent>();
-    
-	// If not found, creates a new one
-	if (!TimelineComp)
-	{
-		TimelineComp = NewObject<UTimelinesComponent>(Owner);
-		TimelineComp->RegisterComponent();
-	}
 
-	if (TimelineComp && Curve)
+	if (!bHasStoredInitialTransform)
 	{
-		// Progress bind
-		TimelineComp->OnTimelineProgress.AddDynamic(this, &UOpenableData::OnTimelineProgress);
-		TimelineComp->OnTimelineFinished.AddDynamic(this, &UOpenableData::OnTimelineFinished);
-        
-		// Start timeline
-		TimelineComp->PlayTimeline(Curve, Duration, bIsOpened);
-		
+		InitialLocation = LinkedComponent->GetRelativeLocation();
+		InitialRotation = LinkedComponent->GetRelativeRotation();
+		bHasStoredInitialTransform = true;
 	}
-
-	// Set new state
+	if (!bTimelineInitialized)
+	{
+		InitTimeline(Owner);
+		bTimelineInitialized = true;
+	}
+	// Si timeline déjà en cours, inverser
+	if (Timeline.IsPlaying())
+		Timeline.Reverse();
+	else
+	{
+		if (bIsOpened)
+			Timeline.ReverseFromEnd();
+		else
+			Timeline.PlayFromStart();
+	}
 	bIsOpened = !bIsOpened;
 	InteractText = bIsOpened ? "Close" : "Open";
+	// Find Timeline component on the actor
+	
+}
+void UOpenableData::InitTimeline(AActor* Owner)
+{
+	FOnTimelineFloat ProgressFunction;
+	ProgressFunction.BindUFunction(this, FName("HandleProgress"));
+	Timeline.AddInterpFloat(Curve, ProgressFunction);
+
+	// CORRECTION: Use FOnTimelineEventStatic instead of FOnTimelineEvent
+	FOnTimelineEventStatic FinishedCallback;
+	FinishedCallback.BindUFunction(this, FName("HandleFinished"));
+	Timeline.SetTimelineFinishedFunc(FinishedCallback);
+
+	Timeline.SetTimelineLength(Duration);
+	Timeline.SetLooping(false);
+
+	// Assure-toi que le tick de l'acteur est actif
+	Owner->PrimaryActorTick.bCanEverTick = true;
+}
+void UOpenableData::HandleProgress(float Value)
+{
+	if (!LinkedComponent) return;
+
+	switch (OpenableType)
+	{
+	case EOpenableType::Door:
+		{
+			float RotationAngle = (OpeningSide == EOpeningSide::Left || OpeningSide == EOpeningSide::Down) ? -Angle*Value : Angle*Value;
+			if (OpeningSide == EOpeningSide::Up || OpeningSide == EOpeningSide::Down)
+				LinkedComponent->SetRelativeRotation(FRotator(RotationAngle, 0, 0));
+			else
+				LinkedComponent->SetRelativeRotation(FRotator(0, RotationAngle, 0));
+			break;
+		}
+	case EOpenableType::Drawer:
+		{
+			FVector Direction = FVector::ZeroVector;
+			switch (OpeningSide)
+			{
+			case EOpeningSide::Right: Direction = FVector::RightVector; break;
+			case EOpeningSide::Left: Direction = FVector::LeftVector; break;
+			case EOpeningSide::Up: Direction = FVector::UpVector; break;
+			case EOpeningSide::Down: Direction = FVector::DownVector; break;
+			}
+			LinkedComponent->SetRelativeLocation(InitialLocation + Direction * Distance * Value);
+			break;
+		}
+	}
 }
 
-void UOpenableData::OnTimelineFinished()
+void UOpenableData::HandleFinished()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, TEXT("end Opening"));
 	OnInteractionEnded.ExecuteIfBound();
+	bHasStoredInitialTransform = false;
 }
 
 void UOpenableData::OnTimelineProgress(float Value)
 {
 	HandleProgress(Value);
 }
-
-void UOpenableData::HandleProgress(float Value)
+void UOpenableData::Tick(float DeltaTime)
 {
-	GEngine->AddOnScreenDebugMessage(
-	-1,
-	3.f,
-	FColor::Black,
-	FString::Printf(TEXT("%f""Coucou"), Value));
-	if (!LinkedComponent)
-		return;
-
-	FTransform InitialTransform = LinkedComponent->GetRelativeTransform();
-
-	
-	FVector Direction = FVector::ZeroVector;
-	float RotationAngle = 0.f;
-	
-	switch (OpenableType)
+	if (Timeline.IsPlaying())
 	{
-	case EOpenableType::Door:
-		{
-			//Rotation calculus
-			switch (OpeningSide)
-			{
-			case EOpeningSide::Right:
-				RotationAngle = Value * Angle;
-				break;
-			case EOpeningSide::Left:
-				RotationAngle = Value * -Angle;
-				break;
-			case EOpeningSide::Up:
-				RotationAngle = Value * Angle;
-				LinkedComponent->SetRelativeRotation(FRotator(RotationAngle, 0.f, 0.f));
-				return;
-			case EOpeningSide::Down:
-				RotationAngle = Value * -Angle;
-				LinkedComponent->SetRelativeRotation(FRotator(RotationAngle, 0.f, 0.f));
-				return;
-			default:
-				break;
-			}
-
-			//Rotation around Y axis
-			LinkedComponent->SetRelativeRotation(FRotator(0.f, RotationAngle, 0.f));
-			break;
-		}
-
-	case EOpenableType::Drawer:
-		{
-			// Translation Movement
-			switch (OpeningSide)
-			{
-			case EOpeningSide::Right:
-				Direction = FVector::RightVector;
-				break;
-			case EOpeningSide::Left:
-				Direction = FVector::LeftVector;
-				break;
-			case EOpeningSide::Up:
-				Direction = FVector::UpVector;
-				break;
-			case EOpeningSide::Down:
-				Direction = FVector::DownVector;
-				break;
-			default:
-				break;
-			}
-			
-			FVector Offset = Direction * Value * Distance;
-
-			LinkedComponent->SetRelativeLocation(InitialTransform.GetLocation() + Offset);
-			break;
-		}
-
-	default:
-		break;
+		Timeline.TickTimeline(DeltaTime);
 	}
 }

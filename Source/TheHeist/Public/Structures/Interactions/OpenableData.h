@@ -12,13 +12,18 @@ class THEHEIST_API UOpenableData : public UInteractionData
 {
 	GENERATED_BODY()
 
+public:
+
+	virtual void Tick(float DeltaTime);
+	
 protected:
 
 	UOpenableData();
 	
-	virtual void ExecuteInteraction_Implementation(AActor* Owner, USceneComponent* Target) override;
+	virtual void ExecuteInteraction(AActor* Owner, USceneComponent* Target) override;
 
 
+	
 protected:
 	
 	//------------Functions-----------//
@@ -30,9 +35,10 @@ protected:
 
 	//Called whenever the timeline has stopped
 	UFUNCTION()
-	void OnTimelineFinished();
+	void HandleFinished();
 
 	//Handles the actual movement or rotation.
+	UFUNCTION()
 	void HandleProgress(float Value);
 	
 	
@@ -82,6 +88,6 @@ protected:
 	FVector InitialLocation;
 	FRotator InitialRotation;
 	
-
+	bool bTimelineInitialized = false;
 	void InitTimeline(AActor* Owner);
 };

@@ -6,9 +6,10 @@ UHideableData::UHideableData()
 	InteractText = "Hide";
 }
 
-void UHideableData::ExecuteInteraction_Implementation(AActor* Owner, USceneComponent* Target)
+void UHideableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target)
 {
-	Super::ExecuteInteraction_Implementation(Owner, Target);
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "OKAY");
+	Super::ExecuteInteraction(Owner, Target);
 	
 	if (!Owner) return;
 
@@ -41,6 +42,7 @@ void UHideableData::ExecuteInteraction_Implementation(AActor* Owner, USceneCompo
 		}
 		else
 		{
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "Chelou");
 			PlayerComp->Hide();
 				
 		}
