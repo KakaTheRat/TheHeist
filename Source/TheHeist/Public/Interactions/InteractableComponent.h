@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "InteractionInterface.h"
 #include "Components/ActorComponent.h"
+#include "Player/PlayerInteractionComponent.h"
 #include "../Structures/Interactions/InteractionData.h"
 #include "Widget/Interaction/InteractionWidgetActor.h"
 #include "InteractableComponent.generated.h"
@@ -202,7 +203,7 @@ protected:
 	void InteractWithObject(const FString m_InteractText);
 
 	//Implementation for the interact interface function
-	virtual void Interact_Implementation(USceneComponent* HitComponent) override;
+	virtual void Interact_Implementation(USceneComponent* HitComponent, AActor* InteractingActor) override;
 
 	//Implementation for the interact AI interface function
 	virtual void InteractAI_Implementation() override;
@@ -218,5 +219,5 @@ public:
 	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
+	
 };

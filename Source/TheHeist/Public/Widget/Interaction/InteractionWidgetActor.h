@@ -23,26 +23,41 @@ public:
 	AInteractionWidgetActor();
 
 	// Returns widget. Widget's Getter
-	UUserWidget* GetWidget() const { return WidgetComp ? WidgetComp->GetWidget() : nullptr; }
+	UInteractionWindowWidget* GetWidget() const { return MyWidget; }
 
 	//Adds a new interaction button to the widget whenever is called. Is expecting an interaction text
 	UFUNCTION(BlueprintImplementableEvent,BlueprintCallable)
 	void AddInteractionEntry(const FString& Entry);
 
+	//Clears all the widget's interactions panel
+	UFUNCTION(BlueprintImplementableEvent,BlueprintCallable)
+	void ClearEntries();
+
+	//Shows widget to the view
+	UFUNCTION(BlueprintCallable)
+	void ShowWidget(const FVector& Location);
+
+	//Hides widget to the view
+	UFUNCTION(BlueprintCallable)
+	void HideWidget();
 	
 
-	//----------------Properties--------------//
 	
-	// Widget Component
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UWidgetComponent* WidgetComp;
-
-	//Reference to the attached widget
-	UPROPERTY(BlueprintReadWrite, Category="Interaction")
-	UInteractionWindowWidget* MyWidget;
 	
 protected:
 	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
+	//----------------Properties--------------//
+	
+	// Widget Component
+	UPROPERTY(BlueprintReadWrite)
+	UWidgetComponent* WidgetComp;
+
+	//Reference to the attached widget
+	UPROPERTY(BlueprintReadWrite)
+	UInteractionWindowWidget* MyWidget;
+	
+	
 };

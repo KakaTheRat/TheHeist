@@ -28,12 +28,18 @@ public:
 	//Blueprint event. Called whenever a new interaction is added
 	UFUNCTION(BlueprintNativeEvent,BlueprintCallable, Category="Interaction")
 	void AddInteraction(const FString& m_InteractText);
+
+	//Blueprint event, Clears all interactions entries created so far
+	UFUNCTION(BlueprintNativeEvent,BlueprintCallable, Category="Interaction")
+	void ClearEntries();
 	
 	virtual void AddInteraction_Implementation(const FString& m_InteractText);
+
+	virtual void ClearEntries_Implementation();
 	
 
 	//------------Properties--------------//
-	
+	UPROPERTY(BlueprintReadWrite)
 	FOnInteractionClicked OnInteractionClicked;
 	
 	

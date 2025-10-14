@@ -6,6 +6,7 @@
 #include "LandscapeGizmoActiveActor.h"
 
 
+
 // Sets default values for this component's properties
 UInteractableComponent::UInteractableComponent()
 {
@@ -17,53 +18,47 @@ UInteractableComponent::UInteractableComponent()
 }
 
 //Interaction interface interact function
-void UInteractableComponent::Interact_Implementation(USceneComponent* HitComponent)
+void UInteractableComponent::Interact_Implementation(USceneComponent* HitComponent, AActor* InteractingActor)
 {
-	IInteractionInterface::Interact_Implementation(HitComponent);
-	
-	
+	IInteractionInterface::Interact_Implementation(HitComponent, InteractingActor);
+
+	if (!InteractingActor)return;
+
 	CurrentlyChosenComponent = HitComponent;
 
-	if (InteractionWidgetClass && GetWorld())
+	//Checks if actor has the player's interaction component
+	if (UPlayerInteractionComponent* PlayerInteraction = InteractingActor->FindComponentByClass<UPlayerInteractionComponent>())
 	{
-		//Destroys Widget attached
-		if (WidgetInstance)
+		// Get the player's widget actor
+		AInteractionWidgetActor* WidgetActor = PlayerInteraction->GetInteractionWidget();
+
+		if (!WidgetActor) return;
+		
+		WidgetActor->ClearEntries();
+
+		//Add new entries to the interaction widget
+		for (FInteractionEntry& Entry : InteractionsConfig)
 		{
-			WidgetInstance->Destroy();
-			WidgetInstance = nullptr;
-		}
-
-		FActorSpawnParameters SpawnParams;
-
-		//Creates a new widget 
-		WidgetInstance = GetWorld()->SpawnActor<AInteractionWidgetActor>(
-		InteractionWidgetClass,
-		FVector(Owner->GetActorLocation().X,Owner->GetActorLocation().Y,100  + Owner->GetActorLocation().Z),   // position
-		FRotator::ZeroRotator,
-		SpawnParams
-	);
-	}
-
-	//Widget setup (creating different interactions)
-	for (FInteractionEntry& Entry : InteractionsConfig)
-	{
-		if (Entry.ComponentName == CurrentlyChosenComponent->GetName())
-		{
-			CurrentEntry = &Entry;
 			
-			for (UInteractionData* Data : Entry.Interactions)
+			if (Entry.ComponentName == CurrentlyChosenComponent->GetName())
 			{
-				if (Data)
+				CurrentEntry = &Entry;
+
+				for (UInteractionData* Data : Entry.Interactions)
 				{
-					//Allows to add options for the widget
-					WidgetInstance->AddInteractionEntry(Data->InteractText);
+					if (Data)
+					{
+						WidgetActor->AddInteractionEntry(Data->InteractText);
+					}
 				}
 			}
 		}
-	}
 
-	//Subscribe to the onclick event of the widget
-	WidgetInstance->MyWidget->OnInteractionClicked.BindDynamic(this, &UInteractableComponent::InteractWithObject);
+		WidgetActor->ShowWidget(HitComponent->GetComponentLocation()+ FVector(0, 0, 100));
+		
+		//Subscribe to the onclick event of the widget
+		WidgetActor->GetWidget()->OnInteractionClicked.BindDynamic(this, &UInteractableComponent::InteractWithObject);
+	}
 }
 
 void UInteractableComponent::InteractAI_Implementation()
@@ -136,7 +131,7 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText)
 void UInteractableComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	Owner = GetOwner();
 
 	

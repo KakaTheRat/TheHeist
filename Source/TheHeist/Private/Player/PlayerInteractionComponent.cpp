@@ -19,8 +19,15 @@ void UPlayerInteractionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	
+
+	//Instantiate the interaction manager
+	FActorSpawnParameters Params;
+	Params.Owner = GetOwner();
+	WidgetInstance = GetWorld()->SpawnActor<AInteractionWidgetActor>(
+		WidgetActorClass,
+		FVector::ZeroVector,
+		FRotator::ZeroRotator,
+		Params);
 }
 
 
@@ -32,11 +39,4 @@ void UPlayerInteractionComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	// ...
 }
 
-void UPlayerInteractionComponent::Shout()
-{
-		FVector PlayerLocation = GetOwner()->GetActorLocation();
-
-		// Broadcast for each guard
-		OnPlayerShout.Broadcast(PlayerLocation);
-}
 

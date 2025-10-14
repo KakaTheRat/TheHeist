@@ -28,7 +28,7 @@ public:
 	//Interact Function, called whenever an object is being interacted with.
 	//Takes the hit component as an input
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Interaction")
-	void Interact(USceneComponent* HitComponent);
+	void Interact(USceneComponent* HitComponent, AActor* InteractingActor);
 
 	//Interact Function, called whenever an AI interact with an object.
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Interaction")

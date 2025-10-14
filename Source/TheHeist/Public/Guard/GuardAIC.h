@@ -30,6 +30,5 @@ public:
 	protected:
 
 	void BeginPlay() override;
-
-	void OnPlayerShout(FVector Location);
+	
 };

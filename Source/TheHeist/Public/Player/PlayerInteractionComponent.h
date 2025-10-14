@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Widget/Interaction/InteractionWidgetActor.h"
 #include "PlayerInteractionComponent.generated.h"
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerShout, FVector);
 
 UCLASS(Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class THEHEIST_API UPlayerInteractionComponent : public UActorComponent
@@ -21,6 +21,9 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	
+	
+
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -33,17 +36,17 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void QuitHiding();
 
+	UFUNCTION()
+	AInteractionWidgetActor* GetInteractionWidget(){return WidgetInstance;};
 	
-	FOnPlayerShout OnPlayerShout;
 
-	//Function called whenever the player presses the shouting key
-	void Shout();
+private:
 
-	UFUNCTION(BlueprintCallable)
-	void InputShout()
-	{
-		Shout();
-	}
-	
-		
+	//Interaction widget class
+	UPROPERTY(EditAnywhere,Category="Interaction")
+	TSubclassOf<AInteractionWidgetActor> WidgetActorClass;
+
+	//Widget object's instance
+	UPROPERTY()
+	AInteractionWidgetActor* WidgetInstance;
 };

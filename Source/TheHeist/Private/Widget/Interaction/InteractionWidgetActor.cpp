@@ -16,6 +16,18 @@ AInteractionWidgetActor::AInteractionWidgetActor()
 
 }
 
+void AInteractionWidgetActor::ShowWidget(const FVector& Location)
+{
+	SetActorLocation(Location);
+	if (MyWidget)
+		SetActorHiddenInGame(false);
+}
+
+void AInteractionWidgetActor::HideWidget()
+{
+	SetActorHiddenInGame(true);
+}
+
 
 // Called when the game starts or when spawned
 void AInteractionWidgetActor::BeginPlay()
