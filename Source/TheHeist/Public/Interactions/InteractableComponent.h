@@ -12,6 +12,7 @@
 
 
 
+#pragma region InteractionStruct
 
 //Structure used to match a scene component's name with an array of interactions linked to this one.
 USTRUCT(BlueprintType)
@@ -24,9 +25,12 @@ struct FInteractionEntry
 	FName ComponentName;
 
 	// Array of available interactions types for this component
-	UPROPERTY(EditAnywhere,Instanced, BlueprintReadWrite, Category="Interaction|Setup")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Setup")
 	TArray<UInteractionData*> Interactions; 
 };
+#pragma endregion 
+
+#pragma region CascadeSlotStruct
 
 //Structure used to match a scene component's name to a single interaction. Used for the interaction cascade  
 USTRUCT(BlueprintType)
@@ -44,6 +48,10 @@ struct FInteractionCascadeSlot
 	
 };
 
+#pragma endregion
+
+#pragma region CascadesDatasStruct
+
 //Structure used for the interaction cascade management. Each cascade has an array of single interaction
 USTRUCT(BlueprintType)
 struct FInteractionCascadeData
@@ -58,7 +66,8 @@ struct FInteractionCascadeData
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FInteractionCascadeSlot> InteractionCascades;
 
-	// === Index du slot principal (dropdown auto-généré) ===
+	//Index of the interaction triggering all the cascade.
+	//For exemple, the main interaction for hiding in a closet would be the hiding interaction as it triggers everything (Opens door -> hides -> closes door)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(GetOptions="GetAvailableSlotIndices"))
 	int32 MainSlotIndex = INDEX_NONE;
 
@@ -66,10 +75,16 @@ struct FInteractionCascadeData
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Interaction|InteractionCascade")
 	FInteractionCascadeSlot MainSlot;
 
-	// ------- Functions
+	UPROPERTY()
+	int32 CurrentIndex = 0;
+	
 	TArray<FString> GetAvailableSlotIndices() const;
+
+	//Refresh the main slot to see it in the editor
 	void RefreshMainSlot();
 };
+
+#pragma endregion
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -78,65 +93,6 @@ class THEHEIST_API UInteractableComponent : public UActorComponent, public IInte
 	GENERATED_BODY()
 
 public:
-
-	//-----------Functions--------------//
-	
-	//----------Properties--------------//
-
-
-
-	
-	//-------------Cascade Interaction Mode--------------//
-
-	//-------------Functions--------------//
-
-
-	// Functions called by the inspector dynamic selection
-	UFUNCTION()
-	TArray<FName> GetAvailableInteractionComponents();
-
-	// Functions called by the inspector dynamic selection. Gets an array of interactions names
-	UFUNCTION()
-	TArray<FName> GetAvailableInteractionsForSelectedComponent();
-
-	//Add chosen interaction to the currently chosen cascade 
-	UFUNCTION(CallInEditor, Category="Interaction|InteractionCascade", meta=(EditCondition="bIsCascadeActive"))
-	void AddCascadeInteraction();
-
-	UFUNCTION()
-	TArray<FName> GetAvailableCascadeNames();
-
-	//Execute the next interaction in the current cascade data
-	void ExecuteNextCascadeInteraction();
-	
-	//------------Properties--------------//
-	
-	UPROPERTY(EditAnywhere, Category="Interaction|InteractionCascade", meta=(EditCondition = "bShouldActivateCascade"))
-	TArray<FInteractionCascadeData> InteractionsCascadeDatas;
-	
-	// Display in the editor the component linked with data
-	UPROPERTY(EditAnywhere, Category="Interaction|InteractionCascade", meta=(GetOptions="GetAvailableInteractionComponents",EditCondition="bShouldActivateCascade"))
-	FName SelectedComponentName;
-
-	// Display in the editor the datas linked to the chosen component
-	UPROPERTY(EditAnywhere, Category="Interaction|InteractionCascade", meta=(GetOptions="GetAvailableInteractionsForSelectedComponent", EditCondition="bShouldActivateCascade"))
-	FName SelectedInteractionName;
-
-	UPROPERTY(EditAnywhere, Category="Interaction|InteractionCascade", meta=(GetOptions="GetAvailableCascadeNames", EditCondition="bShouldActivateCascade"))
-	FName SelectedCascadeName;
-	
-	UPROPERTY(EditAnywhere, Category="Interaction|InteractionCascade", meta=(EditCondition="bShouldActivateCascade"))
-	FName NewCascadeName;
-
-	//Current cascade being interacted with at the moment
-	FInteractionCascadeData* CurrentCascade = nullptr;
-
-	//Current cascade index
-	int32 CurrentCascadeIndex = 0;
-
-
-	
-	
 
 #if WITH_EDITOR
     
@@ -150,10 +106,6 @@ public:
 
 protected:
 
-	//-------------Functions--------------//
-
-	
-	
 	//------------Properties--------------//
 	
 	//Scene components which are accessing to this component
@@ -179,18 +131,9 @@ protected:
 	UPROPERTY(BlueprintReadWrite)
 	TArray<FInteractionEntry> InteractionsConfigPerceptionAI;
 
+	//Determines if the object should implement the cascade interaction feature. If not, the component won't check any cascade.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")
 	bool bShouldActivateCascade = false;
-
-	//----------WIDGET--------------//
-	
-	// Widget Class to instantiate. Widget for the interaction system
-	UPROPERTY(EditAnywhere, Category="UI")
-	TSubclassOf<AInteractionWidgetActor> InteractionWidgetClass;
-
-	//Widget instance
-	AInteractionWidgetActor* WidgetInstance = nullptr;
-	
 	
 
 	//------------FUNCTIONS--------------//
@@ -219,5 +162,56 @@ public:
 	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+
+private:
+
+#pragma region CascadeInteraction
+	//-------------Cascade Interaction Mode--------------//
+
+	//-------------Functions--------------//
+
+
+	// Functions called by the inspector dynamic selection
+	UFUNCTION()
+	TArray<FName> GetAvailableInteractionComponents();
+
+	// Functions called by the inspector dynamic selection. Gets an array of interactions names
+	UFUNCTION()
+	TArray<FName> GetAvailableInteractionsForSelectedComponent();
+
+	//Add chosen interaction to the currently chosen cascade 
+	UFUNCTION(CallInEditor, Category="Interaction|InteractionCascade", meta =(EditCondition="bShouldActivateCascade"))
+	void AddCascadeInteraction();
+
+	//Returns all available cascade by their names
+	UFUNCTION()
+	TArray<FName> GetAvailableCascadeNames();
+
+	//Execute the next interaction in the current cascade data
+	void ExecuteNextCascadeInteraction(FInteractionCascadeData& Cascade);
+	
+	
+	//------------Properties--------------//
+	
+	UPROPERTY(EditAnywhere, Category="Interaction|InteractionCascade")
+	TArray<FInteractionCascadeData> InteractionsCascadeDatas;
+	
+	// Display in the editor the component linked with data
+	UPROPERTY(EditAnywhere, Category="Interaction|InteractionCascade", meta=(GetOptions="GetAvailableInteractionComponents",EditCondition="bShouldActivateCascade"))
+	FName SelectedComponentName;
+
+	// Display in the editor the datas linked to the chosen component
+	UPROPERTY(EditAnywhere, Category="Interaction|InteractionCascade", meta=(GetOptions="GetAvailableInteractionsForSelectedComponent", EditCondition="bShouldActivateCascade"))
+	FName SelectedInteractionName;
+
+	UPROPERTY(EditAnywhere, Category="Interaction|InteractionCascade", meta=(GetOptions="GetAvailableCascadeNames", EditCondition="bShouldActivateCascade"))
+	FName SelectedCascadeName;
+	
+	UPROPERTY(EditAnywhere, Category="Interaction|InteractionCascade", meta=(EditCondition="bShouldActivateCascade"))
+	FName NewCascadeName;
+
+
+#pragma endregion
 	
 };

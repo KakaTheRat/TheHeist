@@ -90,24 +90,30 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText)
 {
 	bool bFoundCascade = false;
 
+	// Go through each cascade
 	for (FInteractionCascadeData& Cascade : InteractionsCascadeDatas)
 	{
-		if (Cascade.InteractionCascades.Num() > 0 && Cascade.InteractionCascades[0].InteractionData)
+		if (Cascade.InteractionCascades.Num() == 0)
+			continue;
+
+		// Checks if main slot index is valid
+		if (!Cascade.InteractionCascades.IsValidIndex(Cascade.MainSlotIndex))
+			continue;
+
+		FInteractionCascadeSlot& MainSlot = Cascade.InteractionCascades[Cascade.MainSlotIndex];
+		
+		if (MainSlot.InteractionData && MainSlot.InteractionData->InteractText == m_InteractText)
 		{
-			if (Cascade.InteractionCascades[0].InteractionData->InteractText == m_InteractText)
-			{
-				bFoundCascade = true;
-				CurrentCascade = &Cascade;
-				CurrentCascadeIndex = 0;
-				ExecuteNextCascadeInteraction(); // Launch next interaction
-				break;
-			}
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, m_InteractText);
+			bFoundCascade = true;
+			ExecuteNextCascadeInteraction(Cascade); // Launch cascade
+			break;
 		}
 	}
 
 	if (!bFoundCascade)
 	{
-		// Normal interaction (no cascade)
+		// Normal single interaction
 		for (UInteractionData* Data : CurrentEntry->Interactions)
 		{
 			if (Data && Data->InteractText == m_InteractText)
@@ -116,13 +122,6 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText)
 				break;
 			}
 		}
-	}
-
-	// Destroy widget
-	if (WidgetInstance)
-	{
-		WidgetInstance->Destroy();
-		WidgetInstance = nullptr;
 	}
 	
 }
@@ -224,52 +223,77 @@ TArray<FName> UInteractableComponent::GetAvailableInteractionsForSelectedCompone
 
 
 
+//---------------------------------Post edit and cascades--------------------------------------------//
 
-// ---------------------------------------------------------------
-// Debug helper to test directly in editor
-// ---------------------------------------------------------------
+#pragma region PostEdit
+
+#if WITH_EDITOR
+void UInteractableComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+    Super::PostEditChangeProperty(PropertyChangedEvent);
+
+    if (PropertyChangedEvent.Property)
+    {
+        const FName PropertyName = PropertyChangedEvent.Property->GetFName();
+        const FName MemberPropertyName = PropertyChangedEvent.MemberProperty ? PropertyChangedEvent.MemberProperty->GetFName() : NAME_None;
+
+        // Checks if its a property in the interaction cascade datas array
+        if (MemberPropertyName == GET_MEMBER_NAME_CHECKED(UInteractableComponent, InteractionsCascadeDatas))
+        {
+            // Refresh main slots
+            for (FInteractionCascadeData& Cascade : InteractionsCascadeDatas)
+            {
+                Cascade.RefreshMainSlot();
+            }
+        }
+        // Vérifier directement si MainSlotIndex a changé
+        else if (PropertyName == GET_MEMBER_NAME_CHECKED(FInteractionCascadeData, MainSlotIndex))
+        {
+            // Trouver la cascade modifiée
+            if (PropertyChangedEvent.GetArrayIndex(PropertyChangedEvent.Property->GetFName().ToString()) != INDEX_NONE)
+            {
+                int32 ArrayIndex = PropertyChangedEvent.GetArrayIndex(PropertyChangedEvent.Property->GetFName().ToString());
+                if (InteractionsCascadeDatas.IsValidIndex(ArrayIndex))
+                {
+                    InteractionsCascadeDatas[ArrayIndex].RefreshMainSlot();
+                }
+            }
+        }
+    }
+}
+#endif
+#pragma endregion
+
+#pragma region CascadeInteraction
 
 void UInteractableComponent::AddCascadeInteraction()
 {
 	if (SelectedComponentName.IsNone() || SelectedInteractionName.IsNone())
-	{
 		return;
-	}
 
 	FName TargetCascadeName = SelectedCascadeName;
-	
+
 	if (SelectedCascadeName == FName("New"))
 	{
 		if (NewCascadeName.IsNone())
-		{
 			return;
-		}
+
 		TargetCascadeName = NewCascadeName;
 	}
 
-	FInteractionCascadeData* ExistingCascade = nullptr;
+	FInteractionCascadeData* ExistingCascade = InteractionsCascadeDatas.FindByPredicate(
+		[TargetCascadeName](const FInteractionCascadeData& Cascade) { return Cascade.CascadeName == TargetCascadeName; });
 
-	for (FInteractionCascadeData& Cascade : InteractionsCascadeDatas)
-	{
-		if (Cascade.CascadeName == TargetCascadeName)
-		{
-			ExistingCascade = &Cascade;
-			break;
-		}
-	}
-
-	if (!ExistingCascade)
+	/*if (!ExistingCascade)
 	{
 		FInteractionCascadeData NewCascade;
 		NewCascade.CascadeName = TargetCascadeName;
 		InteractionsCascadeDatas.Add(NewCascade);
 		ExistingCascade = &InteractionsCascadeDatas.Last();
-	}
-	
-	FInteractionEntry* NewEntry = nullptr;
+	}*/
 
 	UInteractionData* NewData = nullptr;
-	
+
 	for (FInteractionEntry& Entry : InteractionsConfig)
 	{
 		if (Entry.ComponentName == SelectedComponentName)
@@ -278,31 +302,22 @@ void UInteractableComponent::AddCascadeInteraction()
 			{
 				if (Interaction && Interaction->GetName() == SelectedInteractionName.ToString())
 				{
-					NewEntry = &Entry;
-					NewData = Interaction;
-					
-					break;
+					NewData = Interaction; 
+					goto FoundData;
 				}
 			}
 		}
 	}
-	
-	for (FInteractionCascadeSlot& Slot : ExistingCascade->InteractionCascades)
-	{
-		if (Slot.InteractionData == NewData)
-		{
-			if (Slot.ComponentName == NewEntry->ComponentName)
-			{
-				return;
-			}
-			
-		}
-	}
+	FoundData:
+	if (!NewData)
+		return;
 
-	FInteractionCascadeSlot NewCascade;
-	NewCascade.InteractionData = NewData;
-	NewCascade.ComponentName = SelectedComponentName;
-	ExistingCascade->InteractionCascades.Add(NewCascade);
+	
+	FInteractionCascadeSlot NewSlot;
+	NewSlot.ComponentName = SelectedComponentName;
+	NewSlot.InteractionData = NewData;
+
+	InteractionsCascadeDatas[0].InteractionCascades.Add(NewSlot);
 }
 
 TArray<FName> UInteractableComponent::GetAvailableCascadeNames()
@@ -322,29 +337,35 @@ TArray<FName> UInteractableComponent::GetAvailableCascadeNames()
 	return Names;
 }
 
-void UInteractableComponent::ExecuteNextCascadeInteraction()
+void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeData& Cascade)
 {
-	
-	if (!CurrentCascade) return;
-    
-	if (!CurrentCascade->InteractionCascades.IsValidIndex(CurrentCascadeIndex)) 
+	if (!Cascade.InteractionCascades.IsValidIndex(Cascade.CurrentIndex))
 	{
-		CurrentCascade = nullptr;
-		CurrentCascadeIndex = 0;
+	
+		Cascade.CurrentIndex = 0;
 		return;
 	}
 
-	FInteractionCascadeSlot& Slot = CurrentCascade->InteractionCascades[CurrentCascadeIndex];
-    
-	
-	CurrentCascadeIndex++;
-    
+	FInteractionCascadeSlot& Slot = Cascade.InteractionCascades[Cascade.CurrentIndex++];
+
 	if (Slot.InteractionData)
 	{
-		Slot.InteractionData->OnInteractionEnded.BindUObject(this, &UInteractableComponent::ExecuteNextCascadeInteraction);
+	
+		Slot.InteractionData->OnInteractionEnded.AddLambda([this, CascadePtr = &Cascade]()
+		{
+			ExecuteNextCascadeInteraction(*CascadePtr);
+		});
+
+		
 		Slot.InteractionData->ExecuteInteraction(Owner, CurrentlyChosenComponent);
 	}
 }
+
+
+
+#pragma endregion
+
+#pragma region CascadeStruct
 
 TArray<FString> FInteractionCascadeData::GetAvailableSlotIndices() const
 {
@@ -375,39 +396,4 @@ void FInteractionCascadeData::RefreshMainSlot()
 		MainSlot = FInteractionCascadeSlot();
 	}
 }
-#if WITH_EDITOR
-void UInteractableComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
-{
-    Super::PostEditChangeProperty(PropertyChangedEvent);
-
-    if (PropertyChangedEvent.Property)
-    {
-        const FName PropertyName = PropertyChangedEvent.Property->GetFName();
-        const FName MemberPropertyName = PropertyChangedEvent.MemberProperty ? PropertyChangedEvent.MemberProperty->GetFName() : NAME_None;
-
-        // Vérifier si c'est une propriété dans FInteractionCascadeData
-        if (MemberPropertyName == GET_MEMBER_NAME_CHECKED(UInteractableComponent, InteractionsCascadeDatas))
-        {
-            // Forcer le refresh de tous les MainSlot
-            for (FInteractionCascadeData& Cascade : InteractionsCascadeDatas)
-            {
-                Cascade.RefreshMainSlot();
-            }
-        }
-        // Vérifier directement si MainSlotIndex a changé
-        else if (PropertyName == GET_MEMBER_NAME_CHECKED(FInteractionCascadeData, MainSlotIndex))
-        {
-            // Trouver la cascade modifiée
-            if (PropertyChangedEvent.GetArrayIndex(PropertyChangedEvent.Property->GetFName().ToString()) != INDEX_NONE)
-            {
-                int32 ArrayIndex = PropertyChangedEvent.GetArrayIndex(PropertyChangedEvent.Property->GetFName().ToString());
-                if (InteractionsCascadeDatas.IsValidIndex(ArrayIndex))
-                {
-                    InteractionsCascadeDatas[ArrayIndex].RefreshMainSlot();
-                }
-            }
-        }
-    }
-}
-#endif
-
+#pragma endregion

@@ -10,7 +10,7 @@
 
     class UInteractableComponent;
 
-    DECLARE_DELEGATE(FOnInteractionEnded);
+    DECLARE_MULTICAST_DELEGATE(FOnInteractionEnded);
 
     UCLASS(Abstract, Blueprintable, EditInlineNew)
     class THEHEIST_API UInteractionData : public UObject
@@ -23,6 +23,9 @@
 
         //End of interaction event. Must be called whenever an interaction is over
         FOnInteractionEnded OnInteractionEnded;
+
+    	//Set up the end sequence of each interaction
+    	void EndOfInteraction();
 
         //Interaction execution. Must be overrided by each interaction type
         virtual void ExecuteInteraction(AActor* Owner, USceneComponent* Target);
@@ -38,7 +41,7 @@
         FString InteractText;
         
        
-        
+#pragma region Alert
         //-------------ALERT
 
         //--------------Alert Properties
@@ -72,7 +75,8 @@
         // Function to clear guard's alert
         UFUNCTION(BlueprintCallable)
         void ClearAlert(AActor* SourceActor);
-    
+
+#pragma endregion
         
         protected:
         

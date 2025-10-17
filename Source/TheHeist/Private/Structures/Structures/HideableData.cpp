@@ -8,7 +8,6 @@ UHideableData::UHideableData()
 
 void UHideableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "OKAY");
 	Super::ExecuteInteraction(Owner, Target);
 	
 	if (!Owner) return;
@@ -38,11 +37,12 @@ void UHideableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target)
 	{;
 		if (bIsUsed)
 		{
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "HIDeD");
 			PlayerComp->QuitHiding();
 		}
 		else
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "Chelou");
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "NOT HIDeD");
 			PlayerComp->Hide();
 				
 		}
@@ -78,6 +78,13 @@ void UHideableData::HideStep(AActor* Owner)
 		
 
 		bIsUsed = !bIsUsed;
-		OnInteractionEnded.ExecuteIfBound();
+		GEngine->AddOnScreenDebugMessage(
+	-1,
+	15.0f,
+	FColor::Red,
+	FString::Printf(TEXT("bIsUsed: %s"), bIsUsed ? TEXT("true") : TEXT("false"))
+);
+		EndOfInteraction();
+
 	}
 }

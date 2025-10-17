@@ -95,8 +95,7 @@ void UOpenableData::HandleProgress(float Value)
 
 void UOpenableData::HandleFinished()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, TEXT("end Opening"));
-	OnInteractionEnded.ExecuteIfBound();
+	EndOfInteraction();
 	bHasStoredInitialTransform = false;
 }
 

@@ -22,6 +22,8 @@ void UActivableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target)
 	default:
 		break;
 	}
+
+	EndOfInteraction();
 }
 
 void UActivableData::ActivateLight(AActor* Owner)
@@ -33,6 +35,8 @@ void UActivableData::ActivateLight(AActor* Owner)
 		LightComp->SetIntensity(LightIntensity * !bIsActivated);
 		bIsActivated = !bIsActivated;
 	}
+
+	
 }
 
 void UActivableData::ActivateSound(AActor* Owner)
@@ -57,5 +61,4 @@ void UActivableData::ActivateSound(AActor* Owner)
 
 		
 	}
-	OnInteractionEnded.ExecuteIfBound();
 }

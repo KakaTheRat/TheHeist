@@ -2,6 +2,11 @@
 
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 
+void UInteractionData::EndOfInteraction()
+{
+    OnInteractionEnded.Broadcast();
+}
+
 inline void UInteractionData::ExecuteInteraction(AActor* Owner, USceneComponent* Target)
 {
     
@@ -39,8 +44,6 @@ void UInteractionData::ClearAlert(AActor* SourceActor)
     // Désenregistre le composant du système de perception
     StimulusSource->UnregisterFromSense(UAISense_Sight::StaticClass());
 
-    // Debug
-    GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Blue, TEXT("stop  "));
 }
 
 
