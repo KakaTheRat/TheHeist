@@ -12,7 +12,7 @@
 
     DECLARE_MULTICAST_DELEGATE(FOnInteractionEnded);
 
-    UCLASS(Abstract, Blueprintable, EditInlineNew)
+    UCLASS(Abstract, Blueprintable, EditInlineNew, DefaultToInstanced)
     class THEHEIST_API UInteractionData : public UObject
     {
         GENERATED_BODY()

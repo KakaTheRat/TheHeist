@@ -34,6 +34,7 @@ void UActivableData::ActivateLight(AActor* Owner)
 	{
 		LightComp->SetIntensity(LightIntensity * !bIsActivated);
 		bIsActivated = !bIsActivated;
+		bIsActivated ? InteractText = "Activated" : InteractText = "deaActivated";
 	}
 
 	
@@ -58,6 +59,8 @@ void UActivableData::ActivateSound(AActor* Owner)
 			UGameplayStatics::SpawnSoundAttached(Sound, AudioComp);
 		}
 		bIsActivated = !bIsActivated;
+		
+		
 
 		
 	}

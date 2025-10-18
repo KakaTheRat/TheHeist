@@ -44,7 +44,10 @@ struct FInteractionCascadeSlot
 
 	//Associated interaction
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UInteractionData* InteractionData;
+	TSoftObjectPtr<UInteractionData> InteractionData;
+
+	UPROPERTY(VisibleAnywhere)
+	TWeakObjectPtr<USceneComponent> TargetComponent;
 	
 };
 
@@ -105,7 +108,7 @@ public:
 
 
 protected:
-
+	
 	//------------Properties--------------//
 	
 	//Scene components which are accessing to this component

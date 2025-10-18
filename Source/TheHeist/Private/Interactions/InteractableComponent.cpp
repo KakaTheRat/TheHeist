@@ -311,11 +311,21 @@ void UInteractableComponent::AddCascadeInteraction()
 	FoundData:
 	if (!NewData)
 		return;
-
+	
+	USceneComponent* TargetComp = nullptr;
+	for (USceneComponent* Comp : AttachedComponents)
+	{
+		if (Comp && Comp->GetName() == SelectedComponentName.ToString())
+		{
+			TargetComp = Comp;
+			break;
+		}
+	}
 	
 	FInteractionCascadeSlot NewSlot;
 	NewSlot.ComponentName = SelectedComponentName;
 	NewSlot.InteractionData = NewData;
+	NewSlot.TargetComponent = TargetComp;
 
 	InteractionsCascadeDatas[0].InteractionCascades.Add(NewSlot);
 }
@@ -348,16 +358,18 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 
 	FInteractionCascadeSlot& Slot = Cascade.InteractionCascades[Cascade.CurrentIndex++];
 
-	if (Slot.InteractionData)
+	if (Slot.InteractionData.IsValid() && Slot.TargetComponent.IsValid())
 	{
+		UInteractionData* Interaction = Slot.InteractionData.Get();
+		USceneComponent* TargetComp = Slot.TargetComponent.Get();
 	
-		Slot.InteractionData->OnInteractionEnded.AddLambda([this, CascadePtr = &Cascade]()
+		Interaction->OnInteractionEnded.AddLambda([this, CascadePtr = &Cascade]()
 		{
 			ExecuteNextCascadeInteraction(*CascadePtr);
 		});
 
 		
-		Slot.InteractionData->ExecuteInteraction(Owner, CurrentlyChosenComponent);
+		Interaction->ExecuteInteraction(Owner, TargetComp);
 	}
 }
 
@@ -370,7 +382,7 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 TArray<FString> FInteractionCascadeData::GetAvailableSlotIndices() const
 {
 	TArray<FString> Options;
-	for (int32 i = 0; i < InteractionCascades.Num(); ++i)
+	/*for (int32 i = 0; i < InteractionCascades.Num(); ++i)
 	{
 		const FInteractionCascadeSlot& Slot = InteractionCascades[i];
 		
@@ -381,7 +393,7 @@ TArray<FString> FInteractionCascadeData::GetAvailableSlotIndices() const
 		);
 
 		Options.Add(Label);
-	}
+	}*/
 	return Options;
 }
 
