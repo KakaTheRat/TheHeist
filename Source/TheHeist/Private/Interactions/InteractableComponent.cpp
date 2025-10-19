@@ -4,7 +4,8 @@
 #include "Interactions/InteractableComponent.h"
 
 #include "LandscapeGizmoActiveActor.h"
-
+#include "ToolMenusEditor.h"
+#include "Tests/ToolMenusTestUtilities.h"
 
 
 // Sets default values for this component's properties
@@ -220,11 +221,18 @@ TArray<FName> UInteractableComponent::GetAvailableInteractionComponents()
 {
 	TArray<FName> ComponentNames;
 
-	for (const FInteractionEntry& Entry : InteractionsConfig)
+	/*for (const FInteractionEntry& Entry : InteractionsConfig)
 	{
 		if (Entry.Interactions.Num() > 0 && !ComponentNames.Contains(Entry.ComponentName))
 		{
 			ComponentNames.Add(Entry.ComponentName);
+		}
+	}*/
+	for (const UInteractionData* Data : AllInteractions)
+	{
+		if (Data && !ComponentNames.Contains(Data->CompNames))
+		{
+			ComponentNames.Add(Data->CompNames);
 		}
 	}
 
@@ -238,7 +246,7 @@ TArray<FName> UInteractableComponent::GetAvailableInteractionsForSelectedCompone
 	if (SelectedComponentName.IsNone())
 		return InteractionNames;
 
-	for (const FInteractionEntry& Entry : InteractionsConfig)
+	/*for (const FInteractionEntry& Entry : InteractionsConfig)
 	{
 		if (Entry.ComponentName == SelectedComponentName)
 		{
@@ -250,7 +258,17 @@ TArray<FName> UInteractableComponent::GetAvailableInteractionsForSelectedCompone
 				}
 			}
 		}
+	}*/
+
+	for (const UInteractionData* Data : AllInteractions)
+	{
+		if (Data && Data->CompNames == SelectedComponentName)
+		{
+			InteractionNames.Add(FName(*Data->GetName()));
+		}
 	}
+	
+	
 
 	return InteractionNames;
 }
@@ -271,7 +289,7 @@ void UInteractableComponent::PostEditChangeProperty(FPropertyChangedEvent& Prope
         const FName PropertyName = PropertyChangedEvent.Property->GetFName();
         const FName MemberPropertyName = PropertyChangedEvent.MemberProperty ? PropertyChangedEvent.MemberProperty->GetFName() : NAME_None;
 
-        // Checks if its a property in the interaction cascade datas array
+      /*  // Checks if its a property in the interaction cascade datas array
         if (MemberPropertyName == GET_MEMBER_NAME_CHECKED(UInteractableComponent, InteractionsCascadeDatas))
         {
             // Refresh main slots
@@ -292,7 +310,7 @@ void UInteractableComponent::PostEditChangeProperty(FPropertyChangedEvent& Prope
                     InteractionsCascadeDatas[ArrayIndex].RefreshMainSlot();
                 }
             }
-        }
+        }*/
     }
 }
 #endif
@@ -328,7 +346,7 @@ void UInteractableComponent::AddCascadeInteraction()
 
 	UInteractionData* NewData = nullptr;
 
-	for (FInteractionEntry& Entry : InteractionsConfig)
+	/*for (FInteractionEntry& Entry : InteractionsConfig)
 	{
 		if (Entry.ComponentName == SelectedComponentName)
 		{
@@ -341,25 +359,40 @@ void UInteractableComponent::AddCascadeInteraction()
 				}
 			}
 		}
+	}*/
+	for (UInteractionData* Data : AllInteractions)
+	{
+		if (Data->CompNames == SelectedComponentName)
+		{
+			if (Data->GetName() == SelectedInteractionName.ToString())
+				{
+					NewData = Data; 
+					goto FoundData;
+				}
+			
+		}
 	}
 	FoundData:
 	if (!NewData)
 		return;
-	
+	/*
 	USceneComponent* TargetComp = nullptr;
-	for (USceneComponent* Comp : AttachedComponents)
+	TArray<USceneComponent*> Components;
+	Owner->GetComponents<USceneComponent>(Components);
+	
+	for (USceneComponent* Comp : Components)
 	{
 		if (Comp && Comp->GetName() == SelectedComponentName.ToString())
 		{
 			TargetComp = Comp;
 			break;
 		}
-	}
+	}*/
 	
 	FInteractionCascadeSlot NewSlot;
 	NewSlot.ComponentName = SelectedComponentName;
 	NewSlot.InteractionData = NewData;
-	NewSlot.TargetComponent = TargetComp;
+	
 
 	InteractionsCascadeDatas[0].InteractionCascades.Add(NewSlot);
 }
@@ -392,17 +425,29 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 
 	FInteractionCascadeSlot& Slot = Cascade.InteractionCascades[Cascade.CurrentIndex++];
 
-	if (Slot.InteractionData.IsValid() && Slot.TargetComponent.IsValid())
+	if (Slot.InteractionData.IsValid() && Slot.ComponentName.IsValid())
 	{
 		UInteractionData* Interaction = Slot.InteractionData.Get();
-		USceneComponent* TargetComp = Slot.TargetComponent.Get();
+
+		USceneComponent* TargetComp = nullptr;
+		TArray<USceneComponent*> Components;
+		Owner->GetComponents<USceneComponent>(Components);
+		
+		for (USceneComponent* Comp : Components)
+		{
+			if (Comp && Comp->GetName() == Interaction->CompNames)
+			{
+			
+				TargetComp = Comp;
+				break;
+			}
+		}
 	
 		Interaction->OnInteractionEnded.AddLambda([this, CascadePtr = &Cascade]()
 		{
 			ExecuteNextCascadeInteraction(*CascadePtr);
 		});
-
-		
+	
 		Interaction->ExecuteInteraction(Owner, TargetComp);
 	}
 }

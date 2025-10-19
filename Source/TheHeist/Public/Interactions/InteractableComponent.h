@@ -63,9 +63,6 @@ struct FInteractionCascadeSlot
 	//Associated interaction
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSoftObjectPtr<UInteractionData> InteractionData;
-
-	UPROPERTY(VisibleAnywhere)
-	TWeakObjectPtr<USceneComponent> TargetComponent;
 	
 };
 
@@ -89,7 +86,7 @@ struct FInteractionCascadeData
 
 	//Index of the interaction triggering all the cascade.
 	//For exemple, the main interaction for hiding in a closet would be the hiding interaction as it triggers everything (Opens door -> hides -> closes door)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(GetOptions="GetAvailableSlotIndices"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite/*, meta=(GetOptions="GetAvailableSlotIndices")*/)
 	int32 MainSlotIndex = INDEX_NONE;
 
 
