@@ -17,7 +17,7 @@ void UOpenableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target)
 		-1,
 		3.f,
 		FColor::Black,
-		FString::Printf(TEXT("Oué")));
+		FString::Printf(TEXT("%s"), *Target->GetName()));
 
 	if (!bHasStoredInitialTransform)
 	{

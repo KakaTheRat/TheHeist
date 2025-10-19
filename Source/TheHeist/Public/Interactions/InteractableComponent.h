@@ -25,8 +25,26 @@ struct FInteractionEntry
 	FName ComponentName;
 
 	// Array of available interactions types for this component
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Setup")
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category="Interaction|Setup")
 	TArray<UInteractionData*> Interactions; 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Setup")
+	TArray<TSoftObjectPtr<UInteractionData>> InteractionRefs;
+	
+	void UpdateSoftReferences()
+	{
+		InteractionRefs.Empty();
+
+		for (UInteractionData* Data : Interactions)
+		{
+			if (IsValid(Data))
+			{
+				InteractionRefs.Add(Data);
+			}
+		}
+	}
+
+	
 };
 #pragma endregion 
 
@@ -106,6 +124,9 @@ public:
 	
 	
 
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category="Interaction|Setup")
+	TArray<UInteractionData*> AllInteractions; 
+
 
 protected:
 	
@@ -116,7 +137,7 @@ protected:
 	TArray<USceneComponent*>  AttachedComponents;
 
 	//Actor owning the component
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	AActor* Owner;
 
 	//Component targeted by the player
@@ -143,6 +164,9 @@ protected:
 	
 	// Called when the game starts
 	virtual void BeginPlay() override;
+
+	virtual void OnRegister() override;
+	
 	
 	//Function to execute interaction (taking as an input the interaction text, received from the widget
 	UFUNCTION(BlueprintCallable, Category="Interaction|Setup")

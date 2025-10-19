@@ -17,6 +17,76 @@ UInteractableComponent::UInteractableComponent()
 	// ...
 }
 
+// Called when the game starts
+void UInteractableComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	Owner = GetOwner();
+
+	
+	AttachedComponents.Empty();
+	TArray<USceneComponent*> Components;
+	Owner->GetComponents<USceneComponent>(Components);
+	for (USceneComponent* Comp : Components)
+	{
+		if (Comp)
+		{
+			AttachedComponents.Add(Comp);
+		}
+	}
+
+	InteractionsConfigPerceptionAI.Empty();
+	for (FInteractionEntry& Entry : InteractionsConfig)
+	{
+		FInteractionEntry AIEntry;
+		AIEntry.ComponentName = Entry.ComponentName;
+		for (UInteractionData* Data : Entry.Interactions)
+		{
+			if (Data && Data->bCanAlertGuards)
+			{
+				AIEntry.Interactions.Add(Data);
+			}
+		}
+		if (AIEntry.Interactions.Num() > 0)
+		{
+			InteractionsConfigPerceptionAI.Add(AIEntry);
+		}
+	}
+}
+
+// Called every frame
+void UInteractableComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	//Allows Interactions Datas to tick (empty function overrided, means empty by default)
+	for (UInteractionData* Data : AllInteractions)
+	{
+			if (Data)
+			{
+				Data->Tick(DeltaTime);
+			
+			}
+	}
+	/*for (const FInteractionEntry& Entry : InteractionsConfig)
+	{
+		for (UInteractionData* Data : Entry.Interactions)
+		{
+			if (Data)
+				Data->Tick(DeltaTime);
+		}
+	}
+*/
+}
+
+//Called at the registration, in editor mode (if not instancied in runtime)
+void UInteractableComponent::OnRegister()
+{
+	Super::OnRegister();
+	Owner = GetOwner();
+}
+
 //Interaction interface interact function
 void UInteractableComponent::Interact_Implementation(USceneComponent* HitComponent, AActor* InteractingActor)
 {
@@ -36,7 +106,14 @@ void UInteractableComponent::Interact_Implementation(USceneComponent* HitCompone
 		
 		WidgetActor->ClearEntries();
 
-		//Add new entries to the interaction widget
+		for (const UInteractionData* Data : AllInteractions)
+		{
+			if (Data->CompNames == CurrentlyChosenComponent->GetName())
+			{
+				WidgetActor->AddInteractionEntry(Data->InteractText);
+			}
+		}
+		/*//Add new entries to the interaction widget
 		for (FInteractionEntry& Entry : InteractionsConfig)
 		{
 			
@@ -52,7 +129,7 @@ void UInteractableComponent::Interact_Implementation(USceneComponent* HitCompone
 					}
 				}
 			}
-		}
+		}*/
 
 		WidgetActor->ShowWidget(HitComponent->GetComponentLocation()+ FVector(0, 0, 100));
 		
@@ -113,6 +190,7 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText)
 
 	if (!bFoundCascade)
 	{
+		/*
 		// Normal single interaction
 		for (UInteractionData* Data : CurrentEntry->Interactions)
 		{
@@ -121,66 +199,22 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText)
 				Data->ExecuteInteraction(Owner, CurrentlyChosenComponent);
 				break;
 			}
-		}
-	}
-	
-}
-
-// Called when the game starts
-void UInteractableComponent::BeginPlay()
-{
-	Super::BeginPlay();
-	
-	Owner = GetOwner();
-
-	
-	AttachedComponents.Empty();
-	TArray<USceneComponent*> Components;
-	Owner->GetComponents<USceneComponent>(Components);
-	for (USceneComponent* Comp : Components)
-	{
-		if (Comp)
+		}*/
+		for (UInteractionData* Data : AllInteractions)
 		{
-			AttachedComponents.Add(Comp);
-		}
-	}
-
-	InteractionsConfigPerceptionAI.Empty();
-	for (FInteractionEntry& Entry : InteractionsConfig)
-	{
-		FInteractionEntry AIEntry;
-		AIEntry.ComponentName = Entry.ComponentName;
-		for (UInteractionData* Data : Entry.Interactions)
-		{
-			if (Data && Data->bCanAlertGuards)
+			if (Data->CompNames == CurrentlyChosenComponent->GetName())
 			{
-				AIEntry.Interactions.Add(Data);
+				if (Data->InteractText == m_InteractText)
+				{
+					Data->ExecuteInteraction(Owner, CurrentlyChosenComponent);
+					break;
+				}
 			}
 		}
-		if (AIEntry.Interactions.Num() > 0)
-		{
-			InteractionsConfigPerceptionAI.Add(AIEntry);
-		}
 	}
+	
 }
 
-
-// Called every frame
-void UInteractableComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	//Allows Interactions Datas to tick (empty function overrided, means empty by default)
-	for (const FInteractionEntry& Entry : InteractionsConfig)
-	{
-		for (UInteractionData* Data : Entry.Interactions)
-		{
-			if (Data)
-				Data->Tick(DeltaTime);
-		}
-	}
-
-}
 
 TArray<FName> UInteractableComponent::GetAvailableInteractionComponents()
 {
@@ -231,7 +265,7 @@ TArray<FName> UInteractableComponent::GetAvailableInteractionsForSelectedCompone
 void UInteractableComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
     Super::PostEditChangeProperty(PropertyChangedEvent);
-
+	
     if (PropertyChangedEvent.Property)
     {
         const FName PropertyName = PropertyChangedEvent.Property->GetFName();

@@ -7,6 +7,20 @@ void UInteractionData::EndOfInteraction()
     OnInteractionEnded.Broadcast();
 }
 
+//Determines the actor owning the component instanciating this object. 
+void UInteractionData::PostInitProperties()
+{
+    Super::PostInitProperties();
+
+    if (!HasAnyFlags(RF_ClassDefaultObject))
+    {
+        if (const UActorComponent* Comp = Cast<UActorComponent>(GetOuter()))
+        {
+            OwnerActor = Comp->GetOwner();
+        }
+    }
+}
+
 inline void UInteractionData::ExecuteInteraction(AActor* Owner, USceneComponent* Target)
 {
     

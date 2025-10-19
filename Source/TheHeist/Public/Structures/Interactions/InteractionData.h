@@ -19,6 +19,15 @@
 
     public:
 
+    	UPROPERTY(VisibleAnywhere)
+    	AActor* OwnerActor;
+
+    	void SetActor(AActor* Acptr)
+    	{
+    		OwnerActor = Acptr;
+    	}
+
+    	AActor* GetActor(){return OwnerActor;};
         //--------------Functions
 
         //End of interaction event. Must be called whenever an interaction is over
@@ -39,6 +48,32 @@
         // Displayed text on the interaction widget
         UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")
         FString InteractText;
+
+    	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction", meta = (GetOptions = "f"))
+    	FName CompNames;
+
+    	UFUNCTION()
+    	TArray<FName> f() const
+    	{
+    		UE_LOG(LogTemp, Warning, TEXT("HIHIHIHIH"));
+    		TArray<FName> Result;
+
+    		if (!OwnerActor) return Result;
+
+    		TArray<USceneComponent*> Components;
+    		OwnerActor->GetComponents<USceneComponent>(Components);
+
+    		for (USceneComponent* Comp : Components)
+    		{
+    			if (Comp)
+    			{
+    				UE_LOG(LogTemp, Warning, TEXT("%s"), *Comp->GetName());
+    				Result.Add(Comp->GetFName());
+    			}
+    		}
+
+    		return Result;
+    	}
         
        
 #pragma region Alert
@@ -83,7 +118,9 @@
         //Hit Component by the user's interaction   
         UPROPERTY()
         USceneComponent* LinkedComponent = nullptr;
-        
+
+    	virtual void PostInitProperties() override;
+    	
     };
 
     
