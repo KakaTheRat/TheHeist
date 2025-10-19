@@ -26,9 +26,26 @@ void UInteractableComponent::BeginPlay()
 	Owner = GetOwner();
 
 	
+	
 	AttachedComponents.Empty();
 	TArray<USceneComponent*> Components;
 	Owner->GetComponents<USceneComponent>(Components);
+
+	for (UInteractionData* Data : AllInteractions)
+	{
+		if (!Data || Data->CompNames.IsNone())
+			continue;
+
+		for (USceneComponent* Comp : Components)
+		{
+			if (Comp && Comp->GetFName() == Data->CompNames)
+			{
+				AllComponentInteractable.AddUnique(Comp);
+				break;
+			}
+		}
+	}
+	
 	for (USceneComponent* Comp : Components)
 	{
 		if (Comp)

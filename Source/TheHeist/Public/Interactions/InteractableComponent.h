@@ -119,7 +119,8 @@ public:
     	
 #endif
 	
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<USceneComponent*> AllComponentInteractable;
 
 	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category="Interaction|Setup")
 	TArray<UInteractionData*> AllInteractions; 
