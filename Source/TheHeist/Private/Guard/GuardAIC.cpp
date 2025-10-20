@@ -2,7 +2,6 @@
 
 
 #include "Guard/GuardAIC.h"
-#include "Player/PlayerInteractionComponent.h"
 
 
 void AGuardAIC::BeginPlay()

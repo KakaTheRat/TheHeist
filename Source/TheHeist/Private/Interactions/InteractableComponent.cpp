@@ -3,10 +3,6 @@
 
 #include "Interactions/InteractableComponent.h"
 
-#include "LandscapeGizmoActiveActor.h"
-#include "ToolMenusEditor.h"
-#include "Tests/ToolMenusTestUtilities.h"
-
 
 // Sets default values for this component's properties
 UInteractableComponent::UInteractableComponent()
