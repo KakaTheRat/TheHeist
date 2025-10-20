@@ -15,7 +15,6 @@ struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
-DECLARE_DYNAMIC_DELEGATE(FOnJump);
 
 /**
  *  A basic first person character
@@ -53,9 +52,6 @@ protected:
 	
 public:
 	ATheHeistCharacter();
-
-	UPROPERTY(BlueprintReadWrite)
-	FOnJump OnJump;
 
 protected:
 

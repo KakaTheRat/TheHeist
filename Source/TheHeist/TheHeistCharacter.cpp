@@ -110,8 +110,6 @@ void ATheHeistCharacter::DoMove(float Right, float Forward)
 void ATheHeistCharacter::DoJumpStart()
 {
 	// pass Jump to the character
-	OnJump.ExecuteIfBound();
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, "Jump Start");
 	Jump();
 }
 
