@@ -11,7 +11,7 @@ enum class EActivableType : uint8
 };
 
 UENUM(BlueprintType)
-enum class EOpenableType : uint8
+enum class EOpeningType : uint8
 {
 	Door       UMETA(DisplayName = "Rotate (door)"),
 	Drawer  UMETA(DisplayName = "Translate (drawer)"),

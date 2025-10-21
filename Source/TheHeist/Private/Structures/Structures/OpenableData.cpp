@@ -51,7 +51,7 @@ void UOpenableData::InitTimeline(AActor* Owner)
 	ProgressFunction.BindUFunction(this, FName("HandleProgress"));
 	Timeline.AddInterpFloat(Curve, ProgressFunction);
 
-	// CORRECTION: Use FOnTimelineEventStatic instead of FOnTimelineEvent
+	
 	FOnTimelineEventStatic FinishedCallback;
 	FinishedCallback.BindUFunction(this, FName("HandleFinished"));
 	Timeline.SetTimelineFinishedFunc(FinishedCallback);
@@ -59,7 +59,7 @@ void UOpenableData::InitTimeline(AActor* Owner)
 	Timeline.SetTimelineLength(Duration);
 	Timeline.SetLooping(false);
 
-	// Assure-toi que le tick de l'acteur est actif
+	
 	Owner->PrimaryActorTick.bCanEverTick = true;
 }
 void UOpenableData::HandleProgress(float Value)
@@ -68,7 +68,7 @@ void UOpenableData::HandleProgress(float Value)
 
 	switch (OpenableType)
 	{
-	case EOpenableType::Door:
+	case EOpeningType::Door:
 		{
 			float RotationAngle = (OpeningSide == EOpeningSide::Left || OpeningSide == EOpeningSide::Down) ? -Angle*Value : Angle*Value;
 			if (OpeningSide == EOpeningSide::Up || OpeningSide == EOpeningSide::Down)
@@ -77,19 +77,32 @@ void UOpenableData::HandleProgress(float Value)
 				LinkedComponent->SetRelativeRotation(FRotator(0, RotationAngle, 0));
 			break;
 		}
-	case EOpenableType::Drawer:
+	case EOpeningType::Drawer:
+		FVector Direction = FVector::ZeroVector;
+
+		if (b_ShouldUseOpeningSide)
 		{
-			FVector Direction = FVector::ZeroVector;
+			
 			switch (OpeningSide)
 			{
-			case EOpeningSide::Right: Direction = FVector::RightVector; break;
-			case EOpeningSide::Left: Direction = FVector::LeftVector; break;
-			case EOpeningSide::Up: Direction = FVector::UpVector; break;
-			case EOpeningSide::Down: Direction = FVector::DownVector; break;
+			case EOpeningSide::Right: Direction = LinkedComponent->GetRightVector(); break;
+			case EOpeningSide::Left:  Direction = -LinkedComponent->GetRightVector(); break;
+			case EOpeningSide::Up:    Direction = LinkedComponent->GetUpVector(); break;
+			case EOpeningSide::Down:  Direction = -LinkedComponent->GetUpVector(); break;
+			default: break;
 			}
-			LinkedComponent->SetRelativeLocation(InitialLocation + Direction * Distance * Value);
-			break;
 		}
+		else
+		{
+			
+			Direction = LinkedComponent->GetForwardVector();
+		}
+
+		
+		float DirectionSign = (OpeningDirection == EOpeningDirection::Push) ? -1.f : 1.f;
+
+		LinkedComponent->SetRelativeLocation(InitialLocation + Direction * Distance * Value * DirectionSign);
+		break;
 	}
 }
 

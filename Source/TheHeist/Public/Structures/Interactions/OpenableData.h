@@ -47,33 +47,39 @@ protected:
 	
 	//Allow to choose the type of opening wanted
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Opening")
-	EOpenableType OpenableType = EOpenableType::Door;
-	
-	
-	//Opening side for the object. Defines the direction of the whole movement
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Opening")
-	EOpeningSide OpeningSide= EOpeningSide::Right;
+	EOpeningType OpenableType = EOpeningType::Door;
 
-	/*/ 
+
+	//Actives or deactivates the opening side choice (for a simple pulled drawer, for exemple, won't need)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Openable")
-	EOpeningDirection OpeningDirection = EOpeningDirection::Push;/*/
+	bool b_ShouldUseOpeningSide = false;
+	
+	//Opening side for the object. Defines the direction side of the whole movement
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Opening",meta=(EditCondition="b_ShouldUseOpeningSide", EditConditionHides))
+	EOpeningSide OpeningSide= EOpeningSide::Right;
+	
+	//Opening Direction for the object. Defines the direction of the whole movement (will define if must be pushed or pulled when interacted with)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Openable")
+	EOpeningDirection OpeningDirection = EOpeningDirection::Push;
 
+	
+	
 	//Opening progression (based of the timeline)
 	UPROPERTY(BlueprintReadWrite)
 	float OpenProgress = 0.f;
 
 	//Chosen angle for the door opening
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Opening", meta=(EditCondition="OpeningSide==EOpeningSide::Door", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Opening", meta=(EditCondition="OpeningSide==EOpeningType::Door", EditConditionHides))
 	float Angle = 90;
 
 	//Opening distance for the drawer
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Opening", meta=(EditCondition="OpeningSide==EOpeningSide::Drawer", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Opening", meta=(EditCondition="OpeningSide==EOpeningType::Drawer", EditConditionHides))
 	float Distance = 10;
 	
 	// Curve to control the animation
 	UPROPERTY(EditAnywhere, Category="Opening")
 	UCurveFloat* Curve;
-        
+	
 	// Optional length of animation (curve can have its own length)
 	UPROPERTY(EditAnywhere, Category="Opening")
 	float Duration = 1.0f;
