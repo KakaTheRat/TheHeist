@@ -52,7 +52,7 @@ protected:
 	//----------------Properties--------------//
 	
 	// Widget Component
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	UWidgetComponent* WidgetComp;
 
 	//Reference to the attached widget

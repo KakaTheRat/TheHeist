@@ -10,39 +10,36 @@ void UOpenableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target)
 	Super::ExecuteInteraction(Owner, Target);
 
 	if (!Owner || !Target || !Curve) return;
-	
 	LinkedComponent = Target;
-	
-	GEngine->AddOnScreenDebugMessage(
-		-1,
-		3.f,
-		FColor::Black,
-		FString::Printf(TEXT("%s"), *Target->GetName()));
 
+	if (!bTimelineInitialized)
+	{
+		InitTimeline(Owner);
+		bTimelineInitialized = true;
+	}
 	if (!bHasStoredInitialTransform)
 	{
 		InitialLocation = LinkedComponent->GetRelativeLocation();
 		InitialRotation = LinkedComponent->GetRelativeRotation();
 		bHasStoredInitialTransform = true;
 	}
-	if (!bTimelineInitialized)
-	{
-		InitTimeline(Owner);
-		bTimelineInitialized = true;
-	}
-	// Si timeline déjà en cours, inverser
+	
+
+	
 	if (Timeline.IsPlaying())
+	{
 		Timeline.Reverse();
+	}
 	else
 	{
 		if (bIsOpened)
-			Timeline.ReverseFromEnd();
+			Timeline.Reverse();
 		else
 			Timeline.PlayFromStart();
 	}
+
 	bIsOpened = !bIsOpened;
 	InteractText = bIsOpened ? "Close" : "Open";
-	// Find Timeline component on the actor
 	
 }
 void UOpenableData::InitTimeline(AActor* Owner)
@@ -109,7 +106,6 @@ void UOpenableData::HandleProgress(float Value)
 void UOpenableData::HandleFinished()
 {
 	EndOfInteraction();
-	bHasStoredInitialTransform = false;
 }
 
 void UOpenableData::OnTimelineProgress(float Value)

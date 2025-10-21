@@ -51,7 +51,7 @@ protected:
 
 
 	//Actives or deactivates the opening side choice (for a simple pulled drawer, for exemple, won't need)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Openable")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Opening")
 	bool b_ShouldUseOpeningSide = false;
 	
 	//Opening side for the object. Defines the direction side of the whole movement
@@ -59,7 +59,7 @@ protected:
 	EOpeningSide OpeningSide= EOpeningSide::Right;
 	
 	//Opening Direction for the object. Defines the direction of the whole movement (will define if must be pushed or pulled when interacted with)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Openable")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Opening")
 	EOpeningDirection OpeningDirection = EOpeningDirection::Push;
 
 	
@@ -69,11 +69,11 @@ protected:
 	float OpenProgress = 0.f;
 
 	//Chosen angle for the door opening
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Opening", meta=(EditCondition="OpeningSide==EOpeningType::Door", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Opening", meta=(EditCondition="OpenableType==EOpeningType::Door", EditConditionHides))
 	float Angle = 90;
 
 	//Opening distance for the drawer
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Opening", meta=(EditCondition="OpeningSide==EOpeningType::Drawer", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Opening", meta=(EditCondition="OpenableType==EOpeningType::Drawer", EditConditionHides))
 	float Distance = 10;
 	
 	// Curve to control the animation
@@ -89,8 +89,9 @@ protected:
 
 	FTimeline Timeline;
 	
-	bool bHasStoredInitialTransform;
+	bool bHasStoredInitialTransform = false;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Opening")
 	FVector InitialLocation;
 	FRotator InitialRotation;
 	

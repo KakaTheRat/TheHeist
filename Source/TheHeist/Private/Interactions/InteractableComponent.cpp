@@ -145,7 +145,7 @@ void UInteractableComponent::Interact_Implementation(USceneComponent* HitCompone
 			}
 		}*/
 
-		WidgetActor->ShowWidget(HitComponent->GetComponentLocation()+ FVector(0, 0, 100));
+		WidgetActor->ShowWidget(HitComponent->GetComponentLocation()+ FVector(0, 0, 20));
 		
 		//Subscribe to the onclick event of the widget
 		WidgetActor->GetWidget()->OnInteractionClicked.BindDynamic(this, &UInteractableComponent::InteractWithObject);
@@ -195,7 +195,6 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText)
 		
 		if (MainSlot.InteractionData && MainSlot.InteractionData->InteractText == m_InteractText)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, m_InteractText);
 			bFoundCascade = true;
 			ExecuteNextCascadeInteraction(Cascade); // Launch cascade
 			break;
@@ -432,7 +431,7 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 	if (!Cascade.InteractionCascades.IsValidIndex(Cascade.CurrentIndex))
 	{
 	
-		Cascade.CurrentIndex = 0;
+		
 		return;
 	}
 

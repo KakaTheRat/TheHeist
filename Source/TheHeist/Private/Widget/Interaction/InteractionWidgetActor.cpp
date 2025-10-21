@@ -13,6 +13,7 @@ AInteractionWidgetActor::AInteractionWidgetActor()
 
 	WidgetComp->SetWidgetSpace(EWidgetSpace::World);
 	WidgetComp->SetDrawSize(FVector2D(300, 100)); // Size
+	WidgetComp->SetPivot(FVector2D(0.5f, 0.5f));
 
 }
 
