@@ -49,7 +49,7 @@ struct FInteractionEntry
 #pragma endregion 
 
 #pragma region CascadeSlotStruct
-
+/*
 //Structure used to match a scene component's name to a single interaction. Used for the interaction cascade  
 USTRUCT(BlueprintType)
 struct FInteractionCascadeSlot
@@ -64,6 +64,49 @@ struct FInteractionCascadeSlot
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSoftObjectPtr<UInteractionData> InteractionData;
 	
+	// Expected state before executing this interaction
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(GetOptions="GetAvailableStates"))
+	FName ExpectedState;
+
+	// Array of available states, feeding the exepected state dropdown
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<FName> AvailableStates;
+
+	TArray<FName> GetAvailableStates() const { return AvailableStates; }
+};*/
+UCLASS(BlueprintType, EditInlineNew, DefaultToInstanced)
+class UInteractionCascadeSlot : public UObject
+{
+	GENERATED_BODY()
+
+public:
+
+	// Display in the editor the component linked with data
+	UPROPERTY(EditAnywhere,  meta=(GetOptions="GetAvailableInteractionComponents"))
+	FName SelectedComponentName;
+	
+	// Functions called by the inspector dynamic selection
+	UFUNCTION()
+	TArray<FName> GetAvailableInteractionComponents();
+
+	// Functions called by the inspector dynamic selection. Gets an array of interactions names
+	UFUNCTION()
+	TArray<FName> GetAvailableInteractionsForSelectedComponent();
+
+	// Display in the editor the datas linked to the chosen component
+	UPROPERTY(EditAnywhere, meta=(GetOptions="GetAvailableInteractionsForSelectedComponent"))
+	FName SelectedInteractionName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSoftObjectPtr<UInteractionData> InteractionData;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(GetOptions="GetAvailableStates"))
+	FName ExpectedState;
+
+	UFUNCTION()
+	TArray<FName> GetAvailableStates() const;
+
+	void RefreshData();
 };
 
 #pragma endregion
@@ -81,8 +124,8 @@ struct FInteractionCascadeData
 	FName CascadeName;
 
 	//Array of single interactions matched with a component name
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FInteractionCascadeSlot> InteractionCascades;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced)
+	TArray<UInteractionCascadeSlot*> InteractionCascades;
 
 	//Index of the interaction triggering all the cascade.
 	//For exemple, the main interaction for hiding in a closet would be the hiding interaction as it triggers everything (Opens door -> hides -> closes door)
@@ -91,7 +134,7 @@ struct FInteractionCascadeData
 
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Interaction|InteractionCascade")
-	FInteractionCascadeSlot MainSlot;
+	UInteractionCascadeSlot* MainSlot;
 
 	UPROPERTY()
 	int32 CurrentIndex = 0;
@@ -112,6 +155,7 @@ class THEHEIST_API UInteractableComponent : public UActorComponent, public IInte
 
 public:
 
+	
 #if WITH_EDITOR
     
 	//Triggered whenever a variable change is detected ONLY IN EDITOR MODE
@@ -223,7 +267,7 @@ private:
 	TArray<FInteractionCascadeData> InteractionsCascadeDatas;
 	
 	// Display in the editor the component linked with data
-	UPROPERTY(EditAnywhere, Category="Interaction|InteractionCascade", meta=(GetOptions="GetAvailableInteractionComponents",EditCondition="bShouldActivateCascade"))
+/*	UPROPERTY(EditAnywhere, Category="Interaction|InteractionCascade", meta=(GetOptions="GetAvailableInteractionComponents",EditCondition="bShouldActivateCascade"))
 	FName SelectedComponentName;
 
 	// Display in the editor the datas linked to the chosen component
@@ -231,7 +275,7 @@ private:
 	FName SelectedInteractionName;
 
 	UPROPERTY(EditAnywhere, Category="Interaction|InteractionCascade", meta=(GetOptions="GetAvailableCascadeNames", EditCondition="bShouldActivateCascade"))
-	FName SelectedCascadeName;
+	FName SelectedCascadeName;*/
 	
 	UPROPERTY(EditAnywhere, Category="Interaction|InteractionCascade", meta=(EditCondition="bShouldActivateCascade"))
 	FName NewCascadeName;

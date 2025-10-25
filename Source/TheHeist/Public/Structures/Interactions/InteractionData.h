@@ -19,6 +19,16 @@
 
     public:
 
+    	virtual TArray<FName> GetAvailableStates() ;
+
+
+
+    	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+    	FName GetCurrentState() const;
+    	virtual FName GetCurrentState_Implementation() const { return "None"; }
+
+    	
+    	
     	UPROPERTY(VisibleAnywhere)
     	AActor* OwnerActor;
 
@@ -53,6 +63,7 @@
     	FName CompNames;
 
     	UFUNCTION()
+    	
     	TArray<FName> f() const
     	{
     		UE_LOG(LogTemp, Warning, TEXT("HIHIHIHIH"));

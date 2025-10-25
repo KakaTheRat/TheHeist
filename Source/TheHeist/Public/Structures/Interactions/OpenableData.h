@@ -7,6 +7,14 @@
 #include "Enumerators/Interactions/InteractionsEnum.h"
 #include "OpenableData.generated.h"
 
+
+UENUM(BlueprintType)
+enum class EOpeningStates : uint8
+{
+	Open     UMETA(DisplayName="Open"),
+	Close    UMETA(DisplayName="Closed"),
+};
+
 UCLASS(Blueprintable, EditInlineNew, DisplayName="Opening Interaction")
 class THEHEIST_API UOpenableData : public UInteractionData
 {
@@ -14,7 +22,16 @@ class THEHEIST_API UOpenableData : public UInteractionData
 
 public:
 
+
+virtual FName GetCurrentState_Implementation() const override;
+	
+	
 	virtual void Tick(float DeltaTime);
+
+	virtual TArray<FName> GetAvailableStates() override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	EOpeningStates CurrentState;
 	
 protected:
 

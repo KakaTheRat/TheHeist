@@ -65,3 +65,14 @@ void UActivableData::ActivateSound(AActor* Owner)
 		
 	}
 }
+
+TArray<FName> UActivableData::GetAvailableStates()
+{
+	TArray<FName> AvailableStates;
+
+	UE_LOG(LogTemp, Display, TEXT("Wtf") );
+	AvailableStates.AddUnique(FName("O"));
+	AvailableStates.AddUnique(FName("F"));
+	
+	return AvailableStates;
+}

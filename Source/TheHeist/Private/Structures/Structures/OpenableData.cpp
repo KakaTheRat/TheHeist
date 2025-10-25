@@ -1,8 +1,11 @@
 #include "Structures/Interactions/OpenableData.h"
 
+#include "NetworkMessage.h"
+
 UOpenableData::UOpenableData()
 {
 	InteractText = "Open";
+	CurrentState = EOpeningStates::Close;
 }
 
 void UOpenableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target)
@@ -105,6 +108,7 @@ void UOpenableData::HandleProgress(float Value)
 
 void UOpenableData::HandleFinished()
 {
+	CurrentState = bIsOpened ? EOpeningStates::Open : EOpeningStates::Close;
 	EndOfInteraction();
 }
 
@@ -117,5 +121,41 @@ void UOpenableData::Tick(float DeltaTime)
 	if (Timeline.IsPlaying())
 	{
 		Timeline.TickTimeline(DeltaTime);
+	}
+}
+
+TArray<FName> UOpenableData::GetAvailableStates()
+{
+	TArray<FName> States;
+
+	// Récupère le type enum de EOpeningStates
+	UEnum* EnumPtr = StaticEnum<EOpeningStates>();
+	if (!EnumPtr)
+		return States;
+
+	// Parcourt toutes les valeurs de l’enum
+	for (int32 i = 0; i < EnumPtr->NumEnums(); ++i)
+	{
+		// Ignore l’élément "_MAX" si tu en as un
+		FString Name = EnumPtr->GetNameStringByIndex(i);
+		if (!Name.Contains(TEXT("MAX")))
+		{
+			States.Add(FName(*Name));
+		}
+	}
+
+	return States;
+}
+
+
+
+
+FName UOpenableData::GetCurrentState_Implementation() const
+{
+	switch (CurrentState)
+	{
+	case EOpeningStates::Open: return "Open";
+	case EOpeningStates::Close: return "Close";
+	default: return "Unknown";
 	}
 }

@@ -2,6 +2,12 @@
 
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 
+TArray<FName> UInteractionData::GetAvailableStates()
+{
+    TArray<FName> AvailableStates;
+    return AvailableStates;
+}
+
 void UInteractionData::EndOfInteraction()
 {
     OnInteractionEnded.Broadcast();

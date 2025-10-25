@@ -22,6 +22,8 @@ public:
 
 	virtual void ExecuteInteraction(AActor* Owner, USceneComponent* Target) override;
 
+	virtual TArray<FName> GetAvailableStates() override;
+
 
 	//----------Properties--------------//
 

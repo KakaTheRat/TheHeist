@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Interactions/InteractableComponent.h"
+#include "Interactions/InteractableComponent.h"	
 
 
 // Sets default values for this component's properties
@@ -94,6 +94,18 @@ void UInteractableComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 */
 }
 
+TArray<FName> UInteractableComponent::GetAvailableInteractionComponents()
+{
+	TArray<FName> Components;
+	return Components;
+}
+
+TArray<FName> UInteractableComponent::GetAvailableInteractionsForSelectedComponent()
+{
+	TArray<FName> Components;
+	return Components;
+}
+
 //Called at the registration, in editor mode (if not instancied in runtime)
 void UInteractableComponent::OnRegister()
 {
@@ -181,25 +193,27 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText)
 {
 	bool bFoundCascade = false;
 
-	// Go through each cascade
 	for (FInteractionCascadeData& Cascade : InteractionsCascadeDatas)
 	{
 		if (Cascade.InteractionCascades.Num() == 0)
 			continue;
 
-		// Checks if main slot index is valid
 		if (!Cascade.InteractionCascades.IsValidIndex(Cascade.MainSlotIndex))
 			continue;
 
-		FInteractionCascadeSlot& MainSlot = Cascade.InteractionCascades[Cascade.MainSlotIndex];
-		
-		if (MainSlot.InteractionData && MainSlot.InteractionData->InteractText == m_InteractText)
+		UInteractionCascadeSlot* MainSlot = Cascade.InteractionCascades[Cascade.MainSlotIndex];
+		if (!MainSlot || !MainSlot->InteractionData.IsValid())
+			continue;
+
+		UInteractionData* Data = MainSlot->InteractionData.Get();
+		if (Data->InteractText == m_InteractText)
 		{
 			bFoundCascade = true;
-			ExecuteNextCascadeInteraction(Cascade); // Launch cascade
+			ExecuteNextCascadeInteraction(Cascade);
 			break;
 		}
 	}
+
 
 	if (!bFoundCascade)
 	{
@@ -229,60 +243,43 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText)
 }
 
 
-TArray<FName> UInteractableComponent::GetAvailableInteractionComponents()
+TArray<FName> UInteractionCascadeSlot::GetAvailableInteractionComponents()
 {
-	TArray<FName> ComponentNames;
+	TArray<FName> Names;
+	UE_LOG(LogTemp, Display, TEXT("GetAvailableIn"));
+	if (!GetOuter()) return Names;
 
-	/*for (const FInteractionEntry& Entry : InteractionsConfig)
+	if (UInteractableComponent* CompOwner = Cast<UInteractableComponent>(GetOuter()))
 	{
-		if (Entry.Interactions.Num() > 0 && !ComponentNames.Contains(Entry.ComponentName))
+		for (UInteractionData* Data : CompOwner->AllInteractions)
 		{
-			ComponentNames.Add(Entry.ComponentName);
-		}
-	}*/
-	for (const UInteractionData* Data : AllInteractions)
-	{
-		if (Data && !ComponentNames.Contains(Data->CompNames))
-		{
-			ComponentNames.Add(Data->CompNames);
-		}
-	}
-
-	return ComponentNames;
-}
-
-TArray<FName> UInteractableComponent::GetAvailableInteractionsForSelectedComponent()
-{
-	TArray<FName> InteractionNames;
-
-	if (SelectedComponentName.IsNone())
-		return InteractionNames;
-
-	/*for (const FInteractionEntry& Entry : InteractionsConfig)
-	{
-		if (Entry.ComponentName == SelectedComponentName)
-		{
-			for (UInteractionData* Interaction : Entry.Interactions)
+			if (Data)
 			{
-				if (Interaction)
-				{
-					InteractionNames.Add(FName(*Interaction->GetName()));
-				}
+				Names.AddUnique(Data->CompNames);
+				
 			}
 		}
-	}*/
+	}
+	RefreshData();
+	return Names;
+}
 
-	for (const UInteractionData* Data : AllInteractions)
+TArray<FName> UInteractionCascadeSlot::GetAvailableInteractionsForSelectedComponent()
+{
+	TArray<FName> Names;
+	UE_LOG(LogTemp, Display, TEXT("GetAvailableInteractionsForSelectedComponent"));
+	if (!GetOuter()) return Names;
+	if (UInteractableComponent* CompOwner = Cast<UInteractableComponent>(GetOuter()))
 	{
-		if (Data && Data->CompNames == SelectedComponentName)
+		for (UInteractionData* Data : CompOwner->AllInteractions)
 		{
-			InteractionNames.Add(FName(*Data->GetName()));
+			if (!Data) continue;
+			if (Data->CompNames == SelectedComponentName)
+				Names.Add(FName(*Data->GetName()));
 		}
 	}
-	
-	
-
-	return InteractionNames;
+	RefreshData();
+	return Names;
 }
 
 
@@ -326,13 +323,14 @@ void UInteractableComponent::PostEditChangeProperty(FPropertyChangedEvent& Prope
     }
 }
 #endif
+
 #pragma endregion
 
 #pragma region CascadeInteraction
 
 void UInteractableComponent::AddCascadeInteraction()
 {
-	if (SelectedComponentName.IsNone() || SelectedInteractionName.IsNone())
+	/*if (SelectedComponentName.IsNone() || SelectedInteractionName.IsNone())
 		return;
 
 	FName TargetCascadeName = SelectedCascadeName;
@@ -354,7 +352,7 @@ void UInteractableComponent::AddCascadeInteraction()
 		NewCascade.CascadeName = TargetCascadeName;
 		InteractionsCascadeDatas.Add(NewCascade);
 		ExistingCascade = &InteractionsCascadeDatas.Last();
-	}*/
+	}
 
 	UInteractionData* NewData = nullptr;
 
@@ -371,7 +369,7 @@ void UInteractableComponent::AddCascadeInteraction()
 				}
 			}
 		}
-	}*/
+	}
 	for (UInteractionData* Data : AllInteractions)
 	{
 		if (Data->CompNames == SelectedComponentName)
@@ -399,14 +397,12 @@ void UInteractableComponent::AddCascadeInteraction()
 			TargetComp = Comp;
 			break;
 		}
-	}*/
+	}
 	
-	FInteractionCascadeSlot NewSlot;
-	NewSlot.ComponentName = SelectedComponentName;
-	NewSlot.InteractionData = NewData;
-	
-
-	InteractionsCascadeDatas[0].InteractionCascades.Add(NewSlot);
+	UInteractionCascadeSlot* NewSlot = NewObject<UInteractionCascadeSlot>(this);
+	NewSlot->ComponentName = SelectedComponentName;
+	NewSlot->InteractionData = NewData;
+	InteractionsCascadeDatas[0].InteractionCascades.Add(NewSlot);*/
 }
 
 TArray<FName> UInteractableComponent::GetAvailableCascadeNames()
@@ -429,39 +425,58 @@ TArray<FName> UInteractableComponent::GetAvailableCascadeNames()
 void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeData& Cascade)
 {
 	if (!Cascade.InteractionCascades.IsValidIndex(Cascade.CurrentIndex))
-	{
-	
-		
 		return;
-	}
 
-	FInteractionCascadeSlot& Slot = Cascade.InteractionCascades[Cascade.CurrentIndex++];
+	UInteractionCascadeSlot* Slot = Cascade.InteractionCascades[Cascade.CurrentIndex];
+	Cascade.CurrentIndex++;
 
-	if (Slot.InteractionData.IsValid() && Slot.ComponentName.IsValid())
+	if (!Slot || !Slot->InteractionData.IsValid())
+		return;
+
+	UInteractionData* Interaction = Slot->InteractionData.Get();
+	if (!Interaction)
+		return;
+
+
+	
+
+	if (!Slot->ExpectedState.IsNone())
 	{
-		UInteractionData* Interaction = Slot.InteractionData.Get();
+		const FName CurrentState = Interaction->GetCurrentState();
+		if (CurrentState == Slot->ExpectedState)
+		{
+			UE_LOG(LogTemp, Display, TEXT("Skipping interaction %s (already in state %s)"),
+				*Interaction->GetName(), *Slot->ExpectedState.ToString());
 
-		USceneComponent* TargetComp = nullptr;
-		TArray<USceneComponent*> Components;
-		Owner->GetComponents<USceneComponent>(Components);
-		
-		for (USceneComponent* Comp : Components)
-		{
-			if (Comp && Comp->GetName() == Interaction->CompNames)
-			{
-			
-				TargetComp = Comp;
-				break;
-			}
+			ExecuteNextCascadeInteraction(Cascade); 
+			return;
 		}
-	
-		Interaction->OnInteractionEnded.AddLambda([this, CascadePtr = &Cascade]()
-		{
-			ExecuteNextCascadeInteraction(*CascadePtr);
-		});
-	
-		Interaction->ExecuteInteraction(Owner, TargetComp);
 	}
+
+	
+	
+	USceneComponent* TargetComp = nullptr;
+	TArray<USceneComponent*> Components;
+	Owner->GetComponents<USceneComponent>(Components);
+	
+	for (USceneComponent* Comp : Components)
+	{
+		if (Comp && Comp->GetName() == Interaction->CompNames)
+		{
+			TargetComp = Comp;
+			break;
+		}
+	}
+
+	if (!TargetComp)
+		return;
+
+	Interaction->OnInteractionEnded.AddLambda([this, CascadePtr = &Cascade]()
+	{
+		ExecuteNextCascadeInteraction(*CascadePtr);
+	});
+
+	Interaction->ExecuteInteraction(Owner, TargetComp);
 }
 
 
@@ -470,7 +485,54 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 
 #pragma region CascadeStruct
 
-TArray<FString> FInteractionCascadeData::GetAvailableSlotIndices() const
+TArray<FName> UInteractionCascadeSlot::GetAvailableStates() const
+{
+	TArray<FName> States;
+
+	if (InteractionData.IsValid())
+	{
+		States = InteractionData->GetAvailableStates();
+		UE_LOG(LogTemp, Display, TEXT("%s"), *InteractionData.Get()->GetName());
+	}
+	else
+	{
+		States.Add("None");
+	}
+
+	return States;
+}
+
+void UInteractionCascadeSlot::RefreshData()
+{
+	#if WITH_EDITOR
+	if (!GetOuter())
+		return;
+
+	
+	UInteractableComponent* CompOwner = Cast<UInteractableComponent>(GetOuter());
+	if (!CompOwner)
+		return;
+	
+	if (!SelectedInteractionName.IsNone())
+	{
+		for (UInteractionData* Data : CompOwner->AllInteractions)
+		{
+			if (!Data)
+				continue;
+			
+			if (Data->CompNames == SelectedComponentName && Data->GetName() == SelectedInteractionName.ToString())
+			{
+				InteractionData = Data;
+				break;
+			}
+		}
+	}
+
+#endif
+	
+}
+
+/*TArray<FString> FInteractionCascadeData::GetAvailableSlotIndices() const
 {
 	TArray<FString> Options;
 	/*for (int32 i = 0; i < InteractionCascades.Num(); ++i)
@@ -484,7 +546,7 @@ TArray<FString> FInteractionCascadeData::GetAvailableSlotIndices() const
 		);
 
 		Options.Add(Label);
-	}*/
+	}
 	return Options;
 }
 
@@ -499,4 +561,4 @@ void FInteractionCascadeData::RefreshMainSlot()
 		MainSlot = FInteractionCascadeSlot();
 	}
 }
-#pragma endregion
+#pragma endregion*/
