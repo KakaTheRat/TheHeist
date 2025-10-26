@@ -18,7 +18,7 @@ public:
     
     UHideableData();
 
-    virtual void ExecuteInteraction(AActor* Owner, USceneComponent* Target) override;
+    virtual void ExecuteInteraction(AActor* Owner, USceneComponent* , EInteractionContext Context, AActor* InteractingActor) override;
 
 
     //--------------Properties
@@ -62,5 +62,8 @@ private:
     
     //Interpolates the player's position over time
     void HideStep(AActor* Owner);
-        
+
+    UPROPERTY(VisibleAnywhere)
+    AActor* HiddenActor = nullptr;
+    
 };

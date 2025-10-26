@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Enumerators/Interactions/InteractionContextEnum.h"
 #include "UObject/Interface.h"
 #include "InteractionInterface.generated.h"
 
@@ -28,7 +29,7 @@ public:
 	//Interact Function, called whenever an object is being interacted with.
 	//Takes the hit component as an input
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Interaction")
-	void Interact(USceneComponent* HitComponent, AActor* InteractingActor);
+	void Interact(USceneComponent* HitComponent, AActor* InteractingActor, EInteractionContext Context= EInteractionContext::Default);
 
 	//Interact Function, called whenever an AI interact with an object.
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Interaction")
@@ -41,8 +42,4 @@ public:
 
 	//-----------Properties
 	
-	
-	
-	
-
 };

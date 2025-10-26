@@ -114,12 +114,20 @@ void UInteractableComponent::OnRegister()
 }
 
 //Interaction interface interact function
-void UInteractableComponent::Interact_Implementation(USceneComponent* HitComponent, AActor* InteractingActor)
+void UInteractableComponent::Interact_Implementation(USceneComponent* HitComponent, AActor* InteractingActor, EInteractionContext Context)
 {
-	IInteractionInterface::Interact_Implementation(HitComponent, InteractingActor);
+	IInteractionInterface::Interact_Implementation(HitComponent, InteractingActor, Context);
 
 	if (!InteractingActor)return;
 
+
+
+
+	InteractingActorr = InteractingActor;
+	CurrentInteractionContext = Context;
+
+
+	
 	CurrentlyChosenComponent = HitComponent;
 
 	//Checks if actor has the player's interaction component
@@ -156,11 +164,15 @@ void UInteractableComponent::Interact_Implementation(USceneComponent* HitCompone
 				}
 			}
 		}*/
-
+		
 		WidgetActor->ShowWidget(HitComponent->GetComponentLocation()+ FVector(0, 0, 20));
 		
 		//Subscribe to the onclick event of the widget
 		WidgetActor->GetWidget()->OnInteractionClicked.BindDynamic(this, &UInteractableComponent::InteractWithObject);
+	}
+	else
+	{
+		InteractWithObject("Hide");
 	}
 }
 
@@ -183,7 +195,7 @@ void UInteractableComponent::InteractAI_Implementation()
 
 		for (UInteractionData* Data : Entry.Interactions)
 		{
-			if (Data) Data->ExecuteInteraction(Owner, TargetComponent);
+			//if (Data) Data->ExecuteInteraction(Owner, TargetComponent);
 		}
 	}
 }
@@ -191,6 +203,8 @@ void UInteractableComponent::InteractAI_Implementation()
 //Execute interaction based on the type
 void UInteractableComponent::InteractWithObject(const FString m_InteractText)
 {
+	EInteractionContext Context = CurrentInteractionContext;
+	
 	bool bFoundCascade = false;
 
 	for (FInteractionCascadeData& Cascade : InteractionsCascadeDatas)
@@ -233,7 +247,7 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText)
 			{
 				if (Data->InteractText == m_InteractText)
 				{
-					Data->ExecuteInteraction(Owner, CurrentlyChosenComponent);
+					Data->ExecuteInteraction(Owner, CurrentlyChosenComponent, Context, InteractingActorr);
 					break;
 				}
 			}
@@ -476,7 +490,7 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 		ExecuteNextCascadeInteraction(*CascadePtr);
 	});
 
-	Interaction->ExecuteInteraction(Owner, TargetComp);
+	//Interaction->ExecuteInteraction(Owner, TargetComp);
 }
 
 

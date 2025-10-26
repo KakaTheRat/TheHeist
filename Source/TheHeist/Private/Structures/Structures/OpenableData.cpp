@@ -8,9 +8,9 @@ UOpenableData::UOpenableData()
 	CurrentState = EOpeningStates::Close;
 }
 
-void UOpenableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target)
+void UOpenableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor)
 {
-	Super::ExecuteInteraction(Owner, Target);
+	Super::ExecuteInteraction(Owner, Target, Context, nullptr);
 
 	if (!Owner || !Target || !Curve) return;
 	LinkedComponent = Target;

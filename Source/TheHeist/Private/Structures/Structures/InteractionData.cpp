@@ -27,7 +27,7 @@ void UInteractionData::PostInitProperties()
     }
 }
 
-inline void UInteractionData::ExecuteInteraction(AActor* Owner, USceneComponent* Target)
+inline void UInteractionData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor)
 {
     
 }

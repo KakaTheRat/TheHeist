@@ -6,9 +6,27 @@ UHideableData::UHideableData()
 	InteractText = "Hide";
 }
 
-void UHideableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target)
+void UHideableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor)
 {
-	Super::ExecuteInteraction(Owner, Target);
+	Super::ExecuteInteraction(Owner, Target, Context, nullptr);
+	
+	if (Context == EInteractionContext::Guard)
+	{
+		if (HiddenActor != nullptr)
+		{
+			// Si quelqu’un est caché → le faire sortir
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("🚨 Guard found a hidden pawn! Forcing them out..."));
+
+			HiddenActor->SetActorLocation(QuitLocation);
+			HiddenActor = nullptr;
+		}
+		else
+		{
+			// Sinon, le garde peut se cacher lui-même
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("👮 nothing to be found..."));
+		}
+		return;
+	}
 	
 	if (!Owner) return;
 
@@ -39,10 +57,12 @@ void UHideableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "HIDeD");
 			PlayerComp->QuitHiding();
+			HiddenActor = nullptr;
 		}
 		else
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "NOT HIDeD");
+			HiddenActor = InteractingActor;
 			PlayerComp->Hide();
 				
 		}

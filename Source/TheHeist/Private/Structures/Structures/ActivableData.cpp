@@ -5,9 +5,9 @@ UActivableData::UActivableData()
 	InteractText = "Activate";
 }
 
-void UActivableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target)
+void UActivableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor)
 {
-	Super::ExecuteInteraction(Owner, Target);
+	Super::ExecuteInteraction(Owner, Target, Context, nullptr);
 
 	switch (ActivationType)
 	{

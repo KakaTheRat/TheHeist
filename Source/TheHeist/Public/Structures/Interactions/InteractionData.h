@@ -7,7 +7,8 @@
     #include "Perception/AISense_Sight.h"
     #include "Perception/AIPerceptionSystem.h"
     #include "Enumerators/Guard/AlertTypes.h"
-    #include "InteractionData.generated.h"
+#include "Enumerators/Interactions/InteractionContextEnum.h"
+#include "InteractionData.generated.h"
 
     class UInteractableComponent;
 
@@ -49,7 +50,7 @@
     	void EndOfInteraction();
 
         //Interaction execution. Must be overrided by each interaction type
-        virtual void ExecuteInteraction(AActor* Owner, USceneComponent* Target);
+        virtual void ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor);
 
         //Virtual function, to tick the UObject into the interaction component. Override this to make is happen
         virtual void Tick(float DeltaTime) {}

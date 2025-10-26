@@ -11,7 +11,7 @@ UCheckData::UCheckData()
 	
 }
 
-void UCheckData::ExecuteInteraction(AActor* Owner, USceneComponent* Target)
+void UCheckData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor)
 {
 	TArray<USceneComponent*> Components;
 	OwnerActor->GetComponents<USceneComponent>(Components);
@@ -24,23 +24,20 @@ void UCheckData::ExecuteInteraction(AActor* Owner, USceneComponent* Target)
 			break;
 		}
 	}
-	UE_LOG(LogTemp, Warning, TEXT("CoucOU"));
-	Super::ExecuteInteraction(Owner, Target);
+	Super::ExecuteInteraction(Owner, Target, Context, nullptr);
 	if (!Owner) return;
-	UE_LOG(LogTemp, Warning, TEXT("CouvvvcOU"));
 	APlayerController* PC = Owner->GetWorld()->GetFirstPlayerController();
 	if (!PC) { EndOfInteraction(); return; }
-	UE_LOG(LogTemp, Warning, TEXT("CoucdddddsdsdOU"));
+
 	APawn* PlayerPawn = PC->GetPawn();
 	UCameraComponent* PlayerCamera = PlayerPawn->FindComponentByClass<UCameraComponent>();
 	if (!PlayerCamera) { EndOfInteraction(); return; }
-	UE_LOG(LogTemp, Warning, TEXT("ccccc"));
 	// 2️⃣ Sauvegarde la position et rotation actuelle
 	OriginalCameraTransform = PlayerCamera->GetComponentTransform();
 
 	// 3️⃣ Positionne la caméra sur le point d'observation
 	if (LookTarget)
-	{UE_LOG(LogTemp, Warning, TEXT("CoussssssscOU"));
+	{
 		PlayerCamera->SetWorldLocationAndRotation(
 			LookTarget->GetComponentLocation(),
 			LookTarget->GetComponentRotation()

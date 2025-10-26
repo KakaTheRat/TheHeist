@@ -215,7 +215,7 @@ protected:
 	void InteractWithObject(const FString m_InteractText);
 
 	//Implementation for the interact interface function
-	virtual void Interact_Implementation(USceneComponent* HitComponent, AActor* InteractingActor) override;
+	virtual void Interact_Implementation(USceneComponent* HitComponent, AActor* InteractingActor, EInteractionContext Context) override;
 
 	//Implementation for the interact AI interface function
 	virtual void InteractAI_Implementation() override;
@@ -233,8 +233,22 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool b_hiden;
+
+
+
+	
+
 private:
 
+	UPROPERTY()
+	AActor* InteractingActorr = nullptr;
+	
+	EInteractionContext CurrentInteractionContext = EInteractionContext::Default;
+	
 #pragma region CascadeInteraction
 	//-------------Cascade Interaction Mode--------------//
 
