@@ -560,5 +560,5 @@ void FInteractionCascadeData::RefreshMainSlot()
 	{
 		MainSlot = FInteractionCascadeSlot();
 	}
-}
-#pragma endregion*/
+}*/
+#pragma endregion

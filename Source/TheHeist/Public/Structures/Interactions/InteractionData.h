@@ -1,6 +1,7 @@
     #pragma once
 
     #include "CoreMinimal.h"
+	#include "Helpers/Interactions/InteractionHelpers.h"
     #include "UObject/NoExportTypes.h"
     #include "Perception/AISense_Hearing.h"
     #include "Perception/AISense_Sight.h"
@@ -25,6 +26,7 @@
 
     	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
     	FName GetCurrentState() const;
+    	
     	virtual FName GetCurrentState_Implementation() const { return "None"; }
 
     	

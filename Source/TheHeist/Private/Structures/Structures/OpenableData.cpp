@@ -126,36 +126,11 @@ void UOpenableData::Tick(float DeltaTime)
 
 TArray<FName> UOpenableData::GetAvailableStates()
 {
-	TArray<FName> States;
-
-	// Récupère le type enum de EOpeningStates
-	UEnum* EnumPtr = StaticEnum<EOpeningStates>();
-	if (!EnumPtr)
-		return States;
-
-	// Parcourt toutes les valeurs de l’enum
-	for (int32 i = 0; i < EnumPtr->NumEnums(); ++i)
-	{
-		// Ignore l’élément "_MAX" si tu en as un
-		FString Name = EnumPtr->GetNameStringByIndex(i);
-		if (!Name.Contains(TEXT("MAX")))
-		{
-			States.Add(FName(*Name));
-		}
-	}
-
-	return States;
+	return InteractionHelpers::GetEnumNames<EOpeningStates>();
 }
-
-
 
 
 FName UOpenableData::GetCurrentState_Implementation() const
 {
-	switch (CurrentState)
-	{
-	case EOpeningStates::Open: return "Open";
-	case EOpeningStates::Close: return "Close";
-	default: return "Unknown";
-	}
+	return InteractionHelpers::GetEnumNameFromValue<EOpeningStates>(CurrentState);
 }
