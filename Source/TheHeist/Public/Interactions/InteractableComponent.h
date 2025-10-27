@@ -11,6 +11,8 @@
 #include "InteractableComponent.generated.h"
 
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInteractionEndedEvent, AActor*, InteractingActor, UInteractionData*, InteractionType);
+
 
 #pragma region InteractionStruct
 
@@ -144,7 +146,9 @@ struct FInteractionCascadeData
 
 	UPROPERTY(EditAnywhere)
 	EInteractionContext ExpectedContext;
-	
+
+	UPROPERTY()
+	bool bIsComplete = true;
 	TArray<FString> GetAvailableSlotIndices() const;
 
 	//Refresh the main slot to see it in the editor
@@ -163,6 +167,14 @@ class THEHEIST_API UInteractableComponent : public UActorComponent, public IInte
 
 public:
 
+
+
+//Event to notify the end of an interaction. Also will return the interacting actor and the interaction type
+	UPROPERTY(BlueprintAssignable)
+	FOnInteractionEndedEvent OnInteractionEndedEvent;
+	
+	
+	
 	
 #if WITH_EDITOR
     
@@ -266,6 +278,9 @@ private:
 	AActor* InteractingActorr = nullptr;
 	
 	EInteractionContext CurrentInteractionContext = EInteractionContext::Default;
+
+	UFUNCTION()
+	void FinishInteraction(AActor* InteractingActor, UInteractionData* Interaction);
 	
 #pragma region CascadeInteraction
 	//-------------Cascade Interaction Mode--------------//

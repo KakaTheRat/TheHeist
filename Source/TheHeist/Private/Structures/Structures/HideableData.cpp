@@ -9,7 +9,7 @@ UHideableData::UHideableData()
 void UHideableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor)
 {
 	Super::ExecuteInteraction(Owner, Target, Context, nullptr);
-	
+	CurrentInteractingActor = InteractingActor;
 	if (Context == EInteractionContext::Guard)
 	{
 		if (HiddenActor != nullptr)
@@ -19,11 +19,13 @@ void UHideableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, E
 
 			HiddenActor->SetActorLocation(QuitLocation);
 			HiddenActor = nullptr;
+			EndOfInteraction();
 		}
 		else
 		{
 			
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("👮 nothing to be found..."));
+			EndOfInteraction();
 		}
 		return;
 	}

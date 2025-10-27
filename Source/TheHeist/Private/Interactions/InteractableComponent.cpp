@@ -256,6 +256,7 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText, US
 		//Cascade interaction
 		if (FInteractionCascadeData* Cascade = FindValidCascade(m_InteractText, Context, nullptr))
 		{
+			Cascade->bIsComplete = false;
 			ExecuteNextCascadeInteraction(*Cascade, InteractingActor, Context);
 			return;
 		}
@@ -271,6 +272,7 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText, US
 				{
 					if (Data->InteractText ==m_InteractText)
 					{
+						Data->OnInteractionEnded.AddUObject(this, &UInteractableComponent::FinishInteraction);
 						Data->ExecuteInteraction(Owner, CurrentlyChosenComponent, Context, InteractingActor);
 						break;
 					}
@@ -371,6 +373,7 @@ void UInteractableComponent::InteractWithSpecificInteraction(TSubclassOf<UIntera
 	if (!TargetComponent) return;
 	if (FInteractionCascadeData* Cascade = FindValidCascade(TEXT(""), Context, InteractionType))
 	{
+		Cascade->bIsComplete = false;
 		ExecuteNextCascadeInteraction(*Cascade, InteractingActor, Context);
 		return;
 	}
@@ -381,12 +384,19 @@ void UInteractableComponent::InteractWithSpecificInteraction(TSubclassOf<UIntera
 	{
 		if (Data && Data->GetClass() == InteractionType)
 		{
+			Data->OnInteractionEnded.AddUObject(this, &UInteractableComponent::FinishInteraction);
 			Data->ExecuteInteraction(Owner, TargetComponent, Context, InteractingActor);
+			
 			break;
 		}
 	}
 }
 
+void UInteractableComponent::FinishInteraction(AActor* InteractingActor, UInteractionData* Interaction)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("Interaction completed!")));
+	OnInteractionEndedEvent.Broadcast(InteractingActor, Interaction);
+}
 TArray<FName> UInteractionCascadeSlot::GetAvailableInteractionComponents()
 {
 	TArray<FName> Names;
@@ -570,7 +580,9 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 {
 	if (!Cascade.InteractionCascades.IsValidIndex(Cascade.CurrentIndex))
 	{
+		Cascade.bIsComplete = true;
 		Cascade.CurrentIndex = 0;
+		FinishInteraction(InteractingActor, nullptr);
 		return;
 	}
 	UInteractionCascadeSlot* Slot = Cascade.InteractionCascades[Cascade.CurrentIndex];
@@ -583,7 +595,6 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 	if (!Interaction)
 		return;
 
-
 	
 
 	if (!Slot->ExpectedState.IsNone())
@@ -591,9 +602,6 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 		const FName CurrentState = Interaction->GetCurrentState();
 		if (CurrentState == Slot->ExpectedState)
 		{
-			UE_LOG(LogTemp, Display, TEXT("Skipping interaction %s (already in state %s)"),
-				*Interaction->GetName(), *Slot->ExpectedState.ToString());
-
 			ExecuteNextCascadeInteraction(Cascade, InteractingActor, Context); 
 			return;
 		}
@@ -617,11 +625,20 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 	if (!TargetComp)
 		return;
 
-	Interaction->OnInteractionEnded.AddLambda([this, CascadePtr = &Cascade, InteractingActor, Context]()
-{
-	ExecuteNextCascadeInteraction(*CascadePtr, InteractingActor, Context);
-});
-
+	
+	
+	FDelegateHandle Handle;
+	Handle = Interaction->OnInteractionEnded.AddLambda(
+		[this, CascadePtr = &Cascade, Context, &Handle](AActor* InteractingActor, UInteractionData* Interaction) mutable
+		{
+			Interaction->OnInteractionEnded.Remove(Handle);
+			if (!CascadePtr->bIsComplete)  // ← Vérifier si terminé
+			{
+				ExecuteNextCascadeInteraction(*CascadePtr, InteractingActor, Context);
+			}
+		}
+	);
+	
 	Interaction->ExecuteInteraction(Owner, TargetComp, Context, InteractingActor );
 }
 

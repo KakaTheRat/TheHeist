@@ -12,7 +12,7 @@
 
     class UInteractableComponent;
 
-    DECLARE_MULTICAST_DELEGATE(FOnInteractionEnded);
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnInteractionEnded, AActor* /*InteractingActor*/, UInteractionData* /*Interaction*/);
 
     UCLASS(Abstract, Blueprintable, EditInlineNew, DefaultToInstanced)
     class THEHEIST_API UInteractionData : public UObject
@@ -132,6 +132,11 @@
         //Hit Component by the user's interaction   
         UPROPERTY()
         USceneComponent* LinkedComponent = nullptr;
+
+
+    	UPROPERTY(EditAnywhere)
+    	AActor* CurrentInteractingActor;
+    	
 
     	virtual void PostInitProperties() override;
     	

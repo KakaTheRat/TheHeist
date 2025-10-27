@@ -10,7 +10,7 @@ TArray<FName> UInteractionData::GetAvailableStates()
 
 void UInteractionData::EndOfInteraction()
 {
-    OnInteractionEnded.Broadcast();
+    OnInteractionEnded.Broadcast(CurrentInteractingActor, this);
 }
 
 //Determines the actor owning the component instanciating this object. 
@@ -27,9 +27,9 @@ void UInteractionData::PostInitProperties()
     }
 }
 
-inline void UInteractionData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor)
+void UInteractionData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor)
 {
-    
+    CurrentInteractingActor = InteractingActor;
 }
 
 void UInteractionData::TriggerAlert(AActor* SourceActor)

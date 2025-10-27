@@ -12,6 +12,9 @@ void UOpenableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, E
 {
 	Super::ExecuteInteraction(Owner, Target, Context, nullptr);
 
+	CurrentInteractingActor = InteractingActor;
+	 
+	
 	if (!Owner || !Target || !Curve) return;
 	LinkedComponent = Target;
 
