@@ -14,7 +14,7 @@ void UHideableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, E
 	{
 		if (HiddenActor != nullptr)
 		{
-			// Si quelqu’un est caché → le faire sortir
+			
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("🚨 Guard found a hidden pawn! Forcing them out..."));
 
 			HiddenActor->SetActorLocation(QuitLocation);
@@ -22,7 +22,7 @@ void UHideableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, E
 		}
 		else
 		{
-			// Sinon, le garde peut se cacher lui-même
+			
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("👮 nothing to be found..."));
 		}
 		return;

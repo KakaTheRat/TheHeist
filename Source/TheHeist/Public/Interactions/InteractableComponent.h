@@ -107,6 +107,9 @@ public:
 	TArray<FName> GetAvailableStates() const;
 
 	void RefreshData();
+
+	UPROPERTY(EditAnywhere)
+	bool bShouldInterruptCascade = false;
 };
 
 #pragma endregion
@@ -138,11 +141,16 @@ struct FInteractionCascadeData
 
 	UPROPERTY()
 	int32 CurrentIndex = 0;
+
+	UPROPERTY(EditAnywhere)
+	EInteractionContext ExpectedContext;
 	
 	TArray<FString> GetAvailableSlotIndices() const;
 
 	//Refresh the main slot to see it in the editor
 	void RefreshMainSlot();
+
+	
 };
 
 #pragma endregion
@@ -189,10 +197,6 @@ protected:
 	//Current entry treated
 	FInteractionEntry* CurrentEntry = nullptr;
 
-	//Array of interactions config created so far
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")
-	TArray<FInteractionEntry> InteractionsConfig;
-
 	//Array of interactions config created so far with the perception activated
 	UPROPERTY(BlueprintReadWrite)
 	TArray<FInteractionEntry> InteractionsConfigPerceptionAI;
@@ -210,10 +214,9 @@ protected:
 	virtual void OnRegister() override;
 	
 	
-	//Function to execute interaction (taking as an input the interaction text, received from the widget
-	UFUNCTION(BlueprintCallable, Category="Interaction|Setup")
-	void InteractWithObject(const FString m_InteractText);
-
+	
+	
+	
 	//Implementation for the interact interface function
 	virtual void Interact_Implementation(USceneComponent* HitComponent, AActor* InteractingActor, EInteractionContext Context) override;
 
@@ -233,10 +236,25 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 
+	//Get all interactions for a told component
+	UFUNCTION(BlueprintCallable)
+	TArray<FString>GetInteractionsForAComp(USceneComponent* Comp);
+	
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool b_hiden;
+	//Function to execute interaction (taking as an input the interaction text, received from the widget
+	UFUNCTION(BlueprintCallable, Category="Interaction|Setup")
+	void InteractWithObject(const FString m_InteractText, USceneComponent* HitComponent, AActor* InteractingActor, EInteractionContext Context);
+
+	//Function to execute interaction (taking as an input the interaction text, received from the widget
+	UFUNCTION(BlueprintCallable, Category="Interaction|Setup")
+	void InteractWithSpecificInteraction(TSubclassOf<UInteractionData> InteractionType, USceneComponent* HitComponent, AActor* InteractingActor, EInteractionContext Context);
+
+
+
+
+	
+
 
 
 
@@ -272,8 +290,10 @@ private:
 	TArray<FName> GetAvailableCascadeNames();
 
 	//Execute the next interaction in the current cascade data
-	void ExecuteNextCascadeInteraction(FInteractionCascadeData& Cascade);
-	
+	void ExecuteNextCascadeInteraction(FInteractionCascadeData& Cascade, AActor* InteractingActor, EInteractionContext Context);
+
+	//Returns the cascade avaiable for these parameters. Need only interaction text or Interaction type to work.
+	FInteractionCascadeData* FindValidCascade(const FString& m_InteractionText,EInteractionContext Context, const TSubclassOf<UInteractionData>& InteractionType);
 	
 	//------------Properties--------------//
 	

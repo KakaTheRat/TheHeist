@@ -20,11 +20,19 @@ void UPlayerInteractionComponent::BeginPlay()
 	Super::BeginPlay();
 
 
-	//Instantiate the interaction manager
+	//Instantiate the interaction choice widget actor
 	FActorSpawnParameters Params;
 	Params.Owner = GetOwner();
-	WidgetInstance = GetWorld()->SpawnActor<AInteractionWidgetActor>(
-		WidgetActorClass,
+	InteractionChoiceWidgetInstance = GetWorld()->SpawnActor<AInteractionWidgetActor>(
+	InteractionChoiceWidgetClass,
+		FVector::ZeroVector,
+		FRotator::ZeroRotator,
+		Params);
+
+	//Instantiate the interaction signal widget actor
+	Params.Owner = GetOwner();
+	InteractionSignalWidgetInstance = GetWorld()->SpawnActor<AActor>(
+	InteractionSignalWidgetClass,
 		FVector::ZeroVector,
 		FRotator::ZeroRotator,
 		Params);

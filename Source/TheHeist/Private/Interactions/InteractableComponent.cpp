@@ -49,7 +49,7 @@ void UInteractableComponent::BeginPlay()
 			AttachedComponents.Add(Comp);
 		}
 	}
-
+/*
 	InteractionsConfigPerceptionAI.Empty();
 	for (FInteractionEntry& Entry : InteractionsConfig)
 	{
@@ -66,7 +66,7 @@ void UInteractableComponent::BeginPlay()
 		{
 			InteractionsConfigPerceptionAI.Add(AIEntry);
 		}
-	}
+	}*/
 }
 
 // Called every frame
@@ -83,15 +83,21 @@ void UInteractableComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 			
 			}
 	}
-	/*for (const FInteractionEntry& Entry : InteractionsConfig)
+}
+
+TArray<FString> UInteractableComponent::GetInteractionsForAComp(USceneComponent* Comp)
+{
+	TArray<FString> Result;
+
+	for (const UInteractionData* Data : AllInteractions)
 	{
-		for (UInteractionData* Data : Entry.Interactions)
+		if (Data->CompNames == Comp->GetName())
 		{
-			if (Data)
-				Data->Tick(DeltaTime);
+			Result.Add(Data->InteractText);
 		}
 	}
-*/
+	
+	return Result;
 }
 
 TArray<FName> UInteractableComponent::GetAvailableInteractionComponents()
@@ -118,6 +124,7 @@ void UInteractableComponent::Interact_Implementation(USceneComponent* HitCompone
 {
 	IInteractionInterface::Interact_Implementation(HitComponent, InteractingActor, Context);
 
+/*
 	if (!InteractingActor)return;
 
 
@@ -147,7 +154,9 @@ void UInteractableComponent::Interact_Implementation(USceneComponent* HitCompone
 				WidgetActor->AddInteractionEntry(Data->InteractText);
 			}
 		}
-		/*//Add new entries to the interaction widget
+		/*/
+
+	/*Add new entries to the interaction widget
 		for (FInteractionEntry& Entry : InteractionsConfig)
 		{
 			
@@ -163,7 +172,7 @@ void UInteractableComponent::Interact_Implementation(USceneComponent* HitCompone
 					}
 				}
 			}
-		}*/
+		}
 		
 		WidgetActor->ShowWidget(HitComponent->GetComponentLocation()+ FVector(0, 0, 20));
 		
@@ -174,6 +183,14 @@ void UInteractableComponent::Interact_Implementation(USceneComponent* HitCompone
 	{
 		InteractWithObject("Hide");
 	}
+	//Checks if actor has the player's interaction component
+	if (UPlayerInteractionComponent* PlayerInteraction = InteractingActor->FindComponentByClass<UPlayerInteractionComponent>())
+	{
+		
+	}
+	else
+	{
+	}*/
 }
 
 void UInteractableComponent::InteractAI_Implementation()
@@ -200,10 +217,78 @@ void UInteractableComponent::InteractAI_Implementation()
 	}
 }
 
-//Execute interaction based on the type
-void UInteractableComponent::InteractWithObject(const FString m_InteractText)
+FInteractionCascadeData* UInteractableComponent::FindValidCascade(const FString& m_InteractionText,EInteractionContext Context, const TSubclassOf<UInteractionData>& InteractionType)
 {
-	EInteractionContext Context = CurrentInteractionContext;
+	for (FInteractionCascadeData& Cascade : InteractionsCascadeDatas)
+	{
+		if (Cascade.InteractionCascades.Num() == 0) continue;
+		if (!Cascade.InteractionCascades.IsValidIndex(Cascade.MainSlotIndex)) continue;
+		if (Cascade.ExpectedContext != Context && Cascade.ExpectedContext != EInteractionContext::Default) continue;
+
+		UInteractionCascadeSlot* MainSlot = Cascade.InteractionCascades[Cascade.MainSlotIndex];
+		if (!MainSlot || !MainSlot->InteractionData.IsValid()) continue;
+
+		UInteractionData* Data = MainSlot->InteractionData.Get();
+		if (!Data) continue;
+
+		if (!m_InteractionText.IsEmpty() && Data->InteractText != m_InteractionText)
+			continue;
+
+		if (InteractionType && Data->GetClass() != InteractionType)
+			continue;
+
+		return &Cascade;
+	}
+
+	return nullptr;
+}
+
+//Execute interaction based on the type
+void UInteractableComponent::InteractWithObject(const FString m_InteractText, USceneComponent* HitComponent, AActor* InteractingActor, EInteractionContext Context)
+{
+	{
+		if (!InteractingActor) return;
+
+		InteractingActorr = InteractingActor;
+		CurrentInteractionContext = Context;
+		CurrentlyChosenComponent = HitComponent;
+
+		//Cascade interaction
+		if (FInteractionCascadeData* Cascade = FindValidCascade(m_InteractText, Context, nullptr))
+		{
+			ExecuteNextCascadeInteraction(*Cascade, InteractingActor, Context);
+			return;
+		}
+
+		
+		
+
+		//Classic interaction
+		{
+			for (UInteractionData* Data : AllInteractions)
+			{
+				if (Data && CurrentlyChosenComponent && Data->CompNames == CurrentlyChosenComponent->GetName())
+				{
+					if (Data->InteractText ==m_InteractText)
+					{
+						Data->ExecuteInteraction(Owner, CurrentlyChosenComponent, Context, InteractingActor);
+						break;
+					}
+				}
+			}
+		}
+	}
+}
+	/*
+	
+	if (!InteractingActor)return;
+
+	InteractingActorr = InteractingActor;
+	CurrentInteractionContext = Context;
+
+
+	
+	CurrentlyChosenComponent = HitComponent;
 	
 	bool bFoundCascade = false;
 
@@ -223,7 +308,7 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText)
 		if (Data->InteractText == m_InteractText)
 		{
 			bFoundCascade = true;
-			ExecuteNextCascadeInteraction(Cascade);
+			ExecuteNextCascadeInteraction(Cascade, nullptr, {});
 			break;
 		}
 	}
@@ -241,6 +326,8 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText)
 				break;
 			}
 		}*/
+
+	/*
 		for (UInteractionData* Data : AllInteractions)
 		{
 			if (Data->CompNames == CurrentlyChosenComponent->GetName())
@@ -252,10 +339,53 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText)
 				}
 			}
 		}
-	}
+	}*/
 	
-}
 
+
+void UInteractableComponent::InteractWithSpecificInteraction(TSubclassOf<UInteractionData> InteractionType,
+	USceneComponent* HitComponent, AActor* InteractingActor, EInteractionContext Context)
+{
+	if (!InteractingActor) return;
+	USceneComponent* TargetComponent = HitComponent;
+
+	if (!TargetComponent)
+	{
+		for (USceneComponent* Comp : AttachedComponents)
+		{
+			if (!Comp) continue;
+
+			for (UInteractionData* Data : AllInteractions)
+			{
+				if (Data && Data->GetClass() == InteractionType)
+				{
+					TargetComponent = Comp;
+					break;
+				}
+			}
+
+			if (TargetComponent) break;
+		}
+	}
+
+	if (!TargetComponent) return;
+	if (FInteractionCascadeData* Cascade = FindValidCascade(TEXT(""), Context, InteractionType))
+	{
+		ExecuteNextCascadeInteraction(*Cascade, InteractingActor, Context);
+		return;
+	}
+
+	
+	// Classic interaction
+	for (UInteractionData* Data : AllInteractions)
+	{
+		if (Data && Data->GetClass() == InteractionType)
+		{
+			Data->ExecuteInteraction(Owner, TargetComponent, Context, InteractingActor);
+			break;
+		}
+	}
+}
 
 TArray<FName> UInteractionCascadeSlot::GetAvailableInteractionComponents()
 {
@@ -436,11 +566,13 @@ TArray<FName> UInteractableComponent::GetAvailableCascadeNames()
 	return Names;
 }
 
-void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeData& Cascade)
+void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeData& Cascade, AActor* InteractingActor, EInteractionContext Context)
 {
 	if (!Cascade.InteractionCascades.IsValidIndex(Cascade.CurrentIndex))
+	{
+		Cascade.CurrentIndex = 0;
 		return;
-
+	}
 	UInteractionCascadeSlot* Slot = Cascade.InteractionCascades[Cascade.CurrentIndex];
 	Cascade.CurrentIndex++;
 
@@ -462,7 +594,7 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 			UE_LOG(LogTemp, Display, TEXT("Skipping interaction %s (already in state %s)"),
 				*Interaction->GetName(), *Slot->ExpectedState.ToString());
 
-			ExecuteNextCascadeInteraction(Cascade); 
+			ExecuteNextCascadeInteraction(Cascade, InteractingActor, Context); 
 			return;
 		}
 	}
@@ -485,12 +617,12 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 	if (!TargetComp)
 		return;
 
-	Interaction->OnInteractionEnded.AddLambda([this, CascadePtr = &Cascade]()
-	{
-		ExecuteNextCascadeInteraction(*CascadePtr);
-	});
+	Interaction->OnInteractionEnded.AddLambda([this, CascadePtr = &Cascade, InteractingActor, Context]()
+{
+	ExecuteNextCascadeInteraction(*CascadePtr, InteractingActor, Context);
+});
 
-	//Interaction->ExecuteInteraction(Owner, TargetComp);
+	Interaction->ExecuteInteraction(Owner, TargetComp, Context, InteractingActor );
 }
 
 
