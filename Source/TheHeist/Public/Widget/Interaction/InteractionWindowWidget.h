@@ -10,7 +10,7 @@
  * 
  */
 
-DECLARE_DYNAMIC_DELEGATE_OneParam(FOnInteractionClicked, FString, InteractionName);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionClicked, FString, InteractionName);
 
 UCLASS()
 class THEHEIST_API UInteractionWindowWidget : public UUserWidget
@@ -39,7 +39,7 @@ public:
 	
 
 	//------------Properties--------------//
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FOnInteractionClicked OnInteractionClicked;
 	
 	

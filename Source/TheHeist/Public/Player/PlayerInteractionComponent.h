@@ -21,9 +21,22 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-	
-	
+	//Interaction choice dropdown widget instance
+	UPROPERTY(BlueprintReadWrite)
+	AInteractionWidgetActor* InteractionChoiceWidgetInstance;
 
+	//Signal widet class
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AInteractionWidgetActor> InteractionChoiceWidgetClass;
+	
+	//Interaction signal widget instance
+	UPROPERTY(BlueprintReadWrite)
+	AActor* InteractionSignalWidgetInstance;
+
+	//Signal widet class
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AActor> InteractionSignalWidgetClass;
+	
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -36,17 +49,11 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void QuitHiding();
 
-	UFUNCTION()
-	AInteractionWidgetActor* GetInteractionWidget(){return WidgetInstance;};
-	
+	//Returns the interaction choice widget
+	UFUNCTION(BlueprintCallable)
+	AInteractionWidgetActor* GetInteractionChoiceWidget(){return InteractionChoiceWidgetInstance;};
 
-private:
-
-	//Interaction widget class
-	UPROPERTY(EditAnywhere,Category="Interaction")
-	TSubclassOf<AInteractionWidgetActor> WidgetActorClass;
-
-	//Widget object's instance
-	UPROPERTY()
-	AInteractionWidgetActor* WidgetInstance;
+	//Returns the interaction signal widget
+	UFUNCTION(BlueprintCallable)
+	AActor* GetInteractionSignalWidget(){return InteractionSignalWidgetInstance;};
 };

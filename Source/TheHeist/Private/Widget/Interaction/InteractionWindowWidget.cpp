@@ -13,5 +13,5 @@ void UInteractionWindowWidget::ClearEntries_Implementation()
 
 void UInteractionWindowWidget::TriggerInteraction(const FString m_InteractionName)
 {
-	OnInteractionClicked.ExecuteIfBound(m_InteractionName);
+	OnInteractionClicked.Broadcast(m_InteractionName);
 }
