@@ -31,15 +31,4 @@ public:
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Interaction")
 	void Interact(USceneComponent* HitComponent, AActor* InteractingActor, EInteractionContext Context= EInteractionContext::Default);
 
-	//Interact Function, called whenever an AI interact with an object.
-	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Interaction")
-	void InteractAI();
-	
-	/*
-	UFUNCTION(BlueprintCallable)
-	void IsCurrentlyActive(bool& IsActive);
-	*/
-
-	//-----------Properties
-	
 };
