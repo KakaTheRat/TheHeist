@@ -217,23 +217,47 @@ void UInteractableComponent::InteractAI_Implementation()
 	}
 }
 
-FInteractionCascadeData* UInteractableComponent::FindValidCascade(const FString& m_InteractionText,EInteractionContext Context, const TSubclassOf<UInteractionData>& InteractionType)
+FInteractionCascadeData* UInteractableComponent::FindValidCascade(const FString& m_InteractionText,EInteractionContext Context, const TSubclassOf<UInteractionData>& InteractionType,UInteractionData* SpecificInteraction)
 {
 	for (FInteractionCascadeData& Cascade : InteractionsCascadeDatas)
 	{
-		if (Cascade.InteractionCascades.Num() == 0) continue;
-		if (!Cascade.InteractionCascades.IsValidIndex(Cascade.MainSlotIndex)) continue;
-		if (Cascade.ExpectedContext != Context && Cascade.ExpectedContext != EInteractionContext::Default) continue;
+		if (Cascade.InteractionCascades.Num() == 0)
+			continue;
 
+		if (!Cascade.InteractionCascades.IsValidIndex(Cascade.MainSlotIndex))
+			continue;
+
+		// Vérifie le contexte
+		if (Cascade.ExpectedContext != Context && Cascade.ExpectedContext != EInteractionContext::Default)
+			continue;
+
+		// Si on cherche une interaction spécifique :
+		if (SpecificInteraction)
+		{
+			for (UInteractionCascadeSlot* Slot : Cascade.InteractionCascades)
+			{
+				if (Slot && Slot->InteractionData.Get() == SpecificInteraction)
+				{
+					return &Cascade; // ✅ trouvé
+				}
+			}
+			continue; // pas dans cette cascade
+		}
+
+		// Sinon, logique habituelle : recherche par texte ou type
 		UInteractionCascadeSlot* MainSlot = Cascade.InteractionCascades[Cascade.MainSlotIndex];
-		if (!MainSlot || !MainSlot->InteractionData.IsValid()) continue;
+		if (!MainSlot || !MainSlot->InteractionData.IsValid())
+			continue;
 
 		UInteractionData* Data = MainSlot->InteractionData.Get();
-		if (!Data) continue;
+		if (!Data)
+			continue;
 
+		// Filtrage par texte
 		if (!m_InteractionText.IsEmpty() && Data->InteractText != m_InteractionText)
 			continue;
 
+		// Filtrage par type
 		if (InteractionType && Data->GetClass() != InteractionType)
 			continue;
 
@@ -254,7 +278,7 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText, US
 		CurrentlyChosenComponent = HitComponent;
 
 		//Cascade interaction
-		if (FInteractionCascadeData* Cascade = FindValidCascade(m_InteractText, Context, nullptr))
+		if (FInteractionCascadeData* Cascade = FindValidCascade(m_InteractText, Context, nullptr, nullptr))
 		{
 			Cascade->bIsComplete = false;
 			ExecuteNextCascadeInteraction(*Cascade, InteractingActor, Context);
@@ -346,50 +370,91 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText, US
 
 
 void UInteractableComponent::InteractWithSpecificInteraction(TSubclassOf<UInteractionData> InteractionType,
-	USceneComponent* HitComponent, AActor* InteractingActor, EInteractionContext Context)
+	USceneComponent* HitComponent, AActor* InteractingActor, EInteractionContext Context,UInteractionData* InteractionInstance)
 {
-	if (!InteractingActor) return;
-	USceneComponent* TargetComponent = HitComponent;
+    if (!InteractingActor)
+        return;
 
-	if (!TargetComponent)
-	{
-		for (USceneComponent* Comp : AttachedComponents)
-		{
-			if (!Comp) continue;
+    USceneComponent* TargetComponent = HitComponent;
 
-			for (UInteractionData* Data : AllInteractions)
-			{
-				if (Data && Data->GetClass() == InteractionType)
-				{
-					TargetComponent = Comp;
-					break;
-				}
-			}
+    // 🔹 1. Si on a une InteractionData spécifique, on regarde si elle appartient à une cascade
+    if (InteractionInstance)
+    {
+        // Tente de trouver une cascade qui contient cette Interaction
+        if (FInteractionCascadeData* Cascade = FindValidCascade(TEXT(""), Context, nullptr, InteractionInstance))
+        {
+            Cascade->bIsComplete = false;
+            ExecuteNextCascadeInteraction(*Cascade, InteractingActor, Context);
+            return;
+        }
 
-			if (TargetComponent) break;
-		}
-	}
+        // Sinon, exécution directe
+        if (!TargetComponent)
+        {
+            // Cherche le bon composant à partir du nom enregistré dans l'interaction
+            for (USceneComponent* Comp : AttachedComponents)
+            {
+                if (Comp && Comp->GetName() == InteractionInstance->CompNames)
+                {
+                    TargetComponent = Comp;
+                    break;
+                }
+            }
+        }
 
-	if (!TargetComponent) return;
-	if (FInteractionCascadeData* Cascade = FindValidCascade(TEXT(""), Context, InteractionType))
-	{
-		Cascade->bIsComplete = false;
-		ExecuteNextCascadeInteraction(*Cascade, InteractingActor, Context);
-		return;
-	}
+        if (TargetComponent)
+        {
+            InteractionInstance->OnInteractionEnded.AddUObject(this, &UInteractableComponent::FinishInteraction);
+            InteractionInstance->ExecuteInteraction(Owner, TargetComponent, Context, InteractingActor);
+        }
 
-	
-	// Classic interaction
-	for (UInteractionData* Data : AllInteractions)
-	{
-		if (Data && Data->GetClass() == InteractionType)
-		{
-			Data->OnInteractionEnded.AddUObject(this, &UInteractableComponent::FinishInteraction);
-			Data->ExecuteInteraction(Owner, TargetComponent, Context, InteractingActor);
-			
-			break;
-		}
-	}
+        return;
+    }
+
+    // 🔹 2. Aucun InteractionInstance → comportement standard
+
+    if (!TargetComponent)
+    {
+        for (USceneComponent* Comp : AttachedComponents)
+        {
+            if (!Comp)
+                continue;
+
+            for (UInteractionData* Data : AllInteractions)
+            {
+                if (Data && Data->GetClass() == InteractionType)
+                {
+                    TargetComponent = Comp;
+                    break;
+                }
+            }
+
+            if (TargetComponent)
+                break;
+        }
+    }
+
+    if (!TargetComponent)
+        return;
+
+    // 🔹 3. Vérifie s’il existe une cascade pour ce type d’interaction
+    if (FInteractionCascadeData* Cascade = FindValidCascade(TEXT(""), Context, InteractionType, nullptr))
+    {
+        Cascade->bIsComplete = false;
+        ExecuteNextCascadeInteraction(*Cascade, InteractingActor, Context);
+        return;
+    }
+
+    // 🔹 4. Interaction simple
+    for (UInteractionData* Data : AllInteractions)
+    {
+        if (Data && Data->GetClass() == InteractionType)
+        {
+            Data->OnInteractionEnded.AddUObject(this, &UInteractableComponent::FinishInteraction);
+            Data->ExecuteInteraction(Owner, TargetComponent, Context, InteractingActor);
+            break;
+        }
+    }
 }
 
 void UInteractableComponent::FinishInteraction(AActor* InteractingActor, UInteractionData* Interaction)
@@ -582,7 +647,8 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 	{
 		Cascade.bIsComplete = true;
 		Cascade.CurrentIndex = 0;
-		FinishInteraction(InteractingActor, nullptr);
+		UInteractionData* Interaction = Cascade.InteractionCascades[Cascade.MainSlotIndex]->InteractionData.Get();
+		FinishInteraction(InteractingActor, Interaction);
 		return;
 	}
 	UInteractionCascadeSlot* Slot = Cascade.InteractionCascades[Cascade.CurrentIndex];

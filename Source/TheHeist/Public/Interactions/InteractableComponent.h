@@ -6,7 +6,7 @@
 #include "InteractionInterface.h"
 #include "Components/ActorComponent.h"
 #include "Player/PlayerInteractionComponent.h"
-#include "../Structures/Interactions/InteractionData.h"
+#include "../Interactions/InteractionTypes/InteractionData.h"
 #include "Widget/Interaction/InteractionWidgetActor.h"
 #include "InteractableComponent.generated.h"
 
@@ -260,9 +260,7 @@ public:
 
 	//Function to execute interaction (taking as an input the interaction text, received from the widget
 	UFUNCTION(BlueprintCallable, Category="Interaction|Setup")
-	void InteractWithSpecificInteraction(TSubclassOf<UInteractionData> InteractionType, USceneComponent* HitComponent, AActor* InteractingActor, EInteractionContext Context);
-
-
+	void InteractWithSpecificInteraction(TSubclassOf<UInteractionData> InteractionType, USceneComponent* HitComponent, AActor* InteractingActor, EInteractionContext Context, UInteractionData* InteractionInstance);
 
 
 	
@@ -308,7 +306,7 @@ private:
 	void ExecuteNextCascadeInteraction(FInteractionCascadeData& Cascade, AActor* InteractingActor, EInteractionContext Context);
 
 	//Returns the cascade avaiable for these parameters. Need only interaction text or Interaction type to work.
-	FInteractionCascadeData* FindValidCascade(const FString& m_InteractionText,EInteractionContext Context, const TSubclassOf<UInteractionData>& InteractionType);
+	FInteractionCascadeData* FindValidCascade(const FString& m_InteractionText,EInteractionContext Context, const TSubclassOf<UInteractionData>& InteractionType,UInteractionData* SpecificInteraction);
 	
 	//------------Properties--------------//
 	
