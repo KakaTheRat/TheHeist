@@ -163,6 +163,9 @@ public:
 	void InteractWithSpecificInteraction(TSubclassOf<UInteractionData> InteractionType, USceneComponent* HitComponent, AActor* InteractingActor, EInteractionContext Context, UInteractionData* InteractionInstance);
 
 
+	//Function used to check if a specific interaction type is implemented for this component.
+	UFUNCTION(BlueprintCallable, Category="Interaction|Setup")
+	bool DoestItImplementInteractionOfType(TSubclassOf<UInteractionData> InteractionType);
 
 protected:
 	

@@ -249,6 +249,18 @@ void UInteractableComponent::InteractWithSpecificInteraction(TSubclassOf<UIntera
     }
 }
 
+bool UInteractableComponent::DoestItImplementInteractionOfType(TSubclassOf<UInteractionData> InteractionType)
+{
+	for (UInteractionData* Data : AllInteractions)
+	{
+		if (Data && Data->GetClass() == InteractionType)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 void UInteractableComponent::FinishInteraction(AActor* InteractingActor, UInteractionData* Interaction)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("Interaction completed!")));
@@ -333,6 +345,7 @@ TArray<FName> UInteractionCascadeSlot::GetAvailableInteractionsForSelectedCompon
 }
 
 #pragma endregion
+
 
 #pragma region PostEdit
 

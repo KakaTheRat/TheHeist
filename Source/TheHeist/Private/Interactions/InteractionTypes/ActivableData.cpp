@@ -49,13 +49,13 @@ void UActivableData::ActivateSound(AActor* Owner)
 		if (bIsActivated)
 		{
 			AudioComp->Stop();
-			ClearAlert(Owner);
+			ClearAlert(OwnerActor);
 		}
 		else
 		{
 			AudioComp->SetSound(Sound);
 			AudioComp->Play();
-			TriggerAlert(Owner);
+			TriggerAlert(OwnerActor);
 			UGameplayStatics::SpawnSoundAttached(Sound, AudioComp);
 		}
 		bIsActivated = !bIsActivated;
