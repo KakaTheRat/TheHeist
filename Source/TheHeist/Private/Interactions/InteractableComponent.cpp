@@ -165,6 +165,7 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText, US
 void UInteractableComponent::InteractWithSpecificInteraction(TSubclassOf<UInteractionData> InteractionType,
 	USceneComponent* HitComponent, AActor* InteractingActor, EInteractionContext Context,UInteractionData* InteractionInstance)
 {
+
     if (!InteractingActor)
         return;
 

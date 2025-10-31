@@ -6,7 +6,7 @@
 #include "Components/LightComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/AudioComponent.h"
-#include "Enumerators/Interactions/InteractionsEnum.h"
+#include "Datas/Enumerators/Interactions/InteractionsEnum.h"
 #include "ActivableData.generated.h"
 
 UCLASS(Blueprintable, EditInlineNew, DisplayName="Activating Interaction")

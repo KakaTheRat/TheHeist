@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "InteractionData.h"
 #include "Components/TimelineComponent.h"
-#include "Enumerators/Interactions/InteractionsEnum.h"
+#include "Datas/Enumerators/Interactions/InteractionsEnum.h"
 #include "OpenableData.generated.h"
 
 

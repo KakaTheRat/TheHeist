@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Enumerators/Interactions/InteractionContextEnum.h"
+#include "Datas/Enumerators/Interactions/InteractionContextEnum.h"
 #include "UObject/Interface.h"
 #include "InteractionInterface.generated.h"
 
