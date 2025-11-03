@@ -30,7 +30,7 @@ FVector UFormationHelper::GetFormationOffset(UFormationData* FormationTypeData, 
 			}
 
 			int32 PositionInRow = Index - Count;
-			float XOffset = Row * RowSpacing;
+			float XOffset = -Row * RowSpacing;
 			float YOffset = (PositionInRow - (GuardsInRow - 1) / 2.f) * Spacing;
 			return FVector(XOffset, YOffset, 0.f);
 		}
