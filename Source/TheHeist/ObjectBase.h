@@ -45,7 +45,10 @@ public:
 	void ReturnObject();
 
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category= "Data")
 	UObjectDataAsset* ObjectDataAsset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	UStaticMeshComponent* StaticMesh;
 
 };
