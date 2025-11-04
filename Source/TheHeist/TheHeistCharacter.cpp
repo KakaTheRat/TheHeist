@@ -42,6 +42,17 @@ ATheHeistCharacter::ATheHeistCharacter()
 	// Configure character movement
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 	GetCharacterMovement()->AirControl = 0.5f;
+
+	FlashlightMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Flashlight Mesh"));	
+	FlashlightMesh->SetupAttachment(GetMesh(), FName("Flashlight"));
+
+	FlashlightLight = CreateDefaultSubobject<USpotLightComponent>(TEXT("Flashlight Light"));
+	FlashlightLight->SetupAttachment(FlashlightMesh);
+	FlashlightLight->SetIntensity(5000.f);
+	FlashlightLight->SetInnerConeAngle(20.f);
+	FlashlightLight->SetOuterConeAngle(40.f);
+	FlashlightLight->bUseInverseSquaredFalloff = false;
+	FlashlightLight->SetVisibility(false);
 }
 
 void ATheHeistCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -59,6 +70,8 @@ void ATheHeistCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		// Looking/Aiming
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATheHeistCharacter::LookInput);
 		EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ATheHeistCharacter::LookInput);
+
+		EnhancedInputComponent->BindAction(FlashlightAction, ETriggerEvent::Started, this, &ATheHeistCharacter::ToggleFlashlight);
 	}
 	else
 	{
@@ -95,6 +108,7 @@ void ATheHeistCharacter::DoAim(float Yaw, float Pitch)
 		AddControllerYawInput(Yaw);
 		AddControllerPitchInput(Pitch);
 	}
+	FlashlightMesh->SetWorldRotation(GetController()->GetControlRotation());
 }
 
 void ATheHeistCharacter::DoMove(float Right, float Forward)
@@ -117,4 +131,16 @@ void ATheHeistCharacter::DoJumpEnd()
 {
 	// pass StopJumping to the character
 	StopJumping();
+}
+
+void ATheHeistCharacter::ToggleFlashlight()
+{
+	GEngine->AddOnScreenDebugMessage(-1,1.0,FColor::Red,"Toggle flashlight");
+	if (FlashlightLight->IsVisible())
+	{
+		FlashlightLight->SetVisibility(false);
+	}else
+	{
+		FlashlightLight->SetVisibility(true);
+	}
 }
