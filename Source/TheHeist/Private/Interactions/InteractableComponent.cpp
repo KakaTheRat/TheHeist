@@ -165,6 +165,7 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText, US
 void UInteractableComponent::InteractWithSpecificInteraction(TSubclassOf<UInteractionData> InteractionType,
 	USceneComponent* HitComponent, AActor* InteractingActor, EInteractionContext Context,UInteractionData* InteractionInstance)
 {
+
     if (!InteractingActor)
         return;
 
@@ -247,6 +248,18 @@ void UInteractableComponent::InteractWithSpecificInteraction(TSubclassOf<UIntera
             break;
         }
     }
+}
+
+bool UInteractableComponent::DoestItImplementInteractionOfType(TSubclassOf<UInteractionData> InteractionType)
+{
+	for (UInteractionData* Data : AllInteractions)
+	{
+		if (Data && Data->GetClass() == InteractionType)
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 void UInteractableComponent::FinishInteraction(AActor* InteractingActor, UInteractionData* Interaction)
@@ -333,6 +346,7 @@ TArray<FName> UInteractionCascadeSlot::GetAvailableInteractionsForSelectedCompon
 }
 
 #pragma endregion
+
 
 #pragma region PostEdit
 

@@ -6,8 +6,8 @@
     #include "Perception/AISense_Hearing.h"
     #include "Perception/AISense_Sight.h"
     #include "Perception/AIPerceptionSystem.h"
-    #include "Enumerators/Guard/AlertTypes.h"
-#include "Enumerators/Interactions/InteractionContextEnum.h"
+    #include "Datas/Enumerators/Guard/AlertTypes.h"
+#include "Datas/Enumerators/Interactions/InteractionContextEnum.h"
 #include "InteractionData.generated.h"
 
     class UInteractableComponent;

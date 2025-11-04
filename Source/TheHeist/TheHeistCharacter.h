@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/SpotLightComponent.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "TheHeistCharacter.generated.h"
@@ -49,6 +50,9 @@ protected:
 	/** Mouse Look Input Action */
 	UPROPERTY(EditAnywhere, Category ="Input")
 	class UInputAction* MouseLookAction;
+
+	UPROPERTY(EditAnywhere, Category ="Input")
+	class UInputAction* FlashlightAction;
 	
 public:
 	ATheHeistCharacter();
@@ -77,6 +81,9 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoJumpEnd();
 
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void ToggleFlashlight();
+
 protected:
 
 	/** Set up input action bindings */
@@ -90,6 +97,14 @@ public:
 
 	/** Returns first person camera component **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
+
+private:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flashlight", meta = (AllowPrivateAccess = "true"))
+	UStaticMeshComponent* FlashlightMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flashlight", meta = (AllowPrivateAccess = "true"))
+	USpotLightComponent* FlashlightLight;
+	
 
 };
 
