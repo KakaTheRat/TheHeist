@@ -3,6 +3,13 @@
 
 #include "Guard/GuardAIC.h"
 
+void AGuardAIC::SetGuardState_Implementation()
+{
+}
+
+void AGuardAIC::SetTarget_Implementation(FVector Target)
+{
+}
 
 void AGuardAIC::BeginPlay()
 {
