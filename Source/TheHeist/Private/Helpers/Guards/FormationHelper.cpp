@@ -47,3 +47,41 @@ FVector UFormationHelper::GetFormationOffset(UFormationData* FormationTypeData, 
 		return FVector::ZeroVector;
 	}
 }
+
+TArray<AActor*> UFormationHelper::GetClosestActors(TArray<AActor*> Actors, const FVector& Location, int32 NumActorsToChoose)
+{
+	if (NumActorsToChoose == Actors.Num())
+		return Actors;
+	
+	// Array of actor with the distance
+	TArray<TPair<float, AActor*>> DistanceActorPairs;
+	DistanceActorPairs.Reserve(Actors.Num());
+
+	// Fills the array
+	for (AActor* Actor : Actors)
+	{
+		if (IsValid(Actor))
+		{
+			float DistanceSq = FVector::DistSquared(Location, Actor->GetActorLocation());
+			DistanceActorPairs.Add(TPair<float, AActor*>(DistanceSq, Actor));
+		}
+	}
+
+	// Sort by distance
+	DistanceActorPairs.Sort([](const TPair<float, AActor*>& A, const TPair<float, AActor*>& B)
+	{
+		return A.Key < B.Key;
+	});
+
+	// Chose N firsts
+	TArray<AActor*> ClosestActors;
+	const int32 Limit = FMath::Min(NumActorsToChoose, DistanceActorPairs.Num());
+	ClosestActors.Reserve(Limit);
+
+	for (int32 i = 0; i < Limit; ++i)
+	{
+		ClosestActors.Add(DistanceActorPairs[i].Value);
+	}
+
+	return ClosestActors;
+}

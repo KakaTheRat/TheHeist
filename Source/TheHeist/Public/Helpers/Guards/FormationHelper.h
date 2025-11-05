@@ -21,5 +21,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Formation")
 	static FVector GetFormationOffset(UFormationData* FormationType,int32 Index, float Spacing = 200.f, float RowSpacing = 200.f);
 	
+	//Calculates the closest actor to a given location.
+	//Enter the amount of actor expected in return.
+	UFUNCTION(BlueprintCallable, Category = "Formation")
+	static TArray<AActor*> GetClosestActors(TArray<AActor*> Actors,const FVector& Location, int32 NumActorsToChoose);
 	
 };

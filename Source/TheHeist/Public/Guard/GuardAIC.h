@@ -26,13 +26,7 @@ public:
 	//Event property, called whenever the guard reaches max stress level
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FOnMaxLevelStress OnMaxLevelStress;
-	
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void SetGuardState();
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void SetTarget(FVector TargetLocation);
-	
 	protected:
 
 	void BeginPlay() override;
