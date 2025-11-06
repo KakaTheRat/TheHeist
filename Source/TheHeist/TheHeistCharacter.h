@@ -105,6 +105,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flashlight", meta = (AllowPrivateAccess = "true"))
 	USpotLightComponent* FlashlightLight;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Missions", meta = (AllowPrivateAccess = "true"))
+	bool bIsMissionComplete = false;
+	
 
 };
 
