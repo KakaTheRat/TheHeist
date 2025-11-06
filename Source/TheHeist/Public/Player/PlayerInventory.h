@@ -18,6 +18,9 @@ struct FInventorySlot
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Quantity = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsStack = false;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryUpdated, const TArray<FInventorySlot>&, Items);
@@ -53,8 +56,14 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Inventory")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Inventory")
 	TArray<FInventorySlot> Items;
+
+	UPROPERTY()
+	TMap<TSubclassOf<AGadgets>, AGadgets*> SpawnedGadgets;
+
+	UPROPERTY()
+	TMap<TSubclassOf<AGadgets>, AGadgets*> CachedGadgets;
 	
 	UFUNCTION(BlueprintCallable)
 	void AddItem(TSubclassOf<AGadgets> ItemClass);
@@ -66,6 +75,12 @@ public:
 	//Called when gadget's use input released
 	UFUNCTION(BlueprintCallable)
 	void RelaseUseItem();
+
+	AGadgets* FindOrCacheGadget(TSubclassOf<AGadgets> ItemClass);
+
+	void RecallGadget(AGadgets* Gadget);
+
+	
 	
 	AGadgets* CurrentGadget;
 

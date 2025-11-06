@@ -23,10 +23,10 @@ struct FObjectGenral
 	FString Description = "";
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "General")
-	UMeshComponent* Mesh = nullptr;
+	UStaticMesh* Mesh = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "General")
-	float Value = 0.0f;
+	float Cooldown = 0.0f;
 };
 
 USTRUCT(BlueprintType)
@@ -63,10 +63,10 @@ struct FObjectAnimation
 	UAnimMontage* ExistObjectAnimation = nullptr;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effect")
-	UNiagaraSystem* UsingObjectAnimation = nullptr;
+	UAnimMontage* UsingObjectAnimation = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effect")
-	UNiagaraSystem* ReturnObjectAnimation = nullptr;
+	UAnimMontage* ReturnObjectAnimation = nullptr;
 };
 
 USTRUCT(BlueprintType)
@@ -75,7 +75,7 @@ struct FObjectStrut
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "General")
-	FObjectEffect General;
+	FObjectGenral General;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effect")
 	FObjectEffect Effect;

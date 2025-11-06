@@ -50,10 +50,18 @@ public:
 	//True if the gadget quantity can be decreased
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gadgets")
 	bool AmountCanBeDecreased = true;
+
 	
 protected:
+	FTimerHandle TimerHandle;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float Cooldown = 5.0f;
+
+	bool bCanBeUse = true;
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	
 
 public:	
 	// Called every frame
@@ -74,7 +82,10 @@ public:
 	//returns the max quantity
 	UFUNCTION(BlueprintCallable, Category="Gadget")
 	float GetMaxAmount(){return MaxAmount;}
-	
 
-
+	void ChangeCanBeUsed()
+	{
+		bCanBeUse = !bCanBeUse;
+	}
+	void CooldownTimer();
 };

@@ -22,6 +22,17 @@ void AGadgets::BeginPlay()
 	
 }
 
+void AGadgets::CooldownTimer()
+{
+	GetWorld()->GetTimerManager().SetTimer(
+		TimerHandle,          
+		this,                
+		&AGadgets::ChangeCanBeUsed, 
+		Cooldown,        
+		false              
+	);
+}
+
 // Called every frame
 void AGadgets::Tick(float DeltaTime)
 {

@@ -40,6 +40,7 @@ public:
 	
 	void ExistObject();
 
+	UFUNCTION(BlueprintCallable)
 	virtual void UseObject_Implementation() override;
 
 	void ReturnObject();
@@ -50,5 +51,21 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	UStaticMeshComponent* StaticMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	float Cooldown = 0.0f;
+
+
+	UPROPERTY()
+	ACharacter* OwnerCharacter;
+
+	UPROPERTY()
+	UAnimMontage* CurrentAnim = nullptr;
+
+	UPROPERTY()
+	UNiagaraComponent* NiagaraComp = nullptr;
+
+	UPROPERTY()
+	UAudioComponent* AudioComp = nullptr;
 
 };

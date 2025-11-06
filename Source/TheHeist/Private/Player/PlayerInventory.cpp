@@ -2,6 +2,8 @@
 
 
 #include "Player/PlayerInventory.h"
+#include "Kismet/GameplayStatics.h"
+
 
 // Sets default values for this component's properties
 UPlayerInventory::UPlayerInventory()
@@ -20,6 +22,7 @@ void UPlayerInventory::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
+	
 	
 }
 
@@ -57,56 +60,102 @@ void UPlayerInventory::AddItem(TSubclassOf<AGadgets> ItemClass)
 
 void UPlayerInventory::StartUseItem()
 {
-	TSubclassOf<AGadgets> ItemClass = Items[CurrentItemIndex].ItemClass;
-	UE_LOG(LogTemp, Warning, TEXT("Item is on cooldown: %d sec left"),Items[CurrentItemIndex].Quantity );
-	if (Items[CurrentItemIndex].Quantity <= 0)
+	FInventorySlot& Slot = Items[CurrentItemIndex];
+	TSubclassOf<AGadgets> ItemClass = Slot.ItemClass;
+
+	if (!ItemClass)
+		return;
+
+	if (Slot.Quantity <= 0)
 	{
 		return;
 	}
-	
-	if (ActiveCooldowns.Contains(ItemClass))
+	if (FindOrCacheGadget(ItemClass))
 	{
-		float Remaining = ActiveCooldowns[ItemClass];
-		if (Remaining > 0.f)
+		RecallGadget(FindOrCacheGadget(ItemClass));
+		UE_LOG(LogTemp, Warning, TEXT("%s is already spawned, recalling it by cash"), *ItemClass->GetName());
+		if (!Slot.bIsStack)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Item %s is on cooldown: %.2f sec left"), *ItemClass->GetName(), Remaining);
-			return;
+			Slot.Quantity--;
 		}
+		return;
 	}
-	
+
 	UWorld* World = GetWorld();
 	if (!World) return;
 
-	for (FInventorySlot& Slot : Items)
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = GetOwner();
+	SpawnParams.Instigator = Cast<APawn>(GetOwner());
+
+	AGadgets* SpawnedGadget = World->SpawnActor<AGadgets>(
+		ItemClass,
+		GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 100.f,
+		GetOwner()->GetActorRotation(),
+		SpawnParams
+	);
+
+	if (SpawnedGadget)
 	{
-		if (Slot.ItemClass)
-		{
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = GetOwner();
-			SpawnParams.Instigator = Cast<APawn>(GetOwner());
+		SpawnedGadgets.Add(ItemClass, SpawnedGadget);
+		CurrentGadget = SpawnedGadget;
+		CurrentGadget->OnUsePressed();
+		CurrentGadget->ChangeCanBeUsed();
+		CurrentGadget->CooldownTimer();
 
-			// Spawn actor
-			AActor* SpawnedActor = World->SpawnActor<AActor>(
-				Slot.ItemClass, 
-				GetOwner()->GetActorLocation(), 
-				GetOwner()->GetActorRotation(), 
-				SpawnParams
-			);
+		Slot.Quantity--;
 
-			if (SpawnedActor)
-			{
-				
-				CurrentGadget = Cast<AGadgets>(SpawnedActor);
-				if (CurrentGadget)
-				{
-					CurrentGadget->OnGadgetUsed.AddDynamic(this, &UPlayerInventory::OnGadgetUsed);
-					CurrentGadget->OnUsePressed();
-				}
-				
-			}
-		}
+		UE_LOG(LogTemp, Warning, TEXT("%s used, remaining: %d"), *ItemClass->GetName(), Slot.Quantity);
 	}
 }
+
+AGadgets* UPlayerInventory::FindOrCacheGadget(TSubclassOf<AGadgets> ItemClass)
+{
+	if (!ItemClass) return nullptr;
+
+	if (CachedGadgets.Contains(ItemClass) && IsValid(CachedGadgets[ItemClass]))
+	{
+		CurrentGadget = CachedGadgets[ItemClass];
+		return CurrentGadget;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World) return nullptr;
+
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(World, ItemClass, FoundActors);
+
+	for (AActor* Actor : FoundActors)
+	{
+		AGadgets* Gadget = Cast<AGadgets>(Actor);
+		if (IsValid(Gadget))
+		{
+			CurrentGadget = Gadget;
+			CachedGadgets.Add(ItemClass, Gadget);
+			return CurrentGadget;
+		}
+	}
+
+	return nullptr;
+}
+
+
+void UPlayerInventory::RecallGadget(AGadgets* Gadget)
+{
+	if (!Gadget || !GetOwner()) return;
+
+	FVector SpawnLocation = GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 100.f;
+	Gadget->SetActorLocation(SpawnLocation);
+	Gadget->SetActorRotation(GetOwner()->GetActorRotation());
+	Gadget->OnUsePressed();
+	Gadget->ChangeCanBeUsed();
+	Gadget->CooldownTimer();
+	
+
+	UE_LOG(LogTemp, Warning, TEXT("%s recalled"), *Gadget->GetName());
+}
+
+
 
 void UPlayerInventory::RelaseUseItem()
 {
