@@ -85,3 +85,28 @@ TArray<AActor*> UFormationHelper::GetClosestActors(TArray<AActor*> Actors, const
 
 	return ClosestActors;
 }
+
+TArray<FVector> UFormationHelper::FiltrateEQSPoints(const TArray<FVector>& Points, float MinDistance)
+{
+	TArray<FVector> OutFilteredPoints;
+
+	for (const FVector& Point : Points)
+	{
+		bool bTooClose = false;
+
+		for (const FVector& Existing : OutFilteredPoints)
+		{
+			if (FVector::Dist(Point, Existing) < MinDistance)
+			{
+				bTooClose = true;
+				break;
+			}
+		}
+
+		if (!bTooClose)
+		{
+			OutFilteredPoints.Add(Point);
+		}
+	}
+	return OutFilteredPoints;
+}

@@ -2,7 +2,7 @@
 
 UActivableData::UActivableData()
 {
-	InteractText = "Activate";
+	InteractText = "ON";
 }
 
 void UActivableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor)
@@ -26,21 +26,28 @@ void UActivableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, 
 	EndOfInteraction();
 }
 
-void UActivableData::ActivateLight(AActor* Owner)
+void UActivableData::ActivateLight(const AActor* Owner)
 {
 	if (!Owner) return;
 
 	if (ULightComponent* LightComp = Owner->FindComponentByClass<ULightComponent>())
 	{
 		LightComp->SetIntensity(LightIntensity * !bIsActivated);
-		bIsActivated = !bIsActivated;
-		bIsActivated ? InteractText = "Activated" : InteractText = "deaActivated";
+		bIsActivated ? InteractText = "ON" : InteractText = "OFF";
 	}
-
+	if (bIsActivated)
+		{
+			ClearAlert(OwnerActor, UAISense_Sight::StaticClass());
+		}
+	else
+		{
+			TriggerAlert(OwnerActor,UAISense_Sight::StaticClass());
+		}
+		bIsActivated = !bIsActivated;
 	
 }
 
-void UActivableData::ActivateSound(AActor* Owner)
+void UActivableData::ActivateSound(const AActor* Owner)
 {
 	if (!Owner) return;
 
@@ -49,14 +56,13 @@ void UActivableData::ActivateSound(AActor* Owner)
 		if (bIsActivated)
 		{
 			AudioComp->Stop();
-			ClearAlert(OwnerActor);
+			ClearAlert(OwnerActor, UAISense_Hearing::StaticClass());
 		}
 		else
 		{
 			AudioComp->SetSound(Sound);
 			AudioComp->Play();
-			TriggerAlert(OwnerActor);
-			UGameplayStatics::SpawnSoundAttached(Sound, AudioComp);
+			TriggerAlert(OwnerActor,UAISense_Hearing::StaticClass());
 		}
 		bIsActivated = !bIsActivated;
 		

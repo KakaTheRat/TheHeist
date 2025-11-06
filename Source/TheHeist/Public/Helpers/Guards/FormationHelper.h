@@ -25,5 +25,10 @@ public:
 	//Enter the amount of actor expected in return.
 	UFUNCTION(BlueprintCallable, Category = "Formation")
 	static TArray<AActor*> GetClosestActors(TArray<AActor*> Actors,const FVector& Location, int32 NumActorsToChoose);
+
+	//Calculates the closest actor to a given location.
+	//Enter the amount of actor expected in return.
+	UFUNCTION(BlueprintCallable, Category = "Formation")
+	static TArray<FVector> FiltrateEQSPoints(const TArray<FVector>& Points, float MinDistance);
 	
 };
