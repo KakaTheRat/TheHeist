@@ -120,11 +120,11 @@
         
         // Function to trigger guard's alert
         UFUNCTION(BlueprintCallable)
-        void TriggerAlert(AActor* SourceActor);
+        void TriggerAlert(AActor* SourceActor,TSubclassOf<UAISense> Sense);
         
         // Function to clear guard's alert
         UFUNCTION(BlueprintCallable)
-        void ClearAlert(AActor* SourceActor);
+        void ClearAlert(AActor* SourceActor, TSubclassOf<UAISense> Sense);
 
 #pragma endregion
         

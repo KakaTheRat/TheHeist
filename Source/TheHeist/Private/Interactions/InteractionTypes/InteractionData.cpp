@@ -32,7 +32,7 @@ void UInteractionData::ExecuteInteraction(AActor* Owner, USceneComponent* Target
     CurrentInteractingActor = InteractingActor;
 }
 
-void UInteractionData::TriggerAlert(AActor* SourceActor)
+void UInteractionData::TriggerAlert(AActor* SourceActor, TSubclassOf<UAISense> Sense)
 {
     if (!bCanAlertGuards || !SourceActor) return;
 
@@ -52,17 +52,17 @@ void UInteractionData::TriggerAlert(AActor* SourceActor)
     {
         
         // Registers stimulus to the sense
-        StimulusSource->RegisterForSense(UAISense_Sight::StaticClass());
+        StimulusSource->RegisterForSense(Sense);
        
     }
 }
 
-void UInteractionData::ClearAlert(AActor* SourceActor)
+void UInteractionData::ClearAlert(AActor* SourceActor, TSubclassOf<UAISense> Sense)
 {
     if (!SourceActor || !StimulusSource) return;
 
     // Désenregistre le composant du système de perception
-    StimulusSource->UnregisterFromSense(UAISense_Sight::StaticClass());
+    StimulusSource->UnregisterFromSense(Sense);
 
 }
 

@@ -55,9 +55,9 @@ protected:
 
 	//Activation for the light
 	UFUNCTION()
-	void ActivateLight(AActor* Owner);
+	void ActivateLight(const AActor* Owner);
 
 	//Activation for the sound
 	UFUNCTION()
-	void ActivateSound(AActor* Owner);
+	void ActivateSound(const AActor* Owner);
 };
