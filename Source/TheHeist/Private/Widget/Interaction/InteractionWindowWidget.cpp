@@ -1,0 +1,17 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Widget/Interaction/InteractionWindowWidget.h"
+
+void UInteractionWindowWidget::AddInteraction_Implementation(const FString& m_InteractText)
+{
+}
+
+void UInteractionWindowWidget::ClearEntries_Implementation()
+{
+}
+
+void UInteractionWindowWidget::TriggerInteraction(const FString m_InteractionName)
+{
+	OnInteractionClicked.Broadcast(m_InteractionName);
+}
