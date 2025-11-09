@@ -440,7 +440,9 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 		return;
 
 	
+	
 	//Subscribes the cascade to the end of the interaction event. Will cause to execute the next interaction in this cascade, if possible
+	Interaction->OnInteractionEnded.Clear();
 	FDelegateHandle Handle;
 	Handle = Interaction->OnInteractionEnded.AddLambda(
 		[this, CascadePtr = &Cascade, Context, &Handle](AActor* InteractingActor, UInteractionData* Interaction) mutable
