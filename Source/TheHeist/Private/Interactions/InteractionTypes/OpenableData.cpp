@@ -67,46 +67,68 @@ void UOpenableData::InitTimeline(AActor* Owner)
 }
 void UOpenableData::HandleProgress(float Value)
 {
-	if (!LinkedComponent) return;
+    if (!LinkedComponent) return;
 
-	switch (OpenableType)
-	{
-	case EOpeningType::Door:
-		{
-			float RotationAngle = (OpeningSide == EOpeningSide::Left || OpeningSide == EOpeningSide::Down) ? -Angle*Value : Angle*Value;
-			if (OpeningSide == EOpeningSide::Up || OpeningSide == EOpeningSide::Down)
-				LinkedComponent->SetRelativeRotation(FRotator(RotationAngle, 0, 0));
-			else
-				LinkedComponent->SetRelativeRotation(FRotator(0, RotationAngle, 0));
-			break;
-		}
-	case EOpeningType::Drawer:
-		FVector Direction = FVector::ZeroVector;
+    // Calculate rotation based of opening type
+    switch (OpenableType)
+    {
+        case EOpeningType::Door:
+        {
+            // Determines opening side, based of opening side
+            float RotationAngle = Angle * Value;
+            switch (OpeningSide)
+            {
+                case EOpeningSide::Left:  RotationAngle = -RotationAngle; break;
+                case EOpeningSide::Down:  RotationAngle = -RotationAngle; break;
+                case EOpeningSide::Up:     break;
+                case EOpeningSide::Right:  break;
+                default: break;
+            }
 
-		if (b_ShouldUseOpeningSide)
-		{
-			
-			switch (OpeningSide)
-			{
-			case EOpeningSide::Right: Direction = LinkedComponent->GetRightVector(); break;
-			case EOpeningSide::Left:  Direction = -LinkedComponent->GetRightVector(); break;
-			case EOpeningSide::Up:    Direction = LinkedComponent->GetUpVector(); break;
-			case EOpeningSide::Down:  Direction = -LinkedComponent->GetUpVector(); break;
-			default: break;
-			}
-		}
-		else
-		{
-			
-			Direction = LinkedComponent->GetForwardVector();
-		}
+         
+            FRotator DeltaRot = FRotator::ZeroRotator;
+            if (OpeningSide == EOpeningSide::Up || OpeningSide == EOpeningSide::Down)
+                DeltaRot.Pitch = RotationAngle;
+            else
+                DeltaRot.Yaw = RotationAngle;
 
-		
-		float DirectionSign = (OpeningDirection == EOpeningDirection::Push) ? -1.f : 1.f;
+            // Final rotation
+            LinkedComponent->SetRelativeRotation(InitialRotation + DeltaRot);
+            break;
+        }
 
-		LinkedComponent->SetRelativeLocation(InitialLocation + Direction * Distance * Value * DirectionSign);
-		break;
-	}
+        case EOpeningType::Drawer:
+        {
+            // Calculate translation direction
+            FVector Direction = FVector::ZeroVector;
+
+            if (b_ShouldUseOpeningSide)
+            {
+                switch (OpeningSide)
+                {
+                    case EOpeningSide::Right: Direction = FVector::RightVector; break;
+                    case EOpeningSide::Left:  Direction = -FVector::RightVector; break;
+                    case EOpeningSide::Up:    Direction = FVector::UpVector; break;
+                    case EOpeningSide::Down:  Direction = -FVector::UpVector; break;
+                    default: break;
+                }
+            }
+            else
+            {
+                Direction = FVector::ForwardVector;
+            }
+
+            // Pulling or pushing 
+            float DirectionSign = (OpeningDirection == EOpeningDirection::Push) ? -1.f : 1.f;
+
+            
+            FVector RotatedDirection = InitialRotation.RotateVector(Direction);
+
+            // Final translation
+            LinkedComponent->SetRelativeLocation(InitialLocation + RotatedDirection * Distance * Value * DirectionSign);
+            break;
+        }
+    }
 }
 
 void UOpenableData::HandleFinished()
