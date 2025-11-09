@@ -48,6 +48,7 @@
         FOnInteractionEnded OnInteractionEnded;
 
     	//Set up the end sequence of each interaction
+    	UFUNCTION(BlueprintCallable,Category="Interaction")
     	void EndOfInteraction();
 
         //Interaction execution. Must be overrided by each interaction type
@@ -63,14 +64,21 @@
         UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")
         FString InteractText;
 
-    	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction", meta = (GetOptions = "f"))
+    	UPROPERTY(EditAnywhere, Category="Interaction")
+    	bool bUseExternalActor = false;
+
+    	// Acteur externe dont on veut les composants
+    	UPROPERTY(EditAnywhere, Category="Interaction", meta=(EditCondition="bUseExternalActor"))
+    	AActor* ExternalActor = nullptr;
+    	
+    	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction", meta = (GetOptions = "GetAvailableComponents"))
     	FName CompNames;
 
     	UFUNCTION()
     	
-    	TArray<FName> f() const
+    	TArray<FName> GetAvailableComponents() const
     	{
-    		UE_LOG(LogTemp, Warning, TEXT("HIHIHIHIH"));
+    		/*UE_LOG(LogTemp, Warning, TEXT("HIHIHIHIH"));
     		TArray<FName> Result;
 
     		if (!OwnerActor) return Result;
@@ -83,6 +91,31 @@
     			if (Comp)
     			{
     				UE_LOG(LogTemp, Warning, TEXT("%s"), *Comp->GetName());
+    				Result.Add(Comp->GetFName());
+    			}
+    		}
+
+    		return Result;*/
+    		TArray<FName> Result;
+
+    		// Détermine sur quel acteur on travaille
+    		AActor* TargetActor = nullptr;
+    		if (bUseExternalActor && ExternalActor)
+    			TargetActor = ExternalActor;
+    		else
+    			TargetActor = OwnerActor;
+
+    		if (!TargetActor)
+    			return Result;
+
+    		// Liste les composants
+    		TArray<USceneComponent*> Components;
+    		TargetActor->GetComponents<USceneComponent>(Components);
+
+    		for (USceneComponent* Comp : Components)
+    		{
+    			if (Comp)
+    			{
     				Result.Add(Comp->GetFName());
     			}
     		}
