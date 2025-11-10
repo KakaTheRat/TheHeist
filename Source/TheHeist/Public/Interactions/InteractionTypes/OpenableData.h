@@ -99,7 +99,18 @@ protected:
 	// Optional length of animation (curve can have its own length)
 	UPROPERTY(EditAnywhere, Category="Opening")
 	float Duration = 1.0f;
-        
+
+	UPROPERTY(EditAnywhere, Category="Opening")
+	USoundBase* DuringSound;
+	
+	UPROPERTY(EditAnywhere, Category="Opening")
+	USoundBase* StartingSound;
+
+	UPROPERTY(EditAnywhere, Category="Opening")
+	USoundBase* EndingSound;
+
+	bool bDuringSoundPlaying = false;
+	
 	bool bIsOpened = false;
 	bool bIsMoving = false;
 
