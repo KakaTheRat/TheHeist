@@ -135,6 +135,11 @@ public:
 	// Array of all the components impacted by the interaction
 	UPROPERTY(BlueprintReadOnly)
 	TArray<USceneComponent*> AllComponentInteractable;
+
+	// Array of all the components impacted by the interaction for the player. Will remove the ones that should not be seen
+	UPROPERTY(BlueprintReadOnly)
+	TArray<USceneComponent*> AllComponentInteractablePlayer;
+	
 	
 	// FUNCTIONS //
 

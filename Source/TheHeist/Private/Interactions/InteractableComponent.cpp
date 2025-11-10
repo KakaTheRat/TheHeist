@@ -37,6 +37,11 @@ void UInteractableComponent::BeginPlay()
 			if (Comp && Comp->GetFName() == Data->CompNames)
 			{
 				AllComponentInteractable.AddUnique(Comp);
+				
+				if (Data->bShouldAppearForThePlayer)
+				{
+					AllComponentInteractablePlayer.AddUnique(Comp);
+				}
 				break;
 			}
 		}
@@ -282,9 +287,12 @@ TArray<FString> UInteractableComponent::GetInteractionsForAComp(USceneComponent*
 
 	for (const UInteractionData* Data : AllInteractions)
 	{
-		if (Data->CompNames == Comp->GetName())
+		if (Data->bShouldAppearForThePlayer)
 		{
-			Result.Add(Data->InteractText);
+			if (Data->CompNames == Comp->GetName())
+			{
+				Result.Add(Data->InteractText);
+			}
 		}
 	}
 	
@@ -440,7 +448,9 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 		return;
 
 	
+	
 	//Subscribes the cascade to the end of the interaction event. Will cause to execute the next interaction in this cascade, if possible
+	Interaction->OnInteractionEnded.Clear();
 	FDelegateHandle Handle;
 	Handle = Interaction->OnInteractionEnded.AddLambda(
 		[this, CascadePtr = &Cascade, Context, &Handle](AActor* InteractingActor, UInteractionData* Interaction) mutable
