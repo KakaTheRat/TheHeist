@@ -37,6 +37,11 @@ void UInteractableComponent::BeginPlay()
 			if (Comp && Comp->GetFName() == Data->CompNames)
 			{
 				AllComponentInteractable.AddUnique(Comp);
+				
+				if (Data->bShouldAppearForThePlayer)
+				{
+					AllComponentInteractablePlayer.AddUnique(Comp);
+				}
 				break;
 			}
 		}
@@ -282,9 +287,12 @@ TArray<FString> UInteractableComponent::GetInteractionsForAComp(USceneComponent*
 
 	for (const UInteractionData* Data : AllInteractions)
 	{
-		if (Data->CompNames == Comp->GetName())
+		if (Data->bShouldAppearForThePlayer)
 		{
-			Result.Add(Data->InteractText);
+			if (Data->CompNames == Comp->GetName())
+			{
+				Result.Add(Data->InteractText);
+			}
 		}
 	}
 	

@@ -67,13 +67,20 @@
     	UPROPERTY(EditAnywhere, Category="Interaction")
     	bool bUseExternalActor = false;
 
-    	// Acteur externe dont on veut les composants
+    	// External actor 
     	UPROPERTY(EditAnywhere, Category="Interaction", meta=(EditCondition="bUseExternalActor"))
     	AActor* ExternalActor = nullptr;
-    	
+
+    	//Dropdown of available components for the owner or given actor
     	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction", meta = (GetOptions = "GetAvailableComponents"))
     	FName CompNames;
 
+    	//Bool to determines if this interaction should be seen and used by the player
+    	UPROPERTY(EditAnywhere, Category="Interaction")
+		bool bShouldAppearForThePlayer = true;
+    	
+    	
+    	
     	UFUNCTION()
     	
     	TArray<FName> GetAvailableComponents() const

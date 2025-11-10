@@ -1,6 +1,7 @@
 #include "Interactions/InteractionTypes/OpenableData.h"
 
 #include "NetworkMessage.h"
+#include "Kismet/GameplayStatics.h"
 
 UOpenableData::UOpenableData()
 {
@@ -30,7 +31,10 @@ void UOpenableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, E
 		bHasStoredInitialTransform = true;
 	}
 	
-
+	if (StartingSound && LinkedComponent)
+	{
+		UGameplayStatics::SpawnSoundAttached(StartingSound, LinkedComponent);
+	}
 	
 	if (Timeline.IsPlaying())
 	{
@@ -67,6 +71,17 @@ void UOpenableData::InitTimeline(AActor* Owner)
 }
 void UOpenableData::HandleProgress(float Value)
 {
+
+	if (DuringSound && LinkedComponent)
+	{
+		
+		if(!bDuringSoundPlaying)
+		{
+			UGameplayStatics::SpawnSoundAttached(DuringSound, LinkedComponent);
+			bDuringSoundPlaying = true;
+		}
+	}
+	
     if (!LinkedComponent) return;
 
     // Calculate rotation based of opening type
@@ -134,6 +149,13 @@ void UOpenableData::HandleProgress(float Value)
 void UOpenableData::HandleFinished()
 {
 	CurrentState = bIsOpened ? EOpeningStates::Open : EOpeningStates::Close;
+	bDuringSoundPlaying = false;
+	
+	if (EndingSound && LinkedComponent && !bIsOpened)
+	{
+		UGameplayStatics::SpawnSoundAttached(EndingSound, LinkedComponent);
+	}
+	
 	EndOfInteraction();
 }
 
