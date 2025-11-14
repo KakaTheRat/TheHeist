@@ -29,8 +29,49 @@ void UInteractionData::PostInitProperties()
 
 void UInteractionData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor)
 {
-    CurrentInteractingActor = InteractingActor;
+    if (bWaitingForAnimation)
+    {
+        CurrentInteractingActor = InteractingActor;
+
+        if (InteractionMontage && InteractingActor)
+        {
+            UAnimInstance* Anim = InteractingActor->FindComponentByClass<USkeletalMeshComponent>()->GetAnimInstance();
+
+            if (Anim)
+            {
+                Anim->OnPlayMontageNotifyBegin.AddDynamic(this, &UInteractionData::OnMontageNotifyBegin);
+                Anim->Montage_Play(InteractionMontage);
+                bWaitingForAnimation = false;
+            
+                return;
+            }
+        }
+    }
+    
+    
+    
 }
+
+void UInteractionData::OnMontageNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& Payload)
+{
+    ExecuteInteraction()
+    if (!bWaitingForAnimation) return;
+    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Blue, "Genial");
+    // Filtrer le notify que tu veux écouter
+    if (NotifyName == MontageNotifyToTrigger)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Notify reçu : OnInteract"));
+        
+        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Blue, "Super");
+
+        // Si tu veux, tu peux arrêter d'attendre après
+        bWaitingForAnimation = false;
+    }
+}
+
+
+
+
 
 void UInteractionData::TriggerAlert(AActor* SourceActor, TSubclassOf<UAISense> Sense)
 {

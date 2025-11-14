@@ -11,7 +11,7 @@ UOpenableData::UOpenableData()
 
 void UOpenableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor)
 {
-	Super::ExecuteInteraction(Owner, Target, Context, nullptr);
+	Super::ExecuteInteraction(Owner, Target, Context, InteractingActor);
 
 	CurrentInteractingActor = InteractingActor;
 	 
