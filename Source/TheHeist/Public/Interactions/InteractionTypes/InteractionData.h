@@ -129,7 +129,31 @@
 
     		return Result;
     	}
-        
+
+
+
+
+
+
+    	// Animation montage à jouer avant d'exécuter l'interaction
+    	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation")
+    	UAnimMontage* InteractionMontage = nullptr;
+
+    	// Nom de l'AnimNotify attendu (ex: "OnInteract")
+    	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation")
+    	FName MontageNotifyToTrigger = "OnInteract";
+
+    	// Flag pour savoir si on est en attente du notify
+    	bool bWaitingForAnimation = true;
+
+    	UFUNCTION()
+    	void OnMontageNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& Payload);
+    	
+
+    	
+
+
+    	
        
 #pragma region Alert
         //-------------ALERT
