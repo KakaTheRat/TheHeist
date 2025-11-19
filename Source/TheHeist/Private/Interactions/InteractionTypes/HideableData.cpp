@@ -5,13 +5,9 @@ UHideableData::UHideableData()
 	InteractText = "Hide";
 }
 
-void UHideableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor)
+void UHideableData::StartInteraction()
 {
-	Super::ExecuteInteraction(Owner, Target, Context, nullptr);
-	CurrentInteractingActor = InteractingActor;
-
-	if (!Owner)
-		return;
+	
 
 	// ===  GUARD CASE CONTEXT ===
 	if (Context == EInteractionContext::Guard)
@@ -79,31 +75,34 @@ void UHideableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, E
 	}
 
 	// === Movement launch ===
-	if (UWorld* World = Owner->GetWorld())
+	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().SetTimer(
 			HideTimerHandle,
-			[this, Owner]() { HideStep(Owner); },
+			[this]()
+			{ 
+				HideStep(Owner);
+			},
 			HideTickRate,
 			true
 		);
 	}
 }
 
-void UHideableData::HideStep(AActor* Owner)
+void UHideableData::HideStep(AActor* m_Owner)
 {
 	if (!Owner || !PlayerRef.IsValid())
 		return;
 
-	FVector Target = bIsUsed ? QuitLocation : HiddenLocation;
+	FVector m_Target = bIsUsed ? QuitLocation : HiddenLocation;
 	FVector Current = PlayerRef->GetActorLocation();
 	float DeltaTime = Owner->GetWorld()->GetDeltaSeconds();
 	float Speed = 300.f;
 
-	FVector NewPos = UKismetMathLibrary::VInterpTo_Constant(Current, Target, DeltaTime, Speed);
+	FVector NewPos = UKismetMathLibrary::VInterpTo_Constant(Current, m_Target, DeltaTime, Speed);
 	PlayerRef->SetActorLocation(NewPos);
 	
-	if (FVector::DistSquared(Target, PlayerRef->GetActorLocation()) < FMath::Square(5.f))
+	if (FVector::DistSquared(m_Target, PlayerRef->GetActorLocation()) < FMath::Square(5.f))
 	{
 		Owner->GetWorld()->GetTimerManager().ClearTimer(HideTimerHandle);
 

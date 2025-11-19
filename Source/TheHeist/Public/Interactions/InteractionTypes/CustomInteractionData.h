@@ -16,5 +16,5 @@ class THEHEIST_API UCustomInteractionData : public UInteractionData
 
 public:
 	
-	virtual void ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor) override;
+	virtual void StartInteraction() override;
 };

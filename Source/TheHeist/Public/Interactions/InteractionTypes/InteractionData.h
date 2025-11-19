@@ -52,8 +52,10 @@
     	void EndOfInteraction();
 
         //Interaction execution. Must be overrided by each interaction type
-        virtual void ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor);
+        virtual void ExecuteInteraction(AActor* m_Owner, USceneComponent* m_Target, EInteractionContext m_Context, AActor* m_InteractingActor);
 
+    	virtual void StartInteraction();
+    	
         //Virtual function, to tick the UObject into the interaction component. Override this to make is happen
         virtual void Tick(float DeltaTime) {}
 
@@ -148,9 +150,29 @@
 
     	UFUNCTION()
     	void OnMontageNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& Payload);
+
+    	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation")
+    	float PlayRate = 1;
+    	
+    	UPROPERTY(editAnywhere, BlueprintReadWrite, Category="Interaction|Animation", meta = (GetOptions = "GetAvailableComponents"))
+    	FName AnimationTarget;
+
+    	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation")
+    	FName BoneTarget = EName::None;
     	
 
-    	
+    	UPROPERTY()
+    	AActor* Owner;
+
+    	UPROPERTY()
+    	USceneComponent* Target;
+
+    	UPROPERTY()
+    	EInteractionContext Context;
+
+    	UPROPERTY()
+    	AActor* InteractingActor;
+
 
 
     	
@@ -204,6 +226,9 @@
     	
 
     	virtual void PostInitProperties() override;
+
+    	UFUNCTION()
+    	void PlayAnimation();
     	
     };
 
