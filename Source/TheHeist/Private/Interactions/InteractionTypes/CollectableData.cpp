@@ -5,12 +5,9 @@ UCollectableData::UCollectableData()
 	InteractText = "Collect";
 }
 
-void UCollectableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor)
- {
- 	Super::ExecuteInteraction(Owner, Target, Context, nullptr);
- 
- 	if (!Owner) return;
-
+void UCollectableData::StartInteraction()
+{
+	
  	APlayerController* PC = Owner->GetWorld()->GetFirstPlayerController();
  	APawn* PlayerRef = PC ? PC->GetPawn() : nullptr;
  	if (!PlayerRef) return;
@@ -18,8 +15,11 @@ void UCollectableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target
  	UPlayerInventory* Inventory = PlayerRef->FindComponentByClass<UPlayerInventory>();
  	if (Inventory)
  	{
+ 		USkeletalMeshComponent* Mesh = InteractingActor->FindComponentByClass<USkeletalMeshComponent>();
+ 		Owner->SetActorEnableCollision(false);
+ 		Owner->AttachToComponent(Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, "HandGrip_R");
  		Inventory->AddItem(GadgetClass);
- 		Owner->Destroy();
+ 		
  	}
  	else
  	{

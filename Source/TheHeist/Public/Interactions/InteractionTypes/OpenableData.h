@@ -36,7 +36,7 @@ protected:
 
 	UOpenableData();
 	
-	virtual void ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor) override;
+	virtual void StartInteraction() override;
 
 
 	

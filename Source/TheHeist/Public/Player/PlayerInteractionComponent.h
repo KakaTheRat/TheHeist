@@ -56,4 +56,10 @@ public:
 	//Returns the interaction signal widget
 	UFUNCTION(BlueprintCallable)
 	AActor* GetInteractionSignalWidget(){return InteractionSignalWidgetInstance;};
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USceneComponent* InteractionTarget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bEnableHandIK = false;
 };

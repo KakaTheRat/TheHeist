@@ -1,6 +1,7 @@
 #include "Interactions/InteractionTypes/InteractionData.h"
-
+#include "GameFramework/Character.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Player/PlayerInteractionComponent.h"
 
 TArray<FName> UInteractionData::GetAvailableStates()
 {
@@ -27,45 +28,66 @@ void UInteractionData::PostInitProperties()
     }
 }
 
-void UInteractionData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor)
+
+
+void UInteractionData::ExecuteInteraction(AActor* m_Owner, USceneComponent* m_Target, EInteractionContext m_Context, AActor* m_InteractingActor)
 {
-    if (bWaitingForAnimation)
+    Owner = m_Owner;
+    Target = m_Target;
+    Context = m_Context;
+    InteractingActor = m_InteractingActor;
+    
+    if (InteractionMontage)
     {
-        CurrentInteractingActor = InteractingActor;
-
-        if (InteractionMontage && InteractingActor)
-        {
-            UAnimInstance* Anim = InteractingActor->FindComponentByClass<USkeletalMeshComponent>()->GetAnimInstance();
-
-            if (Anim)
-            {
-                Anim->OnPlayMontageNotifyBegin.AddDynamic(this, &UInteractionData::OnMontageNotifyBegin);
-                Anim->Montage_Play(InteractionMontage);
-                bWaitingForAnimation = false;
-            
-                return;
-            }
-        }
+       PlayAnimation();
+        return;
     }
-    
-    
+    StartInteraction();
+}
+
+void UInteractionData::StartInteraction()
+{
     
 }
 
+
 void UInteractionData::OnMontageNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& Payload)
 {
-    ExecuteInteraction()
-    if (!bWaitingForAnimation) return;
-    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Blue, "Genial");
-    // Filtrer le notify que tu veux écouter
     if (NotifyName == MontageNotifyToTrigger)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Notify reçu : OnInteract"));
+        ACharacter* Character = Cast<ACharacter>(InteractingActor);
+
+       UPlayerInteractionComponent* f = Character->GetComponentByClass<UPlayerInteractionComponent>();
+
+        f->bEnableHandIK = false;
+        f->InteractionTarget = nullptr;
         
         GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Blue, "Super");
+        
+        StartInteraction();
+    }
+    if (NotifyName == "Start")
+    {
+        ACharacter* Character = Cast<ACharacter>(InteractingActor);
 
-        // Si tu veux, tu peux arrêter d'attendre après
-        bWaitingForAnimation = false;
+        UPlayerInteractionComponent* f = Character->GetComponentByClass<UPlayerInteractionComponent>();
+
+        f->bEnableHandIK = true;
+
+        TArray<USceneComponent*> Components;
+        Owner->GetComponents<USceneComponent>(Components);
+        
+        for (USceneComponent* s : Components)
+        {
+            if (s->GetName() == AnimationTarget)
+            {
+                f->InteractionTarget = s;
+                GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Blue, "YAHEE");
+                return;
+            }
+        }
+        
+        
     }
 }
 
@@ -107,4 +129,20 @@ void UInteractionData::ClearAlert(AActor* SourceActor, TSubclassOf<UAISense> Sen
 
 }
 
+
+void UInteractionData::PlayAnimation()
+{
+    if (InteractionMontage && InteractingActor)
+    {
+        UAnimInstance* Anim = InteractingActor->FindComponentByClass<USkeletalMeshComponent>()->GetAnimInstance();
+
+
+        if (Anim)
+        {
+            Anim->OnPlayMontageNotifyBegin.RemoveDynamic(this, &UInteractionData::OnMontageNotifyBegin);
+            Anim->OnPlayMontageNotifyBegin.AddDynamic(this, &UInteractionData::OnMontageNotifyBegin);
+            Anim->Montage_Play(InteractionMontage, PlayRate);
+        }
+    }
+}
 

@@ -9,12 +9,8 @@ UOpenableData::UOpenableData()
 	CurrentState = EOpeningStates::Close;
 }
 
-void UOpenableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor)
+void UOpenableData::StartInteraction()
 {
-	Super::ExecuteInteraction(Owner, Target, Context, InteractingActor);
-
-	CurrentInteractingActor = InteractingActor;
-	 
 	
 	if (!Owner || !Target || !Curve) return;
 	LinkedComponent = Target;
@@ -52,7 +48,7 @@ void UOpenableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, E
 	InteractText = bIsOpened ? "Close" : "Open";
 	
 }
-void UOpenableData::InitTimeline(AActor* Owner)
+void UOpenableData::InitTimeline(AActor* m_Owner)
 {
 	FOnTimelineFloat ProgressFunction;
 	ProgressFunction.BindUFunction(this, FName("HandleProgress"));
