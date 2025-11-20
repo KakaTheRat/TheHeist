@@ -1,7 +1,7 @@
 #include "Interactions/InteractionTypes/InteractionData.h"
 #include "GameFramework/Character.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
-#include "Player/PlayerInteractionComponent.h"
+#include "Entities/Player/PlayerInteractionComponent.h"
 
 TArray<FName> UInteractionData::GetAvailableStates()
 {
