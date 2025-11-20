@@ -20,10 +20,21 @@ void UCollectableData::StartInteraction()
  	{
  		USkeletalMeshComponent* Mesh = IEntitiesInterface::Execute_GetSkeletalMeshComponent(InteractingActor);
 
- 		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red, FString::Printf(TEXT("Mesh = %s"), *GetName()));
- 		
+ 		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
+	FString::Printf(TEXT("Mesh = %s"), *Mesh->GetName()));
+ 		if (!Mesh->DoesSocketExist("HandGrip_R"))
+ 		{
+ 			GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red,
+				 TEXT("Socket HandGrip_R DOES NOT EXIST on mesh !!"));
+
+ 			return;
+ 		}
  		Owner->SetActorEnableCollision(false);
- 		Owner->AttachToComponent(Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, "HandGrip_R");
+ 		Owner->AttachToComponent(
+	Mesh,
+	FAttachmentTransformRules::SnapToTargetIncludingScale,
+	FName("HandGrip_R")
+);
  		Inventory->AddItem(GadgetClass);
  		
  	}
