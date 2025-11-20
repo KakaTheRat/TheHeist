@@ -26,5 +26,7 @@ class THEHEIST_API IEntitiesInterface
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Entities")
 	UAnimBlueprint* GetAnimationBlueprint();
 
-	
+	//Returns the skeletal mesh
+	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Entities")
+	USkeletalMeshComponent* GetSkeletalMeshComponent();
 };
