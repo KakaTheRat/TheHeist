@@ -1,5 +1,8 @@
 #include "Interactions/InteractionTypes/CollectableData.h"
 
+#include "Entities/EntitiesInterface.h"
+#include "Entities/Player/PlayerInventory.h"
+
 UCollectableData::UCollectableData()
 {
 	InteractText = "Collect";
@@ -15,7 +18,10 @@ void UCollectableData::StartInteraction()
  	UPlayerInventory* Inventory = PlayerRef->FindComponentByClass<UPlayerInventory>();
  	if (Inventory)
  	{
- 		USkeletalMeshComponent* Mesh = InteractingActor->FindComponentByClass<USkeletalMeshComponent>();
+ 		USkeletalMeshComponent* Mesh = IEntitiesInterface::Execute_GetSkeletalMeshComponent(InteractingActor);
+
+ 		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red, FString::Printf(TEXT("Mesh = %s"), *GetName()));
+ 		
  		Owner->SetActorEnableCollision(false);
  		Owner->AttachToComponent(Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, "HandGrip_R");
  		Inventory->AddItem(GadgetClass);
