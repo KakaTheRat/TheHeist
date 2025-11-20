@@ -4,7 +4,7 @@
 #include "InteractionData.h"
 #include "UObject/NoExportTypes.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Player/PlayerInteractionComponent.h"
+#include "Entities/Player/PlayerInteractionComponent.h"
 #include "HideableData.generated.h"
 
 UCLASS(Blueprintable, EditInlineNew, DisplayName="Hiding Interaction")

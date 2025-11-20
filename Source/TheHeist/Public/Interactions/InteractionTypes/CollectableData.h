@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "InteractionData.h"
 #include "UObject/NoExportTypes.h"
-#include "Player/PlayerInventory.h"
+#include "Entities/Player/PlayerInventory.h"
 #include "CollectableData.generated.h"
 
 UCLASS(Blueprintable, EditInlineNew, DisplayName="Collecting Interaction")

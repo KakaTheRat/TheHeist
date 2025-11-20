@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "InteractionInterface.h"
 #include "Components/ActorComponent.h"
-#include "Player/PlayerInteractionComponent.h"
+#include "Entities/Player/PlayerInteractionComponent.h"
 #include "../Interactions/InteractionTypes/InteractionData.h"
 #include "Widget/Interaction/InteractionWidgetActor.h"
 #include "InteractableComponent.generated.h"
