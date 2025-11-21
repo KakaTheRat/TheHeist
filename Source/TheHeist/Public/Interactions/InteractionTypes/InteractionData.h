@@ -159,7 +159,12 @@
 
     	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation")
     	FName BoneTarget = EName::None;
-    	
+
+    	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation", meta = (GetOptions = "GetAvailableComponents"))
+    	FName InPosition;
+
+    	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation", meta = (GetOptions = "GetAvailableComponents"))
+    	USceneComponent* OutPosition;
 
     	UPROPERTY()
     	AActor* Owner;

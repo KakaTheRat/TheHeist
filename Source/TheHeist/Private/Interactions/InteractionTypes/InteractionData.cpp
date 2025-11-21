@@ -1,4 +1,6 @@
 #include "Interactions/InteractionTypes/InteractionData.h"
+
+#include "Entities/EntitiesInterface.h"
 #include "GameFramework/Character.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Entities/Player/PlayerInteractionComponent.h"
@@ -39,6 +41,20 @@ void UInteractionData::ExecuteInteraction(AActor* m_Owner, USceneComponent* m_Ta
     
     if (InteractionMontage)
     {
+        if (InPosition != "none")
+            
+        {
+            TArray<USceneComponent*> Components;
+            Owner->GetComponents<USceneComponent>(Components);
+            for (USceneComponent* s : Components)
+            {
+                if (s->GetName() == InPosition)
+                {
+                    IEntitiesInterface::Execute_MoveEntity(InteractingActor, s);
+                }
+            }
+        }
+        
        PlayAnimation();
         return;
     }
@@ -134,7 +150,9 @@ void UInteractionData::PlayAnimation()
 {
     if (InteractionMontage && InteractingActor)
     {
-        UAnimInstance* Anim = InteractingActor->FindComponentByClass<USkeletalMeshComponent>()->GetAnimInstance();
+        USkeletalMeshComponent* Mesh = IEntitiesInterface::Execute_GetSkeletalMeshComponent(InteractingActor);
+        
+        UAnimInstance* Anim = Mesh->GetAnimInstance();
 
 
         if (Anim)
