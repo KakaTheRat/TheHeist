@@ -29,4 +29,7 @@ class THEHEIST_API IEntitiesInterface
 	//Returns the skeletal mesh
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Entities")
 	USkeletalMeshComponent* GetSkeletalMeshComponent();
+	
+	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Entities")
+	void MoveEntity(USceneComponent* Position);
 };
