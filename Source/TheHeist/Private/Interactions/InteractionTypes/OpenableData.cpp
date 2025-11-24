@@ -15,6 +15,9 @@ void UOpenableData::StartInteraction()
 	if (!Owner || !Target || !Curve) return;
 	LinkedComponent = Target;
 
+	if (Timeline.IsPlaying())
+		return;
+	
 	if (!bTimelineInitialized)
 	{
 		InitTimeline(Owner);
@@ -48,6 +51,14 @@ void UOpenableData::StartInteraction()
 	InteractText = bIsOpened ? "Close" : "Open";
 	
 }
+
+UAnimMontage* UOpenableData::AnimationMontageToPlay()
+{
+	if (bIsOpened) return AnimationMontageCloseOut;
+
+	return AnimationMontageOpenOut;
+}
+
 void UOpenableData::InitTimeline(AActor* m_Owner)
 {
 	FOnTimelineFloat ProgressFunction;
@@ -151,7 +162,7 @@ void UOpenableData::HandleFinished()
 	{
 		UGameplayStatics::SpawnSoundAttached(EndingSound, LinkedComponent);
 	}
-	
+	Owner->PrimaryActorTick.bCanEverTick = false;
 	EndOfInteraction();
 }
 

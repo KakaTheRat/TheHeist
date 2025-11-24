@@ -161,10 +161,13 @@
     	FName BoneTarget = EName::None;
 
     	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation", meta = (GetOptions = "GetAvailableComponents"))
-    	FName InPosition;
+    	FName InPosition = "none";
 
     	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation", meta = (GetOptions = "GetAvailableComponents"))
-    	USceneComponent* OutPosition;
+    	FName OutPosition ="none";
+
+    	UFUNCTION()
+    	virtual UAnimMontage* AnimationMontageToPlay(); 
 
     	UPROPERTY()
     	AActor* Owner;
@@ -233,7 +236,7 @@
     	virtual void PostInitProperties() override;
 
     	UFUNCTION()
-    	void PlayAnimation();
+    	void PlayAnimation(UAnimMontage* Animation);
     	
     };
 
