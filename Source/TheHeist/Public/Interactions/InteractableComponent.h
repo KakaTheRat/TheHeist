@@ -76,6 +76,9 @@ USTRUCT(BlueprintType)
 struct FInteractionCascadeData
 {
 	GENERATED_BODY()
+
+	UPROPERTY()
+    TWeakObjectPtr<AActor> InteractingActor;
 	
 	//Name to recognize a particular cascade struct
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

@@ -13,6 +13,16 @@ TArray<FName> UInteractionData::GetAvailableStates()
 
 void UInteractionData::EndOfInteraction()
 {
+    if (InteractingActor && InteractingActor->GetClass()->ImplementsInterface(UEntitiesInterface::StaticClass()))
+    {
+        UAnimInstance* Anim = IEntitiesInterface::Execute_GetSkeletalMeshComponent(InteractingActor)->GetAnimInstance();
+        if (Anim)
+        {
+            Anim->OnPlayMontageNotifyBegin.RemoveDynamic(this, &UInteractionData::OnMontageNotifyBegin);
+        }
+    }
+
+    
     OnInteractionEnded.Broadcast(CurrentInteractingActor, this);
 }
 
@@ -41,21 +51,65 @@ void UInteractionData::ExecuteInteraction(AActor* m_Owner, USceneComponent* m_Ta
     
     if (InteractionMontage)
     {
-        if (InPosition != "none")
-            
+        USceneComponent* In = nullptr;
+        USceneComponent* Out = nullptr;
+
+        if (OutPosition != "none" || InPosition != "none")
         {
+            // Récupération des components
             TArray<USceneComponent*> Components;
             Owner->GetComponents<USceneComponent>(Components);
-            for (USceneComponent* s : Components)
+
+            // Trouver les bons components
+            for (USceneComponent* Comp : Components)
             {
-                if (s->GetName() == InPosition)
+                if (Comp->GetName() == InPosition)
                 {
-                    IEntitiesInterface::Execute_MoveEntity(InteractingActor, s);
+                    In = Comp;
                 }
+                if (Comp->GetName() == OutPosition)
+                {
+                    Out = Comp;
+                }
+            }
+
+            FVector PlayerLoc = InteractingActor->GetActorLocation();
+
+            USceneComponent* BestPoint = nullptr;
+
+            // Si on a les deux
+            if (In && Out)
+            {
+                float InDist = FVector::Dist(PlayerLoc, In->GetComponentLocation());
+                float OutDist = FVector::Dist(PlayerLoc, Out->GetComponentLocation());
+
+                BestPoint = (InDist <= OutDist) ? In : Out;
+            }
+            else if (In) BestPoint = In;
+            else if (Out) BestPoint = Out;
+
+            
+            if (BestPoint)
+            {
+                USceneComponent* Targ = nullptr;
+                TArray<USceneComponent*> Componentss;
+                Owner->GetComponents<USceneComponent>(Componentss);
+        
+                for (USceneComponent* s : Componentss)
+                {
+                    if (s->GetName() == AnimationTarget)
+                    {
+                        Targ = s;
+                    }
+                }
+                
+                IEntitiesInterface::Execute_MoveAndLookEntity(InteractingActor, BestPoint, Targ );
+                IEntitiesInterface::Execute_CheckClosest(InteractingActor, In, Out);
             }
         }
         
-       PlayAnimation();
+
+        PlayAnimation(AnimationMontageToPlay());
         return;
     }
     StartInteraction();
@@ -107,8 +161,10 @@ void UInteractionData::OnMontageNotifyBegin(FName NotifyName, const FBranchingPo
     }
 }
 
-
-
+UAnimMontage* UInteractionData::AnimationMontageToPlay()
+{
+    return InteractionMontage;
+}
 
 
 void UInteractionData::TriggerAlert(AActor* SourceActor, TSubclassOf<UAISense> Sense)
@@ -140,15 +196,15 @@ void UInteractionData::ClearAlert(AActor* SourceActor, TSubclassOf<UAISense> Sen
 {
     if (!SourceActor || !StimulusSource) return;
 
-    // Désenregistre le composant du système de perception
+   
     StimulusSource->UnregisterFromSense(Sense);
 
 }
 
 
-void UInteractionData::PlayAnimation()
+void UInteractionData::PlayAnimation(UAnimMontage* Animation)
 {
-    if (InteractionMontage && InteractingActor)
+    if (InteractionMontage && InteractingActor && InteractingActor->GetClass()->ImplementsInterface(UEntitiesInterface::StaticClass()))
     {
         USkeletalMeshComponent* Mesh = IEntitiesInterface::Execute_GetSkeletalMeshComponent(InteractingActor);
         
@@ -159,7 +215,7 @@ void UInteractionData::PlayAnimation()
         {
             Anim->OnPlayMontageNotifyBegin.RemoveDynamic(this, &UInteractionData::OnMontageNotifyBegin);
             Anim->OnPlayMontageNotifyBegin.AddDynamic(this, &UInteractionData::OnMontageNotifyBegin);
-            Anim->Montage_Play(InteractionMontage, PlayRate);
+            Anim->Montage_Play(Animation, PlayRate);
         }
     }
 }

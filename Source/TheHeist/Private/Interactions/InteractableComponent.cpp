@@ -398,11 +398,19 @@ TArray<FName> UInteractableComponent::GetAvailableCascadeNames()
 
 void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeData& Cascade, AActor* InteractingActor, EInteractionContext Context)
 {
+	if (Cascade.CurrentIndex ==0)
+	{
+		Cascade.InteractingActor = InteractingActor;
+	}
+
+	AActor* Interactorr = Cascade.InteractingActor.Get();
+	
 	//Reset the cascade if the cycle is over
 	if (!Cascade.InteractionCascades.IsValidIndex(Cascade.CurrentIndex))
 	{
 		Cascade.bIsComplete = true;
 		Cascade.CurrentIndex = 0;
+		Cascade.InteractingActor = nullptr;
 		UInteractionData* Interaction = Cascade.InteractionCascades[Cascade.MainSlotIndex]->InteractionData.Get();
 		FinishInteraction(InteractingActor, Interaction);
 		return;
@@ -424,7 +432,7 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 		const FName CurrentState = Interaction->GetCurrentState();
 		if (CurrentState == Slot->ExpectedState)
 		{
-			ExecuteNextCascadeInteraction(Cascade, InteractingActor, Context); 
+			ExecuteNextCascadeInteraction(Cascade, Interactorr, Context); 
 			return;
 		}
 	}
@@ -451,19 +459,18 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 	
 	//Subscribes the cascade to the end of the interaction event. Will cause to execute the next interaction in this cascade, if possible
 	Interaction->OnInteractionEnded.Clear();
-	FDelegateHandle Handle;
-	Handle = Interaction->OnInteractionEnded.AddLambda(
-		[this, CascadePtr = &Cascade, Context, &Handle](AActor* InteractingActor, UInteractionData* Interaction) mutable
+	FDelegateHandle Handle = Interaction->OnInteractionEnded.AddLambda(
+	[this, CascadePtr = &Cascade, Context, Handle](AActor* Interactorr, UInteractionData* Interaction) mutable
+	{
+		Interaction->OnInteractionEnded.Remove(Handle);
+		if (!CascadePtr->bIsComplete)
 		{
-			Interaction->OnInteractionEnded.Remove(Handle);
-			if (!CascadePtr->bIsComplete) 
-			{
-				ExecuteNextCascadeInteraction(*CascadePtr, InteractingActor, Context);
-			}
+			ExecuteNextCascadeInteraction(*CascadePtr, Interactorr, Context);
 		}
-	);
+	}
+);
 	
-	Interaction->ExecuteInteraction(Owner, TargetComp, Context, InteractingActor );
+	Interaction->ExecuteInteraction(Owner, TargetComp, Context, Interactorr );
 }
 
 

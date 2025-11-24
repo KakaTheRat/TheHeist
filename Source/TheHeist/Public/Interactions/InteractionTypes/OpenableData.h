@@ -38,7 +38,20 @@ protected:
 	
 	virtual void StartInteraction() override;
 
+	virtual UAnimMontage* AnimationMontageToPlay() override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation")
+	UAnimMontage* AnimationMontageOpenIn;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation")
+	UAnimMontage* AnimationMontageCloseIn;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation")
+	UAnimMontage* AnimationMontageOpenOut;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation")
+	UAnimMontage* AnimationMontageCloseOut;
+	
 	
 protected:
 	

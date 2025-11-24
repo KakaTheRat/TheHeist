@@ -31,5 +31,11 @@ class THEHEIST_API IEntitiesInterface
 	USkeletalMeshComponent* GetSkeletalMeshComponent();
 	
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Entities")
-	void MoveEntity(USceneComponent* Position);
+	void MoveAndLookEntity(USceneComponent* Position, USceneComponent* LookTarget);
+
+	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Entities")
+	void CheckClosest(USceneComponent* InPosition, USceneComponent* OutPosition);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Entities")
+	void LookAtTarget(USceneComponent* Target, float BlendTime);
 };
