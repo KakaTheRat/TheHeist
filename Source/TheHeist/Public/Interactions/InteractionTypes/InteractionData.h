@@ -132,9 +132,12 @@
     		return Result;
     	}
 
+    	UFUNCTION()
+    	AActor*GetEffectiveActor() const;
 
-
-
+    	
+    	
+    	
 
 
     	// Animation montage à jouer avant d'exécuter l'interaction

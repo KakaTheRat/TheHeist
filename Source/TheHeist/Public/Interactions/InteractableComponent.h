@@ -238,7 +238,8 @@ protected:
 	void ExecuteNextCascadeInteraction(FInteractionCascadeData& Cascade, AActor* InteractingActor, EInteractionContext Context);
 
 	//Returns the cascade available for these parameters. Need only interaction text or Interaction type to work.
-	FInteractionCascadeData* FindValidCascade(const FString& m_InteractionText,EInteractionContext Context, const TSubclassOf<UInteractionData>& InteractionType,const UInteractionData* SpecificInteraction);
+	FInteractionCascadeData* FindValidCascade(const FString& m_InteractionText, EInteractionContext Context, const TSubclassOf<UInteractionData>& InteractionType, const UInteractionData* SpecificInteraction, const
+	                                          USceneComponent* Target);
 	
 	//------------Properties--------------//
 

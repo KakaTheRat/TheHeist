@@ -48,67 +48,66 @@ void UInteractionData::ExecuteInteraction(AActor* m_Owner, USceneComponent* m_Ta
     Target = m_Target;
     Context = m_Context;
     InteractingActor = m_InteractingActor;
+
+    USceneComponent* In = nullptr;
+    USceneComponent* Out = nullptr;
+
+    if (OutPosition != "none" || InPosition != "none")
+    {
+        // Récupération des components
+        TArray<USceneComponent*> Components;
+        Owner->GetComponents<USceneComponent>(Components);
+
+        // Trouver les bons components
+        for (USceneComponent* Comp : Components)
+        {
+            if (Comp->GetName() == InPosition)
+            {
+                In = Comp;
+            }
+            if (Comp->GetName() == OutPosition)
+            {
+                Out = Comp;
+            }
+        }
+
+        FVector PlayerLoc = InteractingActor->GetActorLocation();
+
+        USceneComponent* BestPoint = nullptr;
+
+        // Si on a les deux
+        if (In && Out)
+        {
+            float InDist = FVector::Dist(PlayerLoc, In->GetComponentLocation());
+            float OutDist = FVector::Dist(PlayerLoc, Out->GetComponentLocation());
+
+            BestPoint = (InDist <= OutDist) ? In : Out;
+        }
+        else if (In) BestPoint = In;
+        else if (Out) BestPoint = Out;
+
+            
+        if (BestPoint)
+        {
+            USceneComponent* Targ = nullptr;
+            TArray<USceneComponent*> Componentss;
+            Owner->GetComponents<USceneComponent>(Componentss);
+        
+            for (USceneComponent* s : Componentss)
+            {
+                if (s->GetName() == AnimationTarget)
+                {
+                    Targ = s;
+                }
+            }
+                
+            IEntitiesInterface::Execute_MoveAndLookEntity(InteractingActor, BestPoint, Targ );
+            IEntitiesInterface::Execute_CheckClosest(InteractingActor, In, Out);
+        }
+    }
     
     if (InteractionMontage)
     {
-        USceneComponent* In = nullptr;
-        USceneComponent* Out = nullptr;
-
-        if (OutPosition != "none" || InPosition != "none")
-        {
-            // Récupération des components
-            TArray<USceneComponent*> Components;
-            Owner->GetComponents<USceneComponent>(Components);
-
-            // Trouver les bons components
-            for (USceneComponent* Comp : Components)
-            {
-                if (Comp->GetName() == InPosition)
-                {
-                    In = Comp;
-                }
-                if (Comp->GetName() == OutPosition)
-                {
-                    Out = Comp;
-                }
-            }
-
-            FVector PlayerLoc = InteractingActor->GetActorLocation();
-
-            USceneComponent* BestPoint = nullptr;
-
-            // Si on a les deux
-            if (In && Out)
-            {
-                float InDist = FVector::Dist(PlayerLoc, In->GetComponentLocation());
-                float OutDist = FVector::Dist(PlayerLoc, Out->GetComponentLocation());
-
-                BestPoint = (InDist <= OutDist) ? In : Out;
-            }
-            else if (In) BestPoint = In;
-            else if (Out) BestPoint = Out;
-
-            
-            if (BestPoint)
-            {
-                USceneComponent* Targ = nullptr;
-                TArray<USceneComponent*> Componentss;
-                Owner->GetComponents<USceneComponent>(Componentss);
-        
-                for (USceneComponent* s : Componentss)
-                {
-                    if (s->GetName() == AnimationTarget)
-                    {
-                        Targ = s;
-                    }
-                }
-                
-                IEntitiesInterface::Execute_MoveAndLookEntity(InteractingActor, BestPoint, Targ );
-                IEntitiesInterface::Execute_CheckClosest(InteractingActor, In, Out);
-            }
-        }
-        
-
         PlayAnimation(AnimationMontageToPlay());
         return;
     }
@@ -120,6 +119,14 @@ void UInteractionData::StartInteraction()
     
 }
 
+
+AActor* UInteractionData::GetEffectiveActor() const
+{
+   if (bUseExternalActor && ExternalActor)
+            return ExternalActor;
+
+        return OwnerActor;
+}
 
 void UInteractionData::OnMontageNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& Payload)
 {
