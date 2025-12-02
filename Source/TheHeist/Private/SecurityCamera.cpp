@@ -66,17 +66,24 @@ void ASecurityCamera::HackCamera()
         return;
     }
 
+    APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+
     if (!bCameraHacked)
     {
         PC->SetViewTarget(this);
         bCameraHacked = true;
+
+        if (PlayerPawn)
+        {
+            PlayerPawn->DisableInput(PC);
+        }
     }
     else
     {
-        APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
         if (PlayerPawn)
         {
             PC->SetViewTarget(PlayerPawn);
+            PlayerPawn->EnableInput(PC);
         }
 
         bCameraHacked = false;
