@@ -14,6 +14,9 @@ UCLASS()
 class PUZZLEKEYPAD_API APuzzleKeyPad : public AActor
 {
 	GENERATED_BODY()
+	
+public:	
+	APuzzleKeyPad();
 
 protected:
 	virtual void BeginPlay() override;
