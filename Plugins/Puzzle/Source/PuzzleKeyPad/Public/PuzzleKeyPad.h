@@ -33,6 +33,7 @@ protected:
 
 public:	
 	// Appelée par les boutons
+	UFUNCTION(BlueprintCallable)
 	void ReceiveInput(FString Value);
 
 private:

@@ -29,12 +29,12 @@ void UInteractableComponent::BeginPlay()
 
 	for (UInteractionData* Data : AllInteractions)
 	{
-		if (!Data || Data->CompNames.IsNone())
+		if (!Data || Data->CompNames.IsEmpty())
 			continue;
 
 		for (USceneComponent* Comp : Components)
 		{
-			if (Comp && Comp->GetFName() == Data->CompNames)
+			if (Comp && Data->CompNames.Contains(Comp->GetFName()))
 			{
 				AllComponentInteractable.AddUnique(Comp);
 				
@@ -42,7 +42,6 @@ void UInteractableComponent::BeginPlay()
 				{
 					AllComponentInteractablePlayer.AddUnique(Comp);
 				}
-				break;
 			}
 		}
 	}
@@ -119,7 +118,7 @@ FInteractionCascadeData* UInteractableComponent::FindValidCascade(const FString&
 		if (!Data)
 			continue;
 
-		if (Target && Data->CompNames != Target->GetFName())
+		if (Target && !Data->CompNames.Contains(Target->GetFName()) )
 		{
 			if (!Data->bUseExternalActor)
 				continue;
@@ -133,7 +132,7 @@ FInteractionCascadeData* UInteractableComponent::FindValidCascade(const FString&
 				Data->ExternalActor->GetComponents<USceneComponent>(ExternalComps);
 				for (USceneComponent* C : ExternalComps)
 				{
-					if (C->GetFName() == Data->CompNames)
+					if (Data->CompNames.Contains(C->GetFName()))
 					{
 						bFound = true;
 						break;
@@ -181,7 +180,7 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText, US
 		{
 			for (UInteractionData* Data : AllInteractions)
 			{
-				if (Data && HitComponent && Data->CompNames == HitComponent->GetName())
+				if (Data && HitComponent && Data->CompNames.Contains(HitComponent->GetFName()))
 				{
 					if (Data->InteractText ==m_InteractText)
 					{
@@ -221,7 +220,7 @@ void UInteractableComponent::InteractWithSpecificInteraction(TSubclassOf<UIntera
         {
             for (USceneComponent* Comp : AttachedComponents)
             {
-                if (Comp && Comp->GetName() == InteractionInstance->CompNames)
+                if (Comp &&InteractionInstance->CompNames.Contains(Comp->GetFName()))
                 {
                     TargetComponent = Comp;
                     break;
@@ -249,7 +248,7 @@ void UInteractableComponent::InteractWithSpecificInteraction(TSubclassOf<UIntera
 
             for (UInteractionData* Data : AllInteractions)
             {
-                if (Data && Data->GetClass() == InteractionType && Data->CompNames == Comp->GetName())
+                if (Data && Data->GetClass() == InteractionType && Data->CompNames.Contains(Comp->GetFName()))
                 {
                     TargetComponent = Comp;
                     break;
@@ -319,7 +318,7 @@ TArray<FString> UInteractableComponent::GetInteractionsForAComp(USceneComponent*
 	{
 		if (Data->bShouldAppearForThePlayer)
 		{
-			if (Data->CompNames == Comp->GetName())
+			if (Data->CompNames.Contains(Comp->GetFName()))
 			{
 				Result.Add(Data->InteractText);
 			}
@@ -354,7 +353,11 @@ TArray<FName> UInteractionCascadeSlot::GetAvailableInteractionComponents()
 		{
 			if (Data)
 			{
-				Names.AddUnique(Data->CompNames);
+				for (FName name : Data->CompNames)
+				{
+					Names.AddUnique(name);
+				}
+				
 				
 			}
 		}
@@ -375,7 +378,7 @@ TArray<FName> UInteractionCascadeSlot::GetAvailableInteractionsForSelectedCompon
 		for (UInteractionData* Data : CompOwner->AllInteractions)
 		{
 			if (!Data) continue;
-			if (Data->CompNames == SelectedComponentName)
+			if (Data->CompNames.Contains(SelectedComponentName))
 				Names.Add(FName(*Data->GetName()));
 		}
 	}
@@ -479,7 +482,7 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 	
 	for (USceneComponent* Comp : Components)
 	{
-		if (Comp && Comp->GetName() == Interaction->CompNames)
+		if (Comp && Interaction->CompNames.Contains(Comp->GetFName()))
 		{
 			TargetComp = Comp;
 			break;
@@ -547,7 +550,7 @@ void UInteractionCascadeSlot::RefreshData()
 			if (!Data)
 				continue;
 			
-			if (Data->CompNames == SelectedComponentName && Data->GetName() == SelectedInteractionName.ToString())
+			if (Data->CompNames.Contains(SelectedComponentName) && Data->GetName() == SelectedInteractionName.ToString())
 			{
 				InteractionData = Data;
 				break;

@@ -75,8 +75,17 @@
 
     	//Dropdown of available components for the owner or given actor
     	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction", meta = (GetOptions = "GetAvailableComponents"))
-    	FName CompNames;
+    	TArray<FName> CompNames;
 
+    	// Vérifie si le composant passé est valide pour cette interaction
+    	UFUNCTION(BlueprintCallable)
+    	bool IsValidForComponent(const USceneComponent* Comp) const
+    	{
+    		if (!Comp) return false;
+    		return CompNames.Num() == 0 || CompNames.Contains(Comp->GetFName());
+    	}
+
+    	
     	//Bool to determines if this interaction should be seen and used by the player
     	UPROPERTY(EditAnywhere, Category="Interaction")
 		bool bShouldAppearForThePlayer = true;
