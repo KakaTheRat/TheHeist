@@ -7,6 +7,8 @@
 
 #include "PuzzleKeyPadButton.generated.h"
 
+class APuzzleKeyPad;
+
 UCLASS()
 class PUZZLEKEYPAD_API APuzzleKeyPadButton : public AActor
 {
