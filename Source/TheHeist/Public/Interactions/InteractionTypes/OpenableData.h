@@ -36,9 +36,22 @@ protected:
 
 	UOpenableData();
 	
-	virtual void ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor) override;
+	virtual void StartInteraction() override;
 
+	virtual UAnimMontage* AnimationMontageToPlay() override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation")
+	UAnimMontage* AnimationMontageOpenIn;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation")
+	UAnimMontage* AnimationMontageCloseIn;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation")
+	UAnimMontage* AnimationMontageOpenOut;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation")
+	UAnimMontage* AnimationMontageCloseOut;
+	
 	
 protected:
 	
@@ -99,7 +112,18 @@ protected:
 	// Optional length of animation (curve can have its own length)
 	UPROPERTY(EditAnywhere, Category="Opening")
 	float Duration = 1.0f;
-        
+
+	UPROPERTY(EditAnywhere, Category="Opening")
+	USoundBase* DuringSound;
+	
+	UPROPERTY(EditAnywhere, Category="Opening")
+	USoundBase* StartingSound;
+
+	UPROPERTY(EditAnywhere, Category="Opening")
+	USoundBase* EndingSound;
+
+	bool bDuringSoundPlaying = false;
+	
 	bool bIsOpened = false;
 	bool bIsMoving = false;
 

@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "InteractionInterface.h"
 #include "Components/ActorComponent.h"
-#include "Player/PlayerInteractionComponent.h"
+#include "Entities/Player/PlayerInteractionComponent.h"
 #include "../Interactions/InteractionTypes/InteractionData.h"
 #include "Widget/Interaction/InteractionWidgetActor.h"
 #include "InteractableComponent.generated.h"
@@ -76,6 +76,9 @@ USTRUCT(BlueprintType)
 struct FInteractionCascadeData
 {
 	GENERATED_BODY()
+
+	UPROPERTY()
+    TWeakObjectPtr<AActor> InteractingActor;
 	
 	//Name to recognize a particular cascade struct
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -135,6 +138,11 @@ public:
 	// Array of all the components impacted by the interaction
 	UPROPERTY(BlueprintReadOnly)
 	TArray<USceneComponent*> AllComponentInteractable;
+
+	// Array of all the components impacted by the interaction for the player. Will remove the ones that should not be seen
+	UPROPERTY(BlueprintReadOnly)
+	TArray<USceneComponent*> AllComponentInteractablePlayer;
+	
 	
 	// FUNCTIONS //
 
@@ -230,7 +238,8 @@ protected:
 	void ExecuteNextCascadeInteraction(FInteractionCascadeData& Cascade, AActor* InteractingActor, EInteractionContext Context);
 
 	//Returns the cascade available for these parameters. Need only interaction text or Interaction type to work.
-	FInteractionCascadeData* FindValidCascade(const FString& m_InteractionText,EInteractionContext Context, const TSubclassOf<UInteractionData>& InteractionType,const UInteractionData* SpecificInteraction);
+	FInteractionCascadeData* FindValidCascade(const FString& m_InteractionText, EInteractionContext Context, const TSubclassOf<UInteractionData>& InteractionType, const UInteractionData* SpecificInteraction, const
+	                                          USceneComponent* Target);
 	
 	//------------Properties--------------//
 

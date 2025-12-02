@@ -4,7 +4,7 @@
 #include "InteractionData.h"
 #include "UObject/NoExportTypes.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Player/PlayerInteractionComponent.h"
+#include "Entities/Player/PlayerInteractionComponent.h"
 #include "HideableData.generated.h"
 
 UCLASS(Blueprintable, EditInlineNew, DisplayName="Hiding Interaction")
@@ -18,7 +18,7 @@ public:
     
     UHideableData();
 
-    virtual void ExecuteInteraction(AActor* Owner, USceneComponent* , EInteractionContext Context, AActor* InteractingActor) override;
+    virtual void StartInteraction() override;
 
 
     //--------------Properties

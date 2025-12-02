@@ -48,11 +48,14 @@
         FOnInteractionEnded OnInteractionEnded;
 
     	//Set up the end sequence of each interaction
+    	UFUNCTION(BlueprintCallable,Category="Interaction")
     	void EndOfInteraction();
 
         //Interaction execution. Must be overrided by each interaction type
-        virtual void ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor);
+        virtual void ExecuteInteraction(AActor* m_Owner, USceneComponent* m_Target, EInteractionContext m_Context, AActor* m_InteractingActor);
 
+    	virtual void StartInteraction();
+    	
         //Virtual function, to tick the UObject into the interaction component. Override this to make is happen
         virtual void Tick(float DeltaTime) {}
 
@@ -63,14 +66,28 @@
         UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")
         FString InteractText;
 
-    	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction", meta = (GetOptions = "f"))
+    	UPROPERTY(EditAnywhere, Category="Interaction")
+    	bool bUseExternalActor = false;
+
+    	// External actor 
+    	UPROPERTY(EditAnywhere, Category="Interaction", meta=(EditCondition="bUseExternalActor"))
+    	AActor* ExternalActor = nullptr;
+
+    	//Dropdown of available components for the owner or given actor
+    	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction", meta = (GetOptions = "GetAvailableComponents"))
     	FName CompNames;
 
+    	//Bool to determines if this interaction should be seen and used by the player
+    	UPROPERTY(EditAnywhere, Category="Interaction")
+		bool bShouldAppearForThePlayer = true;
+    	
+    	
+    	
     	UFUNCTION()
     	
-    	TArray<FName> f() const
+    	TArray<FName> GetAvailableComponents() const
     	{
-    		UE_LOG(LogTemp, Warning, TEXT("HIHIHIHIH"));
+    		/*UE_LOG(LogTemp, Warning, TEXT("HIHIHIHIH"));
     		TArray<FName> Result;
 
     		if (!OwnerActor) return Result;
@@ -87,9 +104,89 @@
     			}
     		}
 
+    		return Result;*/
+    		TArray<FName> Result;
+
+    		// Détermine sur quel acteur on travaille
+    		AActor* TargetActor = nullptr;
+    		if (bUseExternalActor && ExternalActor)
+    			TargetActor = ExternalActor;
+    		else
+    			TargetActor = OwnerActor;
+
+    		if (!TargetActor)
+    			return Result;
+
+    		// Liste les composants
+    		TArray<USceneComponent*> Components;
+    		TargetActor->GetComponents<USceneComponent>(Components);
+
+    		for (USceneComponent* Comp : Components)
+    		{
+    			if (Comp)
+    			{
+    				Result.Add(Comp->GetFName());
+    			}
+    		}
+
     		return Result;
     	}
-        
+
+    	UFUNCTION()
+    	AActor*GetEffectiveActor() const;
+
+    	
+    	
+    	
+
+
+    	// Animation montage à jouer avant d'exécuter l'interaction
+    	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation")
+    	UAnimMontage* InteractionMontage = nullptr;
+
+    	// Nom de l'AnimNotify attendu (ex: "OnInteract")
+    	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation")
+    	FName MontageNotifyToTrigger = "OnInteract";
+
+    	// Flag pour savoir si on est en attente du notify
+    	bool bWaitingForAnimation = true;
+
+    	UFUNCTION()
+    	void OnMontageNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& Payload);
+
+    	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation")
+    	float PlayRate = 1;
+    	
+    	UPROPERTY(editAnywhere, BlueprintReadWrite, Category="Interaction|Animation", meta = (GetOptions = "GetAvailableComponents"))
+    	FName AnimationTarget;
+
+    	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation")
+    	FName BoneTarget = EName::None;
+
+    	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation", meta = (GetOptions = "GetAvailableComponents"))
+    	FName InPosition = "none";
+
+    	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction|Animation", meta = (GetOptions = "GetAvailableComponents"))
+    	FName OutPosition ="none";
+
+    	UFUNCTION()
+    	virtual UAnimMontage* AnimationMontageToPlay(); 
+
+    	UPROPERTY()
+    	AActor* Owner;
+
+    	UPROPERTY()
+    	USceneComponent* Target;
+
+    	UPROPERTY()
+    	EInteractionContext Context;
+
+    	UPROPERTY()
+    	AActor* InteractingActor;
+
+
+
+    	
        
 #pragma region Alert
         //-------------ALERT
@@ -140,6 +237,9 @@
     	
 
     	virtual void PostInitProperties() override;
+
+    	UFUNCTION()
+    	void PlayAnimation(UAnimMontage* Animation);
     	
     };
 

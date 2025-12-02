@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Datas/Enumerators/Interactions/InteractionContextEnum.h"
+#include "InteractionTypes/InteractionData.h"
 #include "UObject/Interface.h"
 #include "InteractionInterface.generated.h"
 
@@ -17,6 +18,7 @@ class UInteractionInterface : public UInterface
 /**
  * 
  */
+
 class THEHEIST_API IInteractionInterface
 {
 	GENERATED_BODY()
@@ -29,6 +31,7 @@ public:
 	//Interact Function, called whenever an object is being interacted with.
 	//Takes the hit component as an input
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Interaction")
-	void Interact(USceneComponent* HitComponent, AActor* InteractingActor, EInteractionContext Context= EInteractionContext::Default);
-
+	void Interact(USceneComponent* HitComponent, AActor* InteractingActor, EInteractionContext Context= EInteractionContext::Default, UInteractionData* Data = nullptr);
+	
+	
 };

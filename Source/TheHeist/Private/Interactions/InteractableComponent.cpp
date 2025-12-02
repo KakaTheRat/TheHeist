@@ -37,6 +37,11 @@ void UInteractableComponent::BeginPlay()
 			if (Comp && Comp->GetFName() == Data->CompNames)
 			{
 				AllComponentInteractable.AddUnique(Comp);
+				
+				if (Data->bShouldAppearForThePlayer)
+				{
+					AllComponentInteractablePlayer.AddUnique(Comp);
+				}
 				break;
 			}
 		}
@@ -76,7 +81,8 @@ void UInteractableComponent::OnRegister()
 }
 
 #pragma region Interaction
-FInteractionCascadeData* UInteractableComponent::FindValidCascade(const FString& m_InteractionText,EInteractionContext Context, const TSubclassOf<UInteractionData>& InteractionType,const UInteractionData* SpecificInteraction)
+FInteractionCascadeData* UInteractableComponent::FindValidCascade(const FString& m_InteractionText, EInteractionContext Context, const TSubclassOf<UInteractionData>& InteractionType, const UInteractionData* SpecificInteraction, const
+                                                                  USceneComponent* Target)
 {
 	for (FInteractionCascadeData& Cascade : InteractionsCascadeDatas)
 	{
@@ -105,6 +111,7 @@ FInteractionCascadeData* UInteractableComponent::FindValidCascade(const FString&
 
 		// ------- Interaction type OR interaction text searched
 		UInteractionCascadeSlot* MainSlot = Cascade.InteractionCascades[Cascade.MainSlotIndex];
+		
 		if (!MainSlot || !MainSlot->InteractionData.IsValid())
 			continue;
 
@@ -112,6 +119,33 @@ FInteractionCascadeData* UInteractableComponent::FindValidCascade(const FString&
 		if (!Data)
 			continue;
 
+		if (Target && Data->CompNames != Target->GetFName())
+		{
+			if (!Data->bUseExternalActor)
+				continue;
+
+			if (Data->ExternalActor)
+			{
+				USceneComponent* ExternalComp = Data->ExternalActor->FindComponentByClass<USceneComponent>();
+				bool bFound = false;
+
+				TArray<USceneComponent*> ExternalComps;
+				Data->ExternalActor->GetComponents<USceneComponent>(ExternalComps);
+				for (USceneComponent* C : ExternalComps)
+				{
+					if (C->GetFName() == Data->CompNames)
+					{
+						bFound = true;
+						break;
+					}
+				}
+
+				if (!bFound)
+					continue;
+			}
+		}
+			
+		
 		// Text filter
 		if (!m_InteractionText.IsEmpty() && Data->InteractText != m_InteractionText)
 			continue;
@@ -133,7 +167,7 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText, US
 		if (!InteractingActor) return;
 
 		//Checks for a cascade, for this type of interaction text. If so, will launch the cascade
-		if (FInteractionCascadeData* Cascade = FindValidCascade(m_InteractText, Context, nullptr, nullptr))
+		if (FInteractionCascadeData* Cascade = FindValidCascade(m_InteractText, Context, nullptr, nullptr, HitComponent))
 		{
 			Cascade->bIsComplete = false;
 			ExecuteNextCascadeInteraction(*Cascade, InteractingActor, Context);
@@ -152,7 +186,7 @@ void UInteractableComponent::InteractWithObject(const FString m_InteractText, US
 					if (Data->InteractText ==m_InteractText)
 					{
 						Data->OnInteractionEnded.AddUObject(this, &UInteractableComponent::FinishInteraction);
-						Data->ExecuteInteraction(Owner, HitComponent, Context, InteractingActor);
+						Data->ExecuteInteraction(Data->GetEffectiveActor(), HitComponent, Context, InteractingActor);
 						break;
 					}
 				}
@@ -175,7 +209,7 @@ void UInteractableComponent::InteractWithSpecificInteraction(TSubclassOf<UIntera
     if (InteractionInstance)
     {
         // Trying to find a cascade fitting, will execute if so
-        if (FInteractionCascadeData* Cascade = FindValidCascade(TEXT(""), Context, nullptr, InteractionInstance))
+        if (FInteractionCascadeData* Cascade = FindValidCascade(TEXT(""), Context, nullptr, InteractionInstance, TargetComponent))
         {
             Cascade->bIsComplete = false;
             ExecuteNextCascadeInteraction(*Cascade, InteractingActor, Context);
@@ -198,7 +232,7 @@ void UInteractableComponent::InteractWithSpecificInteraction(TSubclassOf<UIntera
         if (TargetComponent)
         {
             InteractionInstance->OnInteractionEnded.AddUObject(this, &UInteractableComponent::FinishInteraction);
-            InteractionInstance->ExecuteInteraction(Owner, TargetComponent, Context, InteractingActor);
+            InteractionInstance->ExecuteInteraction(InteractionInstance->GetEffectiveActor(), TargetComponent, Context, InteractingActor);
         }
 
         return;
@@ -215,7 +249,7 @@ void UInteractableComponent::InteractWithSpecificInteraction(TSubclassOf<UIntera
 
             for (UInteractionData* Data : AllInteractions)
             {
-                if (Data && Data->GetClass() == InteractionType)
+                if (Data && Data->GetClass() == InteractionType && Data->CompNames == Comp->GetName())
                 {
                     TargetComponent = Comp;
                     break;
@@ -226,15 +260,16 @@ void UInteractableComponent::InteractWithSpecificInteraction(TSubclassOf<UIntera
                 break;
         }
     }
+	
 
     if (!TargetComponent)
         return;
 
     // Checks the cascade for the given type
-    if (FInteractionCascadeData* Cascade = FindValidCascade(TEXT(""), Context, InteractionType, nullptr))
+    if (FInteractionCascadeData* Cascade = FindValidCascade(TEXT(""), Context, InteractionType, nullptr, TargetComponent))
     {
         Cascade->bIsComplete = false;
-        ExecuteNextCascadeInteraction(*Cascade, InteractingActor, Context);
+         ExecuteNextCascadeInteraction(*Cascade, InteractingActor, Context);
         return;
     }
 
@@ -244,7 +279,7 @@ void UInteractableComponent::InteractWithSpecificInteraction(TSubclassOf<UIntera
         if (Data && Data->GetClass() == InteractionType)
         {
             Data->OnInteractionEnded.AddUObject(this, &UInteractableComponent::FinishInteraction);
-            Data->ExecuteInteraction(Owner, TargetComponent, Context, InteractingActor);
+            Data->ExecuteInteraction(Data->GetEffectiveActor(), TargetComponent, Context, InteractingActor);
             break;
         }
     }
@@ -282,9 +317,12 @@ TArray<FString> UInteractableComponent::GetInteractionsForAComp(USceneComponent*
 
 	for (const UInteractionData* Data : AllInteractions)
 	{
-		if (Data->CompNames == Comp->GetName())
+		if (Data->bShouldAppearForThePlayer)
 		{
-			Result.Add(Data->InteractText);
+			if (Data->CompNames == Comp->GetName())
+			{
+				Result.Add(Data->InteractText);
+			}
 		}
 	}
 	
@@ -390,13 +428,21 @@ TArray<FName> UInteractableComponent::GetAvailableCascadeNames()
 
 void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeData& Cascade, AActor* InteractingActor, EInteractionContext Context)
 {
+	if (Cascade.CurrentIndex ==0)
+	{
+		Cascade.InteractingActor = InteractingActor;
+	}
+
+	AActor* Interactorr = Cascade.InteractingActor.Get();
+	
 	//Reset the cascade if the cycle is over
 	if (!Cascade.InteractionCascades.IsValidIndex(Cascade.CurrentIndex))
 	{
+		UInteractionData* Interaction = Cascade.InteractionCascades[Cascade.MainSlotIndex]->InteractionData.Get();
+		FinishInteraction(Interactorr, Interaction);
 		Cascade.bIsComplete = true;
 		Cascade.CurrentIndex = 0;
-		UInteractionData* Interaction = Cascade.InteractionCascades[Cascade.MainSlotIndex]->InteractionData.Get();
-		FinishInteraction(InteractingActor, Interaction);
+		Cascade.InteractingActor = nullptr;
 		return;
 	}
 	UInteractionCascadeSlot* Slot = Cascade.InteractionCascades[Cascade.CurrentIndex];
@@ -416,7 +462,7 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 		const FName CurrentState = Interaction->GetCurrentState();
 		if (CurrentState == Slot->ExpectedState)
 		{
-			ExecuteNextCascadeInteraction(Cascade, InteractingActor, Context); 
+			ExecuteNextCascadeInteraction(Cascade, Interactorr, Context); 
 			return;
 		}
 	}
@@ -425,7 +471,11 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 	//Searches for the right component
 	USceneComponent* TargetComp = nullptr;
 	TArray<USceneComponent*> Components;
-	Owner->GetComponents<USceneComponent>(Components);
+	AActor* FinalActor = Interaction->GetEffectiveActor();
+	if (!FinalActor)
+		return;
+
+	FinalActor->GetComponents<USceneComponent>(Components);
 	
 	for (USceneComponent* Comp : Components)
 	{
@@ -440,20 +490,21 @@ void UInteractableComponent::ExecuteNextCascadeInteraction(FInteractionCascadeDa
 		return;
 
 	
-	//Subscribes the cascade to the end of the interaction event. Will cause to execute the next interaction in this cascade, if possible
-	FDelegateHandle Handle;
-	Handle = Interaction->OnInteractionEnded.AddLambda(
-		[this, CascadePtr = &Cascade, Context, &Handle](AActor* InteractingActor, UInteractionData* Interaction) mutable
-		{
-			Interaction->OnInteractionEnded.Remove(Handle);
-			if (!CascadePtr->bIsComplete) 
-			{
-				ExecuteNextCascadeInteraction(*CascadePtr, InteractingActor, Context);
-			}
-		}
-	);
 	
-	Interaction->ExecuteInteraction(Owner, TargetComp, Context, InteractingActor );
+	//Subscribes the cascade to the end of the interaction event. Will cause to execute the next interaction in this cascade, if possible
+	Interaction->OnInteractionEnded.Clear();
+	FDelegateHandle Handle = Interaction->OnInteractionEnded.AddLambda(
+	[this, CascadePtr = &Cascade, Context, Handle](AActor* Interactorr, UInteractionData* Interaction) mutable
+	{
+		Interaction->OnInteractionEnded.Remove(Handle);
+		if (!CascadePtr->bIsComplete)
+		{
+			ExecuteNextCascadeInteraction(*CascadePtr, Interactorr, Context);
+		}
+	}
+);
+	
+	Interaction->ExecuteInteraction(FinalActor, TargetComp, Context, Interactorr );
 }
 
 
