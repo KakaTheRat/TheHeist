@@ -1,11 +1,11 @@
 ﻿#include "SecurityCamera.h"
+
+#include "Kismet/GameplayStatics.h"
 #include "Math/UnrealMathUtility.h"
 
 ASecurityCamera::ASecurityCamera(): InitialRotation()
 {
     PrimaryActorTick.bCanEverTick = true;
-
-    AutoPossessPlayer = EAutoReceiveInput::Disabled;
 }
 
 void ASecurityCamera::BeginPlay()
@@ -14,6 +14,8 @@ void ASecurityCamera::BeginPlay()
     
     InitialRotation = GetActorRotation();
     CurrentRotation = 0.0f;
+
+    OnHackCamera.AddDynamic(this, &ASecurityCamera::HackCamera);
 }
 
 void ASecurityCamera::Tick(float DeltaTime)
@@ -47,9 +49,36 @@ void ASecurityCamera::Tick(float DeltaTime)
         NewRotation.Yaw += CurrentRotation;
         SetActorRotation(NewRotation);
     }
+
+    //TODO : A supprimer lorsque le hack sera implémenté correctement
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    if (PC && PC->WasInputKeyJustPressed(EKeys::SpaceBar))
+    {
+        OnHackCamera.Broadcast();
+    }
 }
 
-void ASecurityCamera::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ASecurityCamera::HackCamera()
 {
-    Super::SetupPlayerInputComponent(PlayerInputComponent);
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    if (!PC)
+    {
+        return;
+    }
+
+    if (!bCameraHacked)
+    {
+        PC->SetViewTarget(this);
+        bCameraHacked = true;
+    }
+    else
+    {
+        APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+        if (PlayerPawn)
+        {
+            PC->SetViewTarget(PlayerPawn);
+        }
+
+        bCameraHacked = false;
+    }
 }

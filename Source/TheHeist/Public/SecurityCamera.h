@@ -8,6 +8,7 @@
 
 #include "SecurityCamera.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHackCamera);
 
 UCLASS(Blueprintable)
 class THEHEIST_API ASecurityCamera : public APawn
@@ -19,10 +20,10 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    
     virtual void Tick(float DeltaTime) override;
 
 public:
-    virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
     bool bIsMoving = true;
@@ -33,8 +34,18 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera", meta = (EditCondition = "bIsMoving"))
     float MaxRotationAngle = 60.0f;
 
+    UFUNCTION()
+    void HackCamera();
+
+    UPROPERTY(BlueprintAssignable, Category = "Camera")
+    FOnHackCamera OnHackCamera;
+    
 private:
     float CurrentRotation = 0.0f;
+    
     bool bRotatingRight = true;
+    
+    bool bCameraHacked = false;
+
     FRotator InitialRotation;
 };
