@@ -6,18 +6,21 @@
 #include "PuzzleKeyPadWidget.generated.h"
 
 /**
- * Widget for Puzzle KeyPad display and feedback
+ * Widget for Puzzle KeyPad display and visual feedback
+ * Handles UI presentation for the puzzle keypad
  */
 UCLASS()
 class PUZZLEKEYPAD_API UPuzzleKeyPadWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
-public :
-
-	UFUNCTION(BlueprintImplementableEvent)
+public:
+	
+	/* Updates the display text in the widget */
+	UFUNCTION(BlueprintImplementableEvent, Category = "Puzzle Widget")
 	void UpdateDisplay(const FText& Text);
 
-	UFUNCTION(BlueprintImplementableEvent)
+	/* Updates the visual feedback based on validation result */
+	UFUNCTION(BlueprintImplementableEvent, Category = "Puzzle Widget")
 	void UpdateVisualResult(bool bCodeIsRight);
 };

@@ -1,110 +1,200 @@
 ﻿#include "PuzzleKeyPad.h"
 
-#include "Blueprint/UserWidget.h"
 #include "Components/WidgetComponent.h"
 
+#pragma region Initialization
 
 APuzzleKeyPad::APuzzleKeyPad()
+    : CurrentCode("")
+    , ErrorDisplayDuration(1.5f)
 {
-	PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = false;
 
+    // Create root component
     RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 
-	PuzzleComponent = CreateDefaultSubobject<UPuzzleComponent>(TEXT("PuzzleComponent"));
+    // Create logic components
+    PuzzleComponent = CreateDefaultSubobject<UPuzzleComponent>(TEXT("PuzzleComponent"));
+    DisplayManager = CreateDefaultSubobject<UPuzzleDisplayManager>(TEXT("DisplayManager"));
 
-	ScreenText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("ScreenText"));
-	ScreenText->SetupAttachment(RootComponent);
-    ScreenText->SetHorizontalAlignment(EHTA_Center);
-    ScreenText->SetText(FText::FromString("----"));
-    ScreenText->SetWorldSize(20.0f);
-
-	ScreenWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("ScreenWidget"));
-	ScreenWidget->SetupAttachment(RootComponent);
+    // Create visual component
+    ScreenWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("ScreenWidget"));
+    ScreenWidget->SetupAttachment(RootComponent);
 }
 
 void APuzzleKeyPad::BeginPlay()
 {
-	Super::BeginPlay();
-	CurrentCode = "";
-
-	if (ScreenWidget) ScreenWidgetInstance = Cast<UPuzzleKeyPadWidget>(ScreenWidget->GetWidget());
-	
-    UpdateDisplay();
+    Super::BeginPlay();
+    
+    InitializeComponents();
 }
 
-/*
- * Receives input from the keypad buttons.
+void APuzzleKeyPad::InitializeComponents()
+{
+    if (DisplayManager)
+    {
+       DisplayManager->Initialize(ScreenWidget);
+       DisplayManager->UpdateDisplay("");
+    }
+
+    if (PuzzleComponent)
+    {
+       PuzzleComponent->AddObserver(this);
+    }
+}
+
+#pragma endregion
+
+#pragma region Public Interface
+
+/**
+ * Receives input from external sources (e.g., player interaction)
  * 
- * @param Value The input value from the keypad button.
+ * @param Value The input value from the keypad
  */
 void APuzzleKeyPad::ReceiveInput(FString Value)
 {
-	//Clear the code
-    if(Value == "C") 
+    if (!PuzzleComponent)
     {
-        CurrentCode = "";
-        UpdateDisplay();
-        return;
+       return;
     }
 
-    // Add the input value to the current code
-	CurrentCode.Append(Value);
-	UpdateDisplay();
+    AppendToCode(Value);
 
-    // Check if we need to validate the solution
-	if (PuzzleComponent && PuzzleComponent->NeedToCheckSolution(CurrentCode))
-	{
-		HandleValidation();
-	}
+    UpdateDisplay();
+
+    if (IsCodeComplete())
+    {
+       RequestValidation();
+    }
 }
 
-/*
- * Updates the visual display of the keypad with the current code.
+/**
+ * Clears the current code
  */
-void APuzzleKeyPad::UpdateDisplay() const
+void APuzzleKeyPad::ClearCode()
 {
-	/* Update the TextRenderComponent display */
-    if(ScreenText)
+    CurrentCode.Empty();
+    UpdateDisplay();
+}
+
+/**
+ * Sets the puzzle solution
+ * 
+ * @param Solution The correct solution string
+ */
+void APuzzleKeyPad::SetPuzzleSolution(const FString& Solution)
+{
+    if (PuzzleComponent)
     {
-        ScreenText->SetText(FText::FromString(CurrentCode));
+       PuzzleComponent->SetSolution(Solution);
+    }
+}
+
+#pragma endregion
+
+#pragma region Code Management
+
+/**
+ * Appends a value to the current code
+ * 
+ * @param Value The value to append
+ */
+void APuzzleKeyPad::AppendToCode(const FString& Value)
+{
+    CurrentCode.Append(Value);
+}
+
+/**
+ * Checks if the code is complete (reached expected length)
+ * 
+ * @return true if the code length matches the solution length
+ */
+bool APuzzleKeyPad::IsCodeComplete() const
+{
+    if (!PuzzleComponent)
+    {
+       return false;
     }
 
-	/* Update the Widget display */
-	if (ScreenWidget)
-	{
-		ScreenWidgetInstance->UpdateDisplay(FText::FromString(CurrentCode));
-	}
+    return CurrentCode.Len() == PuzzleComponent->GetSolutionLength();
 }
 
-/*
- * Handles the validation of the entered code against the puzzle solution.
+/**
+ * Updates the display with the current code
  */
-void APuzzleKeyPad::HandleValidation()
+void APuzzleKeyPad::UpdateDisplay()
 {
-	bool bSuccess = PuzzleComponent->TrySolvePuzzle(CurrentCode);
-	
-	ScreenWidgetInstance->UpdateVisualResult(bSuccess);
-
-	// Update the TextRenderComponent based on success or failure
-	if (bSuccess)
-	{
-		ScreenText->SetTextRenderColor(FColor::Green);
-		ScreenText->SetText(FText::FromString("OPEN"));
-		
-        // TODO : Ouvrir la porte ici ou appeler un Event
-	}
-	else
-	{
-		ScreenText->SetTextRenderColor(FColor::Red);
-		ScreenText->SetText(FText::FromString("ERR"));
-        
-        // Timer to reset the display after showing error
-        FTimerHandle UnusedHandle;
-        GetWorldTimerManager().SetTimer(UnusedHandle, [this]()
-        {
-            CurrentCode = "";
-            ScreenText->SetTextRenderColor(FColor::White);
-            UpdateDisplay();
-        }, 1.5f, false);
-	}
+    if (DisplayManager)
+    {
+       DisplayManager->UpdateDisplay(CurrentCode);
+    }
 }
+
+/**
+ * Requests validation of the current code
+ */
+void APuzzleKeyPad::RequestValidation()
+{
+    if (PuzzleComponent)
+    {
+       PuzzleComponent->ValidateSolution(CurrentCode);
+    }
+}
+
+#pragma endregion
+
+#pragma region Observer Implementation
+
+/**
+ * Called when the puzzle is successfully solved
+ */
+void APuzzleKeyPad::OnPuzzleSolved()
+{
+    if (DisplayManager)
+    {
+       DisplayManager->ShowValidationResult(true);
+    }
+
+    OnPuzzleSolvedEvent();
+}
+
+/**
+ * Called when puzzle validation fails
+ */
+void APuzzleKeyPad::OnPuzzleFailed()
+{
+    if (DisplayManager)
+    {
+       DisplayManager->ShowValidationResult(false);
+    }
+
+    GetWorldTimerManager().SetTimer(
+       ErrorResetTimerHandle,
+       this,
+       &APuzzleKeyPad::ResetAfterError,
+       ErrorDisplayDuration,
+       false
+    );
+
+    OnPuzzleFailedEvent();
+}
+
+#pragma endregion
+
+#pragma region Reset Logic
+
+/**
+ * Resets the display and input after showing an error
+ */
+void APuzzleKeyPad::ResetAfterError()
+{
+    ClearCode();
+
+    if (DisplayManager)
+    {
+       DisplayManager->ResetDisplay();
+    }
+}
+
+#pragma endregion
