@@ -1,13 +1,12 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+
 #include "PuzzleKeyPadWidget.generated.h"
 
 /**
- * 
+ * Widget for Puzzle KeyPad display and feedback
  */
 UCLASS()
 class PUZZLEKEYPAD_API UPuzzleKeyPadWidget : public UUserWidget
