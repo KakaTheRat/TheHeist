@@ -1,51 +1,62 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "PuzzleKeyPadWidget.h"
 #include "GameFramework/Actor.h"
 
 #include "PuzzleComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "Components/WidgetComponent.h"
+#include "PuzzleKeyPadWidget.h"
 
 #include "PuzzleKeyPad.generated.h"
 
+/**
+ * Puzzle KeyPad Actor
+ * Handles input from a keypad and checks against a puzzle solution.
+ */
 UCLASS()
 class PUZZLEKEYPAD_API APuzzleKeyPad : public AActor
 {
 	GENERATED_BODY()
 	
-public:	
+public:
+	
 	APuzzleKeyPad();
 
 protected:
+	
 	virtual void BeginPlay() override;
 
+	/* The puzzle component that handles solution checking */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UPuzzleComponent* PuzzleComponent;
 
-	// Le composant qui affiche le texte en 3D dans le monde
+	/* Visual display components */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UTextRenderComponent* ScreenText;
 
+	/* Widget component for advanced UI */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UWidgetComponent* ScreenWidget;
-	
+
+	/* Instance of the widget */
 	UPROPERTY()
 	UPuzzleKeyPadWidget* ScreenWidgetInstance;
 
-
-	// Mémorise ce que le joueur tape
+	/* Current input code */
 	FString CurrentCode;
 
-public:	
-	// Appelée par les boutons
+public:
+	
+	/* Function to receive input from the keypad */
 	UFUNCTION(BlueprintCallable)
 	void ReceiveInput(FString Value);
 
 private:
-	void UpdateDisplay();
+	
+	/* Update the visual display */
+	void UpdateDisplay() const;
+	
+	/* Handle validation of the entered code */
 	void HandleValidation();
 };
