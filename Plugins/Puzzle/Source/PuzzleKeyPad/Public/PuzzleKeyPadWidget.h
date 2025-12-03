@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "KeyPadWidget.generated.h"
+#include "PuzzleKeyPadWidget.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PUZZLEKEYPAD_API UKeyPadWidget : public UUserWidget
+class PUZZLEKEYPAD_API UPuzzleKeyPadWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
