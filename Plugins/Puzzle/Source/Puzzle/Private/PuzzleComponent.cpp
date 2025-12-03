@@ -1,41 +1,123 @@
 ﻿#include "PuzzleComponent.h"
 
-/**
- * Puzzle component to manage enigma solving logic
- */
-UPuzzleComponent::UPuzzleComponent()
+#pragma region Initialization
+
+UPuzzleComponent::UPuzzleComponent() : bIsCompleted(false)
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
-/**
- * Attempts to solve the puzzle with the provided player solution
- *
- * @param PlayerSolution The solution provided by the player
- * @return true if the puzzle is solved, false otherwise
+#pragma endregion
+
+#pragma region Configuration
+
+/*
+ * Sets the puzzle solution
+ * 
+ * @param NewSolution The new solution string
  */
-bool UPuzzleComponent::TrySolvePuzzle(const FString& PlayerSolution)
+void UPuzzleComponent::SetSolution(const FString& NewSolution)
 {
-	if (IsCompleted == true or PuzzleSolution == PlayerSolution)
+	PuzzleSolution = NewSolution;
+	bIsCompleted = false;
+}
+
+/*
+ * Resets the puzzle state to incomplete
+ */
+void UPuzzleComponent::Reset()
+{
+	bIsCompleted = false;
+}
+
+#pragma endregion
+
+#pragma region Validation
+
+/*
+ * Validates the player's solution
+ * 
+ * @param PlayerSolution The solution provided by the player
+ * @return true if the solution is correct, false otherwise
+ */
+bool UPuzzleComponent::ValidateSolution(const FString& PlayerSolution)
+{
+	if (bIsCompleted)
 	{
-		IsCompleted = true;
 		return true;
 	}
-	return false;
-}
 
-/**
- * Checks if the player's solution needs to be evaluated
- *
- * @param PlayerSolution The solution provided by the player
- * @return true if the player's solution length matches the puzzle solution length, false otherwise
- */
-bool UPuzzleComponent::NeedToCheckSolution(const FString& PlayerSolution) const
-{
-	if (PlayerSolution.Len() == PuzzleSolution.Len())
+	const bool bIsCorrect = PuzzleSolution.Equals(PlayerSolution, ESearchCase::CaseSensitive);
+	
+	if (bIsCorrect)
 	{
-		return true;
+		bIsCompleted = true;
 	}
-	return false;
+
+	NotifyObservers(bIsCorrect);
+	
+	return bIsCorrect;
 }
 
+/*
+ * Checks if the solution length is correct
+ * 
+ * @param PlayerSolution The solution provided by the player
+ * @return true if the lengths match, false otherwise
+ */
+bool UPuzzleComponent::IsSolutionLengthCorrect(const FString& PlayerSolution) const
+{
+	return PlayerSolution.Len() == PuzzleSolution.Len();
+}
+
+#pragma endregion
+
+#pragma region Observer
+
+/*
+ * Adds an observer to be notified of puzzle events
+ * 
+ * @param Observer The observer to add
+ */
+void UPuzzleComponent::AddObserver(const TScriptInterface<IPuzzleObserver>& Observer)
+{
+	if (Observer.GetInterface())
+	{
+		Observers.AddUnique(Observer);
+	}
+}
+
+/*
+ * Removes an observer
+ * 
+ * @param Observer The observer to remove
+ */
+void UPuzzleComponent::RemoveObserver(const TScriptInterface<IPuzzleObserver>& Observer)
+{
+	Observers.Remove(Observer);
+}
+
+/*
+ * Notifies all registered observers of puzzle events
+ * 
+ * @param bSuccess true if the puzzle was solved, false if failed
+ */
+void UPuzzleComponent::NotifyObservers(bool bSuccess)
+{
+	for (const TScriptInterface<IPuzzleObserver>& Observer : Observers)
+	{
+		if (Observer.GetInterface())
+		{
+			if (bSuccess)
+			{
+				Observer->OnPuzzleSolved();
+			}
+			else
+			{
+				Observer->OnPuzzleFailed();
+			}
+		}
+	}
+}
+
+#pragma endregion
