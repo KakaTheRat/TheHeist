@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "KeyPadWidget.h"
+#include "PuzzleKeyPadWidget.h"
 #include "GameFramework/Actor.h"
 
 #include "PuzzleComponent.h"
@@ -34,7 +34,7 @@ protected:
 	UWidgetComponent* ScreenWidget;
 	
 	UPROPERTY()
-	UKeyPadWidget* ScreenWidgetInstance;
+	UPuzzleKeyPadWidget* ScreenWidgetInstance;
 
 
 	// Mémorise ce que le joueur tape

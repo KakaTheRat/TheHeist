@@ -29,7 +29,7 @@ void APuzzleKeyPad::BeginPlay()
 	Super::BeginPlay();
 	CurrentCode = "";
 
-	if (ScreenWidget) ScreenWidgetInstance = Cast<UKeyPadWidget>(ScreenWidget->GetWidget());
+	if (ScreenWidget) ScreenWidgetInstance = Cast<UPuzzleKeyPadWidget>(ScreenWidget->GetWidget());
 	
     UpdateDisplay();
 }
