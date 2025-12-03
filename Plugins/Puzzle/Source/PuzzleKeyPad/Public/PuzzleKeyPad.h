@@ -3,10 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "KeyPadWidget.h"
 #include "GameFramework/Actor.h"
 
 #include "PuzzleComponent.h"
 #include "Components/TextRenderComponent.h"
+#include "Components/WidgetComponent.h"
 
 #include "PuzzleKeyPad.generated.h"
 
@@ -27,6 +29,13 @@ protected:
 	// Le composant qui affiche le texte en 3D dans le monde
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UTextRenderComponent* ScreenText;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UWidgetComponent* ScreenWidget;
+	
+	UPROPERTY()
+	UKeyPadWidget* ScreenWidgetInstance;
+
 
 	// Mémorise ce que le joueur tape
 	FString CurrentCode;

@@ -9,6 +9,7 @@ public class PuzzleKeyPad : ModuleRules
         PublicDependencyModuleNames.AddRange(
             [
                 "Core",
+                "UMG"  
             ]
         );
 
