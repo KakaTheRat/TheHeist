@@ -56,6 +56,7 @@ void APuzzleKeyPad::ReceiveInput(FString Value)
 {
     if (!PuzzleComponent)
     {
+    	UE_LOG(LogTemp, Warning, TEXT("PuzzleComponent is not initialized."));
        return;
     }
 
