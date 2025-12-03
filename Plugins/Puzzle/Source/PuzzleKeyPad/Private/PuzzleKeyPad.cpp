@@ -1,5 +1,8 @@
 ﻿#include "PuzzleKeyPad.h"
 
+#include "Blueprint/UserWidget.h"
+#include "Components/WidgetComponent.h"
+
 
 APuzzleKeyPad::APuzzleKeyPad()
 {
@@ -16,12 +19,18 @@ APuzzleKeyPad::APuzzleKeyPad()
     ScreenText->SetHorizontalAlignment(EHTA_Center);
     ScreenText->SetText(FText::FromString("----"));
     ScreenText->SetWorldSize(20.0f); // Taille du texte
+
+	ScreenWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("ScreenWidget"));
+	ScreenWidget->SetupAttachment(RootComponent);
 }
 
 void APuzzleKeyPad::BeginPlay()
 {
 	Super::BeginPlay();
 	CurrentCode = "";
+
+	if (ScreenWidget) ScreenWidgetInstance = Cast<UKeyPadWidget>(ScreenWidget->GetWidget());
+	
     UpdateDisplay();
 }
 
@@ -52,17 +61,26 @@ void APuzzleKeyPad::UpdateDisplay()
     {
         ScreenText->SetText(FText::FromString(CurrentCode));
     }
+
+	if (ScreenWidget)
+	{
+		ScreenWidgetInstance->UpdateDisplay(FText::FromString(CurrentCode));
+	}
 }
 
 void APuzzleKeyPad::HandleValidation()
 {
 	bool bSuccess = PuzzleComponent->TrySolveEnigma(CurrentCode);
-
+	
+	ScreenWidgetInstance->UpdateVisualResult(bSuccess);
+	
 	if (bSuccess)
 	{
 		ScreenText->SetTextRenderColor(FColor::Green);
 		ScreenText->SetText(FText::FromString("OPEN"));
         // TODO : Ouvrir la porte ici ou appeler un Event
+
+		
 	}
 	else
 	{
