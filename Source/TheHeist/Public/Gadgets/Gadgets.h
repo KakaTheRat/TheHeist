@@ -4,10 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Datas/DataAssets/Gadget.h"
+#include "GameFramework/Character.h"
 #include "Gadgets.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGadgetUsedDelegate, AGadgets*, Gadget);
-
+DECLARE_DYNAMIC_DELEGATE(FSetDataAsset);
 UCLASS()
 class THEHEIST_API AGadgets : public AActor
 {
@@ -61,6 +63,15 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly,  Category="Gadget")
+	UGadget* DA_Gadget;
+
+private:
+	UPROPERTY()
+	ACharacter* CharacterOwner;
+
+	bool bIsTaking;
+
 	
 
 public:	
@@ -88,4 +99,32 @@ public:
 		bCanBeUse = !bCanBeUse;
 	}
 	void CooldownTimer();
+	
+	UFUNCTION(BlueprintCallable, Category="Gadget")
+	UGadget* GetDataAsset() {
+		if (!DA_Gadget)
+		{
+			return nullptr;
+		}
+		return DA_Gadget;
+	}
+
+	void SetDataAsset(UGadget* NewGadget)
+	{
+		DA_Gadget = NewGadget;
+	}
+
+	void SetCharacter(ACharacter* Character)
+	{
+		CharacterOwner = Character;
+	}
+	float PlayMontage(UAnimMontage* Montage, float Rate = 1.0f)
+	{
+		return CharacterOwner->GetMesh()->GetAnimInstance()->Montage_Play(Montage, Rate);;
+	}
+	
+	float TakeGadget();
+
+	
+	FSetDataAsset DelegateDataAsset;
 };

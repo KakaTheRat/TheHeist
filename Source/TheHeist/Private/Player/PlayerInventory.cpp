@@ -22,8 +22,59 @@ void UPlayerInventory::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
+	Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	ACharacter* Char = Cast<ACharacter>(Pawn);
+	for (auto Gadget : InventoryGadgets)
+	{
+		AGadgets* Tmp = FindActor(Gadget);
+		if (!Tmp)
+		{
+			continue;
+		}
+		Tmp->SetCharacter(Char);
+		HardRefGadgets.Add(Tmp);
+	}
+	Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 	
+	APlayerController* PC = Cast<APlayerController>(Pawn->GetController());
+	if (!PC) return;
+
+	if (ULocalPlayer* LocalPlayer = PC->GetLocalPlayer())
+	{
+		UEnhancedInputLocalPlayerSubsystem* Subsystem =
+			LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+        
+		if (Subsystem && InputMapping)
+		{
+			Subsystem->AddMappingContext(InputMapping, 0);
+		}
+	}
+
 	
+	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PC->InputComponent))
+	{
+		if (USeAction)
+		{
+			EnhancedInput->BindAction(USeAction, ETriggerEvent::Started, this, &UPlayerInventory::Use);
+			EnhancedInput->BindAction(USeAction, ETriggerEvent::Completed, this, &UPlayerInventory::RelaseUseItem);
+		}
+		if (GadgetOne)
+		{
+			EnhancedInput->BindAction(GadgetOne, ETriggerEvent::Triggered, this, &UPlayerInventory::InputOne);
+		}
+		if (GadgetTwo)
+		{
+			EnhancedInput->BindAction(GadgetTwo, ETriggerEvent::Triggered, this, &UPlayerInventory::InputTwo);
+		}
+		if (GadgetThree)
+		{
+			EnhancedInput->BindAction(GadgetThree, ETriggerEvent::Triggered, this, &UPlayerInventory::InputThree);
+		}
+		if (GadgetFor)
+		{
+			EnhancedInput->BindAction(GadgetFor, ETriggerEvent::Triggered, this, &UPlayerInventory::InputFore);
+		}
+	}
 }
 
 
@@ -70,9 +121,9 @@ void UPlayerInventory::StartUseItem()
 	{
 		return;
 	}
-	if (FindOrCacheGadget(ItemClass))
+	if (FindActor(ItemClass))
 	{
-		RecallGadget(FindOrCacheGadget(ItemClass));
+		RecallGadget(FindActor(ItemClass));
 		UE_LOG(LogTemp, Warning, TEXT("%s is already spawned, recalling it by cash"), *ItemClass->GetName());
 		if (!Slot.bIsStack)
 		{
@@ -109,44 +160,74 @@ void UPlayerInventory::StartUseItem()
 	}
 }
 
-AGadgets* UPlayerInventory::FindOrCacheGadget(TSubclassOf<AGadgets> ItemClass)
+AGadgets* UPlayerInventory::FindActor(TSubclassOf<AGadgets> ItemClass)
 {
-	if (!ItemClass) return nullptr;
-
-	if (CachedGadgets.Contains(ItemClass) && IsValid(CachedGadgets[ItemClass]))
+	if (!*ItemClass)
 	{
-		CurrentGadget = CachedGadgets[ItemClass];
-		return CurrentGadget;
+		return nullptr;
 	}
 
 	UWorld* World = GetWorld();
-	if (!World) return nullptr;
+	if (!World)
+	{
+		return nullptr;
+	}
 
 	TArray<AActor*> FoundActors;
 	UGameplayStatics::GetAllActorsOfClass(World, ItemClass, FoundActors);
 
-	for (AActor* Actor : FoundActors)
+	if (FoundActors.Num() > 0)
 	{
-		AGadgets* Gadget = Cast<AGadgets>(Actor);
-		if (IsValid(Gadget))
+		if (GEngine)
 		{
-			CurrentGadget = Gadget;
-			CachedGadgets.Add(ItemClass, Gadget);
-			return CurrentGadget;
+			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, TEXT("trouver"));
 		}
+		AGadgets* Tmp = Cast<AGadgets>(FoundActors[0]);
+		if (!Tmp->GetDataAsset())
+		{
+			Tmp->SetDataAsset(FindDataAssets(Tmp->GetName()));
+			Tmp->DelegateDataAsset.ExecuteIfBound();
+		}
+		return Cast<AGadgets>( FoundActors[0]);
 	}
 
-	return nullptr;
+	return SpawnAndCacheGadget(ItemClass);
 }
+
+
+AGadgets* UPlayerInventory::SpawnAndCacheGadget(TSubclassOf<AGadgets> ItemClass)
+{
+	if (!ItemClass) return nullptr;
+
+	UWorld* World = GetWorld();
+	if (!World) return nullptr;
+
+	FActorSpawnParameters Params;
+	Params.Owner = GetOwner();
+	Params.Instigator = Cast<APawn>(GetOwner());
+
+	FVector SpawnLocation = FVector(0.f, 0.f, 0.f);
+	FRotator SpawnRotation = GetOwner()->GetActorRotation();
+
+	AGadgets* Gadget = World->SpawnActor<AGadgets>(ItemClass, SpawnLocation, SpawnRotation, Params);
+	if (!IsValid(Gadget)) return nullptr;
+
+	CachedGadgets.Add(ItemClass, Gadget);
+
+	Gadget->SetCharacter(Character);
+	Gadget->SetDataAsset(FindDataAssets(Gadget->GetName()));
+	return Gadget;
+}
+
 
 
 void UPlayerInventory::RecallGadget(AGadgets* Gadget)
 {
 	if (!Gadget || !GetOwner()) return;
 
-	FVector SpawnLocation = GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 100.f;
+	/*FVector SpawnLocation = GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 100.f;
 	Gadget->SetActorLocation(SpawnLocation);
-	Gadget->SetActorRotation(GetOwner()->GetActorRotation());
+	Gadget->SetActorRotation(GetOwner()->GetActorRotation());*/
 	Gadget->OnUsePressed();
 	Gadget->ChangeCanBeUsed();
 	Gadget->CooldownTimer();
@@ -228,4 +309,85 @@ void UPlayerInventory::ModifyCurrentIndex(int m_Value)
 	OnInventoryUpdated.Broadcast(Items);
 }
 
+void UPlayerInventory::Use(const FInputActionValue& Value)
+{
+	if (!CurrentGadget)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("pas de gadget"));
+		return;
+	}
+	RecallGadget(CurrentGadget);
+}
+
+void UPlayerInventory::InputOne(const FInputActionValue& Value)
+{
+	ChangeCurrentGadget(0);
+}
+
+void UPlayerInventory::InputTwo(const FInputActionValue& Value)
+{
+	ChangeCurrentGadget(1);
+}
+
+void UPlayerInventory::InputThree(const FInputActionValue& Value)
+{
+	ChangeCurrentGadget(2);
+}
+
+void UPlayerInventory::InputFore(const FInputActionValue& Value)
+{
+	ChangeCurrentGadget(3);
+}
+
+void UPlayerInventory::ChangeCurrentGadget(int32 Value)
+{
+	if (HardRefGadgets.IsValidIndex(Value))
+	{
+		CurrentGadget = HardRefGadgets[Value];
+
+		FVector SpawnLocation = GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 100.f;
+
+		CurrentGadget->SetActorLocation(SpawnLocation);
+		
+		CurrentGadget->SetActorRotation(GetOwner()->GetActorRotation());
+		CurrentGadget->TakeGadget();
+	}
+}
+
+UGadget* UPlayerInventory::FindDataAssets(FString Name)
+{
+	UE_LOG(LogTemp, Warning, TEXT("%s Data asset"), *CleanName(Name));
+	if (AllDataAssets.IsEmpty())
+	{
+		return nullptr;
+	}
+	for (auto Data : AllDataAssets)
+	{
+		if (Data->GetName().Contains(CleanName(Name)))
+		{
+			return Data;
+		}
+	}
+	return nullptr;
+}
+
+FString UPlayerInventory::CleanName(const FString& InputName)
+{
+	FString Result = InputName;
+
+	if (Result.StartsWith(TEXT("BP_")))
+	{
+		Result = Result.RightChop(3);
+	}
+	int32 Index;
+	if (Result.FindChar('_', Index))
+	{
+		if (Result.Mid(Index, 3) == "_C_")
+		{
+			Result = Result.Left(Index);
+		}
+	}
+
+	return Result;
+}
 
