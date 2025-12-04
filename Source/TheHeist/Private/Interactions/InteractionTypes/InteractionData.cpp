@@ -139,7 +139,6 @@ void UInteractionData::OnMontageNotifyBegin(FName NotifyName, const FBranchingPo
         f->bEnableHandIK = false;
         f->InteractionTarget = nullptr;
         
-        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Blue, "Super");
         
         StartInteraction();
     }
@@ -159,7 +158,7 @@ void UInteractionData::OnMontageNotifyBegin(FName NotifyName, const FBranchingPo
             if (s->GetName() == AnimationTarget)
             {
                 f->InteractionTarget = s;
-                GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Blue, "YAHEE");
+                
                 return;
             }
         }
