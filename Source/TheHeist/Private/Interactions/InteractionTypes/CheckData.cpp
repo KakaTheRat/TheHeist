@@ -11,7 +11,7 @@ UCheckData::UCheckData()
 	
 }
 
-void UCheckData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor)
+void UCheckData::StartInteraction()
 {
 	TArray<USceneComponent*> Components;
 	OwnerActor->GetComponents<USceneComponent>(Components);
@@ -24,18 +24,17 @@ void UCheckData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInt
 			break;
 		}
 	}
-	Super::ExecuteInteraction(Owner, Target, Context, nullptr);
-	if (!Owner) return;
+	
 	APlayerController* PC = Owner->GetWorld()->GetFirstPlayerController();
 	if (!PC) { EndOfInteraction(); return; }
 
 	APawn* PlayerPawn = PC->GetPawn();
 	UCameraComponent* PlayerCamera = PlayerPawn->FindComponentByClass<UCameraComponent>();
 	if (!PlayerCamera) { EndOfInteraction(); return; }
-	// 2️⃣ Sauvegarde la position et rotation actuelle
+	
 	OriginalCameraTransform = PlayerCamera->GetComponentTransform();
 
-	// 3️⃣ Positionne la caméra sur le point d'observation
+
 	if (LookTarget)
 	{
 		PlayerCamera->SetWorldLocationAndRotation(
@@ -44,14 +43,14 @@ void UCheckData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInt
 		);
 	}
 
-	// 4️⃣ Timer pour la durée du check
+
 	if (UWorld* World = Owner->GetWorld())
 	{
 		World->GetTimerManager().SetTimer(
 			CheckTimerHandle,
 			[this, PlayerCamera]()
 			{
-				// Restore la caméra à sa position originale
+	
 				if (PlayerCamera)
 				{
 					PlayerCamera->SetWorldTransform(OriginalCameraTransform);

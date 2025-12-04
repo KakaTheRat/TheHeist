@@ -20,7 +20,7 @@ public:
 	
 	UActivableData();
 
-	virtual void ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor) override;
+	virtual void StartInteraction() override;
 
 	virtual TArray<FName> GetAvailableStates() override;
 
@@ -55,9 +55,9 @@ protected:
 
 	//Activation for the light
 	UFUNCTION()
-	void ActivateLight(const AActor* Owner);
+	void ActivateLight(const AActor* m_Owner);
 
 	//Activation for the sound
 	UFUNCTION()
-	void ActivateSound(const AActor* Owner);
+	void ActivateSound(const AActor* m_Owner);
 };
