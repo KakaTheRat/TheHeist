@@ -6,6 +6,10 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Gadgets/Gadgets.h"
+#include "GameFramework/Pawn.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "InputAction.h"
 #include "PlayerInventory.generated.h"
 
 USTRUCT(BlueprintType)
@@ -18,9 +22,13 @@ struct FInventorySlot
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Quantity = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsStack = false;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryUpdated, const TArray<FInventorySlot>&, Items);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FUpdateWidget, bool, State, int32, Index);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class THEHEIST_API UPlayerInventory : public UActorComponent
@@ -49,12 +57,41 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Inventory")
 	int CurrentItemIndex = 0;
 
+private:
+	UPROPERTY(EditAnywhere)
+	TArray<UGadget*> AllDataAssets;
+
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Inventory")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Inventory")
 	TArray<FInventorySlot> Items;
+
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Inventory")
+	TArray<TSubclassOf<AGadgets>> InventoryGadgets;
+
+	UPROPERTY()
+	ACharacter* Character;
+
+	UPROPERTY()
+	AGadgets* CurrentGadget;
+	
+	UPROPERTY(BlueprintReadOnly)
+	TArray<AGadgets*> HardRefGadgets;
+
+	UPROPERTY()
+	APawn* Pawn ;
+	
+	UPROPERTY()
+	TMap<TSubclassOf<AGadgets>, AGadgets*> SpawnedGadgets;
+
+	UPROPERTY()
+	TMap<TSubclassOf<AGadgets>, AGadgets*> CachedGadgets;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UInputMappingContext* InputMapping;
 	
 	UFUNCTION(BlueprintCallable)
 	void AddItem(TSubclassOf<AGadgets> ItemClass);
@@ -66,13 +103,49 @@ public:
 	//Called when gadget's use input released
 	UFUNCTION(BlueprintCallable)
 	void RelaseUseItem();
-	
-	AGadgets* CurrentGadget;
 
+	AGadgets* FindActor(TSubclassOf<AGadgets> ItemClass);
+
+	void RecallGadget(AGadgets* Gadget);
+	
 	//Called whenever a gadget is used. Commonly called after the gadget's use dispatcher
 	UFUNCTION(BlueprintCallable)
 	void OnGadgetUsed(AGadgets* GadgetUsed);
 
 	UFUNCTION(BlueprintCallable)
 	void ModifyCurrentIndex(int m_Value);
+
+	AGadgets* SpawnAndCacheGadget(TSubclassOf<AGadgets> ItemClass);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UInputAction* USeAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UInputAction* GadgetOne;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UInputAction* GadgetTwo;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UInputAction* GadgetThree;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UInputAction* GadgetFor;
+
+	void Use(const FInputActionValue& Value);
+	
+	void InputOne(const FInputActionValue& Value);
+	void InputTwo(const FInputActionValue& Value);
+	void InputThree(const FInputActionValue& Value);
+	void InputFore(const FInputActionValue& Value);
+
+	void ChangeCurrentGadget(int32 Value);
+
+	int32 PressedInt;
+
+	UGadget* FindDataAssets(FString Name);
+
+	FString CleanName(const FString& InputName);
+
+	FUpdateWidget UpdateWidget;
 };
