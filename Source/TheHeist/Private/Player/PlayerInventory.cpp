@@ -60,19 +60,19 @@ void UPlayerInventory::BeginPlay()
 		}
 		if (GadgetOne)
 		{
-			EnhancedInput->BindAction(GadgetOne, ETriggerEvent::Triggered, this, &UPlayerInventory::InputOne);
+			EnhancedInput->BindAction(GadgetOne, ETriggerEvent::Started, this, &UPlayerInventory::InputOne);
 		}
 		if (GadgetTwo)
 		{
-			EnhancedInput->BindAction(GadgetTwo, ETriggerEvent::Triggered, this, &UPlayerInventory::InputTwo);
+			EnhancedInput->BindAction(GadgetTwo, ETriggerEvent::Started, this, &UPlayerInventory::InputTwo);
 		}
 		if (GadgetThree)
 		{
-			EnhancedInput->BindAction(GadgetThree, ETriggerEvent::Triggered, this, &UPlayerInventory::InputThree);
+			EnhancedInput->BindAction(GadgetThree, ETriggerEvent::Started, this, &UPlayerInventory::InputThree);
 		}
 		if (GadgetFor)
 		{
-			EnhancedInput->BindAction(GadgetFor, ETriggerEvent::Triggered, this, &UPlayerInventory::InputFore);
+			EnhancedInput->BindAction(GadgetFor, ETriggerEvent::Started, this, &UPlayerInventory::InputFore);
 		}
 	}
 }
@@ -186,7 +186,6 @@ AGadgets* UPlayerInventory::FindActor(TSubclassOf<AGadgets> ItemClass)
 		if (!Tmp->GetDataAsset())
 		{
 			Tmp->SetDataAsset(FindDataAssets(Tmp->GetName()));
-			Tmp->DelegateDataAsset.ExecuteIfBound();
 		}
 		return Cast<AGadgets>( FoundActors[0]);
 	}
@@ -238,6 +237,8 @@ void UPlayerInventory::RelaseUseItem()
 	if (CurrentGadget)
 	{
 		CurrentGadget->OnUseReleased();
+		CurrentGadget->TakeGadget(); 
+		UpdateWidget.Broadcast(false, CurrentItemIndex);
 	}
 }
 
@@ -333,22 +334,38 @@ void UPlayerInventory::InputFore(const FInputActionValue& Value)
 	ChangeCurrentGadget(3);
 }
 
-void UPlayerInventory::ChangeCurrentGadget(int32 Value)
+void UPlayerInventory::ChangeCurrentGadget(int32 NewValue)
 {
-	if (HardRefGadgets.IsValidIndex(Value))
+	if (HardRefGadgets.IsValidIndex(NewValue))
 	{
-		CurrentGadget = HardRefGadgets[Value];
+		int32 OldValue = CurrentGadgetIndex;
 
-		FVector SpawnLocation = GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 100.f;
-
-		CurrentGadget->SetActorLocation(SpawnLocation);
 		
+		if (CurrentGadget && CurrentGadget->GetIsTaking())
+		{
+			CurrentGadget->SetActorLocation(FVector(0.0f, 0.0f, 0.0f));
+			CurrentGadget->SetActorRotation(GetOwner()->GetActorRotation());
+			CurrentGadget->SetNoPhysicObject();
+			CurrentGadget->TakeGadget(); 
+			UpdateWidget.Broadcast(false, OldValue);
+			if (OldValue == NewValue)
+			{
+				return;
+			}
+		}
+
+		CurrentGadgetIndex = NewValue;
+		CurrentGadget = HardRefGadgets[NewValue];
+
+		CurrentGadget->SetActorLocation(GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 100.f);
 		CurrentGadget->SetActorRotation(GetOwner()->GetActorRotation());
 		CurrentGadget->SetNoPhysicObject();
+
 		CurrentGadget->TakeGadget();
-		
+		UpdateWidget.Broadcast(CurrentGadget->GetIsTaking(), NewValue); // true = pris
 	}
 }
+
 
 UGadget* UPlayerInventory::FindDataAssets(FString Name)
 {
