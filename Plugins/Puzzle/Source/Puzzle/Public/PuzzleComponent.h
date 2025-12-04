@@ -33,7 +33,6 @@ public:
 
 /**
  * Component managing puzzle solving logic
- * Single Responsibility Principle: Handles only solution validation
  */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class PUZZLE_API UPuzzleComponent : public UActorComponent
