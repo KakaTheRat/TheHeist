@@ -125,11 +125,8 @@ public:
 	
 	float TakeGadget();
 
-	void SetNoPhysicObject();
+	
 	FSetDataAsset DelegateDataAsset;
 
-	bool GetTaking()
-	{
-		return bIsTaking;
-	}
+	void SetNoPhysicObject();
 };
