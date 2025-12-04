@@ -22,6 +22,41 @@ void AGadgets::BeginPlay()
 	
 }
 
+void AGadgets::CooldownTimer()
+{
+	GetWorld()->GetTimerManager().SetTimer(
+		TimerHandle,          
+		this,                
+		&AGadgets::ChangeCanBeUsed, 
+		Cooldown,        
+		false              
+	);
+}
+
+float AGadgets::TakeGadget()
+{
+	if (!DA_Gadget)
+	{
+		return 0.0f;
+	}
+	if (!DA_Gadget->GadgetStruct.EffectGadget.AnimationGadget)
+	{
+		return 0.0f;
+	}
+	
+	if (!bIsTaking)
+	{
+		return PlayMontage(DA_Gadget->GadgetStruct.EffectGadget.AnimationGadget);
+	}
+	if (bIsTaking)
+	{
+		return PlayMontage(DA_Gadget->GadgetStruct.EffectGadget.AnimationGadget, -1);
+	}
+	
+	return 0.0f;
+}
+
+
 // Called every frame
 void AGadgets::Tick(float DeltaTime)
 {
