@@ -56,6 +56,13 @@ float AGadgets::TakeGadget()
 	return 0.0f;
 }
 
+void AGadgets::SetNoPhysicObject()
+{
+	StaticMesh->SetEnableGravity(false);
+	StaticMesh->SetPhysicsLinearVelocity(FVector::ZeroVector);
+	StaticMesh->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+}
+
 
 // Called every frame
 void AGadgets::Tick(float DeltaTime)

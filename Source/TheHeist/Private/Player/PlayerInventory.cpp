@@ -225,14 +225,9 @@ void UPlayerInventory::RecallGadget(AGadgets* Gadget)
 {
 	if (!Gadget || !GetOwner()) return;
 
-	/*FVector SpawnLocation = GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 100.f;
-	Gadget->SetActorLocation(SpawnLocation);
-	Gadget->SetActorRotation(GetOwner()->GetActorRotation());*/
 	Gadget->OnUsePressed();
 	Gadget->ChangeCanBeUsed();
 	Gadget->CooldownTimer();
-	
-
 	UE_LOG(LogTemp, Warning, TEXT("%s recalled"), *Gadget->GetName());
 }
 
@@ -313,7 +308,6 @@ void UPlayerInventory::Use(const FInputActionValue& Value)
 {
 	if (!CurrentGadget)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("pas de gadget"));
 		return;
 	}
 	RecallGadget(CurrentGadget);
@@ -350,13 +344,14 @@ void UPlayerInventory::ChangeCurrentGadget(int32 Value)
 		CurrentGadget->SetActorLocation(SpawnLocation);
 		
 		CurrentGadget->SetActorRotation(GetOwner()->GetActorRotation());
+		CurrentGadget->SetNoPhysicObject();
 		CurrentGadget->TakeGadget();
+		
 	}
 }
 
 UGadget* UPlayerInventory::FindDataAssets(FString Name)
 {
-	UE_LOG(LogTemp, Warning, TEXT("%s Data asset"), *CleanName(Name));
 	if (AllDataAssets.IsEmpty())
 	{
 		return nullptr;

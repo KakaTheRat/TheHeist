@@ -100,7 +100,7 @@ public:
 	}
 	void CooldownTimer();
 	
-	UFUNCTION(BlueprintCallable, Category="Gadget")
+	UFUNCTION(BlueprintPure, Category="Gadget")
 	UGadget* GetDataAsset() {
 		if (!DA_Gadget)
 		{
@@ -125,6 +125,11 @@ public:
 	
 	float TakeGadget();
 
-	
+	void SetNoPhysicObject();
 	FSetDataAsset DelegateDataAsset;
+
+	bool GetTaking()
+	{
+		return bIsTaking;
+	}
 };

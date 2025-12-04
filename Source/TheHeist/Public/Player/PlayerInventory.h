@@ -28,6 +28,7 @@ struct FInventorySlot
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryUpdated, const TArray<FInventorySlot>&, Items);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FUpdateWidget, bool, State, int32, Index);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class THEHEIST_API UPlayerInventory : public UActorComponent
@@ -77,7 +78,7 @@ public:
 	UPROPERTY()
 	AGadgets* CurrentGadget;
 	
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	TArray<AGadgets*> HardRefGadgets;
 
 	UPROPERTY()
@@ -146,5 +147,5 @@ public:
 
 	FString CleanName(const FString& InputName);
 
-
+	FUpdateWidget UpdateWidget;
 };
