@@ -49,13 +49,6 @@ void ASecurityCamera::Tick(float DeltaTime)
         NewRotation.Yaw += CurrentRotation;
         SetActorRotation(NewRotation);
     }
-
-    //TODO : A supprimer lorsque le hack sera implémenté correctement
-    APlayerController* PC = GetWorld()->GetFirstPlayerController();
-    if (PC && PC->WasInputKeyJustPressed(EKeys::SpaceBar))
-    {
-        OnHackCamera.Broadcast();
-    }
 }
 
 void ASecurityCamera::HackCamera()
