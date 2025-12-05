@@ -158,6 +158,7 @@ void UInteractionData::OnMontageNotifyBegin(FName NotifyName, const FBranchingPo
             if (s->GetName() == AnimationTarget)
             {
                 f->InteractionTarget = s;
+                f->TargetTransform = s->GetComponentTransform();
                 
                 return;
             }

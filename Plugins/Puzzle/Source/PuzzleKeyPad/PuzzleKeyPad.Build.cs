@@ -19,6 +19,7 @@ public class PuzzleKeyPad : ModuleRules
                 "CoreUObject",
                 "Engine",
                 "Puzzle",
+                "TheHeist",
             ]
         );
     }

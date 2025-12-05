@@ -44,5 +44,5 @@ class THEHEIST_API IEntitiesInterface
 	void LookAtTarget(USceneComponent* Target, float BlendTime);
 	
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Entities")
-	void SetIKTarget(FName BoneName, FVector IKTarget, bool bEnable);
+	void SetIKTarget(FName BoneName, FTransform IKTarget, bool bEnable);
 };
