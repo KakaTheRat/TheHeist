@@ -1,6 +1,7 @@
 #include "Interactions/InteractionTypes/OpenableData.h"
 
 #include "NetworkMessage.h"
+#include "Kismet/GameplayStatics.h"
 
 UOpenableData::UOpenableData()
 {
@@ -8,16 +9,15 @@ UOpenableData::UOpenableData()
 	CurrentState = EOpeningStates::Close;
 }
 
-void UOpenableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor)
+void UOpenableData::StartInteraction()
 {
-	Super::ExecuteInteraction(Owner, Target, Context, nullptr);
-
-	CurrentInteractingActor = InteractingActor;
-	 
 	
 	if (!Owner || !Target || !Curve) return;
 	LinkedComponent = Target;
 
+	if (Timeline.IsPlaying())
+		return;
+	
 	if (!bTimelineInitialized)
 	{
 		InitTimeline(Owner);
@@ -30,7 +30,10 @@ void UOpenableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, E
 		bHasStoredInitialTransform = true;
 	}
 	
-
+	if (StartingSound && LinkedComponent)
+	{
+		UGameplayStatics::SpawnSoundAttached(StartingSound, LinkedComponent);
+	}
 	
 	if (Timeline.IsPlaying())
 	{
@@ -48,7 +51,15 @@ void UOpenableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, E
 	InteractText = bIsOpened ? "Close" : "Open";
 	
 }
-void UOpenableData::InitTimeline(AActor* Owner)
+
+UAnimMontage* UOpenableData::AnimationMontageToPlay()
+{
+	if (bIsOpened) return AnimationMontageCloseOut;
+
+	return AnimationMontageOpenOut;
+}
+
+void UOpenableData::InitTimeline(AActor* m_Owner)
 {
 	FOnTimelineFloat ProgressFunction;
 	ProgressFunction.BindUFunction(this, FName("HandleProgress"));
@@ -67,51 +78,91 @@ void UOpenableData::InitTimeline(AActor* Owner)
 }
 void UOpenableData::HandleProgress(float Value)
 {
-	if (!LinkedComponent) return;
 
-	switch (OpenableType)
+	if (DuringSound && LinkedComponent)
 	{
-	case EOpeningType::Door:
-		{
-			float RotationAngle = (OpeningSide == EOpeningSide::Left || OpeningSide == EOpeningSide::Down) ? -Angle*Value : Angle*Value;
-			if (OpeningSide == EOpeningSide::Up || OpeningSide == EOpeningSide::Down)
-				LinkedComponent->SetRelativeRotation(FRotator(RotationAngle, 0, 0));
-			else
-				LinkedComponent->SetRelativeRotation(FRotator(0, RotationAngle, 0));
-			break;
-		}
-	case EOpeningType::Drawer:
-		FVector Direction = FVector::ZeroVector;
-
-		if (b_ShouldUseOpeningSide)
-		{
-			
-			switch (OpeningSide)
-			{
-			case EOpeningSide::Right: Direction = LinkedComponent->GetRightVector(); break;
-			case EOpeningSide::Left:  Direction = -LinkedComponent->GetRightVector(); break;
-			case EOpeningSide::Up:    Direction = LinkedComponent->GetUpVector(); break;
-			case EOpeningSide::Down:  Direction = -LinkedComponent->GetUpVector(); break;
-			default: break;
-			}
-		}
-		else
-		{
-			
-			Direction = LinkedComponent->GetForwardVector();
-		}
-
 		
-		float DirectionSign = (OpeningDirection == EOpeningDirection::Push) ? -1.f : 1.f;
-
-		LinkedComponent->SetRelativeLocation(InitialLocation + Direction * Distance * Value * DirectionSign);
-		break;
+		if(!bDuringSoundPlaying)
+		{
+			UGameplayStatics::SpawnSoundAttached(DuringSound, LinkedComponent);
+			bDuringSoundPlaying = true;
+		}
 	}
+	
+    if (!LinkedComponent) return;
+
+    // Calculate rotation based of opening type
+    switch (OpenableType)
+    {
+        case EOpeningType::Door:
+        {
+            // Determines opening side, based of opening side
+            float RotationAngle = Angle * Value;
+            switch (OpeningSide)
+            {
+                case EOpeningSide::Left:  RotationAngle = -RotationAngle; break;
+                case EOpeningSide::Down:  RotationAngle = -RotationAngle; break;
+                case EOpeningSide::Up:     break;
+                case EOpeningSide::Right:  break;
+                default: break;
+            }
+
+         
+            FRotator DeltaRot = FRotator::ZeroRotator;
+            if (OpeningSide == EOpeningSide::Up || OpeningSide == EOpeningSide::Down)
+                DeltaRot.Pitch = RotationAngle;
+            else
+                DeltaRot.Yaw = RotationAngle;
+
+            // Final rotation
+            LinkedComponent->SetRelativeRotation(InitialRotation + DeltaRot);
+            break;
+        }
+
+        case EOpeningType::Drawer:
+        {
+            // Calculate translation direction
+            FVector Direction = FVector::ZeroVector;
+
+            if (b_ShouldUseOpeningSide)
+            {
+                switch (OpeningSide)
+                {
+                    case EOpeningSide::Right: Direction = FVector::RightVector; break;
+                    case EOpeningSide::Left:  Direction = -FVector::RightVector; break;
+                    case EOpeningSide::Up:    Direction = FVector::UpVector; break;
+                    case EOpeningSide::Down:  Direction = -FVector::UpVector; break;
+                    default: break;
+                }
+            }
+            else
+            {
+                Direction = FVector::ForwardVector;
+            }
+
+            // Pulling or pushing 
+            float DirectionSign = (OpeningDirection == EOpeningDirection::Push) ? -1.f : 1.f;
+
+            
+            FVector RotatedDirection = InitialRotation.RotateVector(Direction);
+
+            // Final translation
+            LinkedComponent->SetRelativeLocation(InitialLocation + RotatedDirection * Distance * Value * DirectionSign);
+            break;
+        }
+    }
 }
 
 void UOpenableData::HandleFinished()
 {
 	CurrentState = bIsOpened ? EOpeningStates::Open : EOpeningStates::Close;
+	bDuringSoundPlaying = false;
+	
+	if (EndingSound && LinkedComponent && !bIsOpened)
+	{
+		UGameplayStatics::SpawnSoundAttached(EndingSound, LinkedComponent);
+	}
+	Owner->PrimaryActorTick.bCanEverTick = false;
 	EndOfInteraction();
 }
 
