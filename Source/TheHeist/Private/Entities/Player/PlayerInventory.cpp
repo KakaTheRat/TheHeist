@@ -2,6 +2,8 @@
 
 
 #include "Entities/Player/PlayerInventory.h"
+#include "Kismet/GameplayStatics.h"
+
 
 // Sets default values for this component's properties
 UPlayerInventory::UPlayerInventory()
@@ -20,7 +22,59 @@ void UPlayerInventory::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
+	Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	ACharacter* Char = Cast<ACharacter>(Pawn);
+	for (auto Gadget : InventoryGadgets)
+	{
+		AGadgets* Tmp = FindActor(Gadget);
+		if (!Tmp)
+		{
+			continue;
+		}
+		Tmp->SetCharacter(Char);
+		HardRefGadgets.Add(Tmp);
+	}
+	Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 	
+	APlayerController* PC = Cast<APlayerController>(Pawn->GetController());
+	if (!PC) return;
+
+	if (ULocalPlayer* LocalPlayer = PC->GetLocalPlayer())
+	{
+		UEnhancedInputLocalPlayerSubsystem* Subsystem =
+			LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+        
+		if (Subsystem && InputMapping)
+		{
+			Subsystem->AddMappingContext(InputMapping, 0);
+		}
+	}
+
+	
+	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PC->InputComponent))
+	{
+		if (USeAction)
+		{
+			EnhancedInput->BindAction(USeAction, ETriggerEvent::Started, this, &UPlayerInventory::Use);
+			EnhancedInput->BindAction(USeAction, ETriggerEvent::Completed, this, &UPlayerInventory::RelaseUseItem);
+		}
+		if (GadgetOne)
+		{
+			EnhancedInput->BindAction(GadgetOne, ETriggerEvent::Started, this, &UPlayerInventory::InputOne);
+		}
+		if (GadgetTwo)
+		{
+			EnhancedInput->BindAction(GadgetTwo, ETriggerEvent::Started, this, &UPlayerInventory::InputTwo);
+		}
+		if (GadgetThree)
+		{
+			EnhancedInput->BindAction(GadgetThree, ETriggerEvent::Started, this, &UPlayerInventory::InputThree);
+		}
+		if (GadgetFor)
+		{
+			EnhancedInput->BindAction(GadgetFor, ETriggerEvent::Started, this, &UPlayerInventory::InputFore);
+		}
+	}
 }
 
 
@@ -55,64 +109,140 @@ void UPlayerInventory::AddItem(TSubclassOf<AGadgets> ItemClass)
 	}
 }
 
-void UPlayerInventory::StartUseItem()
+/*void UPlayerInventory::StartUseItem()
 {
-	TSubclassOf<AGadgets> ItemClass = Items[CurrentItemIndex].ItemClass;
-	UE_LOG(LogTemp, Warning, TEXT("Item is on cooldown: %d sec left"),Items[CurrentItemIndex].Quantity );
-	if (Items[CurrentItemIndex].Quantity <= 0)
+	FInventorySlot& Slot = Items[CurrentItemIndex];
+	TSubclassOf<AGadgets> ItemClass = Slot.ItemClass;
+
+	if (!ItemClass)
+		return;
+
+	if (Slot.Quantity <= 0)
 	{
 		return;
 	}
-	
-	if (ActiveCooldowns.Contains(ItemClass))
+	if (FindActor(ItemClass))
 	{
-		float Remaining = ActiveCooldowns[ItemClass];
-		if (Remaining > 0.f)
+		RecallGadget(FindActor(ItemClass));
+		UE_LOG(LogTemp, Warning, TEXT("%s is already spawned, recalling it by cash"), *ItemClass->GetName());
+		if (!Slot.bIsStack)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Item %s is on cooldown: %.2f sec left"), *ItemClass->GetName(), Remaining);
-			return;
+			Slot.Quantity--;
 		}
+		return;
 	}
-	
+
 	UWorld* World = GetWorld();
 	if (!World) return;
 
-	for (FInventorySlot& Slot : Items)
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = GetOwner();
+	SpawnParams.Instigator = Cast<APawn>(GetOwner());
+
+	AGadgets* SpawnedGadget = World->SpawnActor<AGadgets>(
+		ItemClass,
+		GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 100.f,
+		GetOwner()->GetActorRotation(),
+		SpawnParams
+	);
+
+	if (SpawnedGadget)
 	{
-		if (Slot.ItemClass)
-		{
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = GetOwner();
-			SpawnParams.Instigator = Cast<APawn>(GetOwner());
+		SpawnedGadgets.Add(ItemClass, SpawnedGadget);
+		CurrentGadget = SpawnedGadget;
+		CurrentGadget->OnUsePressed();
+		CurrentGadget->ChangeCanBeUsed();
+		CurrentGadget->CooldownTimer();
 
-			// Spawn actor
-			AActor* SpawnedActor = World->SpawnActor<AActor>(
-				Slot.ItemClass, 
-				GetOwner()->GetActorLocation(), 
-				GetOwner()->GetActorRotation(), 
-				SpawnParams
-			);
+		Slot.Quantity--;
 
-			if (SpawnedActor)
-			{
-				
-				CurrentGadget = Cast<AGadgets>(SpawnedActor);
-				if (CurrentGadget)
-				{
-					CurrentGadget->OnGadgetUsed.AddDynamic(this, &UPlayerInventory::OnGadgetUsed);
-					CurrentGadget->OnUsePressed();
-				}
-				
-			}
-		}
+		UE_LOG(LogTemp, Warning, TEXT("%s used, remaining: %d"), *ItemClass->GetName(), Slot.Quantity);
 	}
 }
+
+AGadgets* UPlayerInventory::FindActor(TSubclassOf<AGadgets> ItemClass)
+{
+	if (!*ItemClass)
+	{
+		return nullptr;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return nullptr;
+	}
+
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(World, ItemClass, FoundActors);
+
+	if (FoundActors.Num() > 0)
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, TEXT("trouver"));
+		}
+		AGadgets* Tmp = Cast<AGadgets>(FoundActors[0]);
+		if (!Tmp->GetDataAsset())
+		{
+			Tmp->SetDataAsset(FindDataAssets(Tmp->GetName()));
+		}
+		return Cast<AGadgets>( FoundActors[0]);
+	}
+
+	return SpawnAndCacheGadget(ItemClass);
+}*/
+
+
+AGadgets* UPlayerInventory::SpawnAndCacheGadget(TSubclassOf<AGadgets> ItemClass)
+{
+	if (!ItemClass) return nullptr;
+
+	UWorld* World = GetWorld();
+	if (!World) return nullptr;
+
+	FActorSpawnParameters Params;
+	Params.Owner = GetOwner();
+	Params.Instigator = Cast<APawn>(GetOwner());
+
+	FVector SpawnLocation = FVector(0.f, 0.f, 0.f);
+	FRotator SpawnRotation = GetOwner()->GetActorRotation();
+
+	AGadgets* Gadget = World->SpawnActor<AGadgets>(ItemClass, SpawnLocation, SpawnRotation, Params);
+	if (!IsValid(Gadget)) return nullptr;
+
+	CachedGadgets.Add(ItemClass, Gadget);
+
+	Gadget->SetCharacter(Character);
+	Gadget->SetDataAsset(FindDataAssets(Gadget->GetName()));
+	return Gadget;
+}
+
+
+
+void UPlayerInventory::RecallGadget(AGadgets* Gadget)
+{
+	if (!Gadget || !GetOwner())
+	{
+		return;
+	}
+
+	Gadget->OnUsePressed();
+	Gadget->ChangeCanBeUsed();
+	Gadget->CooldownTimer();
+	UE_LOG(LogTemp, Warning, TEXT("%s recalled"), *Gadget->GetName());
+}
+
+
 
 void UPlayerInventory::RelaseUseItem()
 {
 	if (CurrentGadget)
 	{
 		CurrentGadget->OnUseReleased();
+		CurrentGadget->TakeGadget(); 
+		UpdateWidget.Broadcast(false, CurrentItemIndex);
+		CurrentGadget = nullptr;
 	}
 }
 
@@ -179,4 +309,101 @@ void UPlayerInventory::ModifyCurrentIndex(int m_Value)
 	OnInventoryUpdated.Broadcast(Items);
 }
 
+void UPlayerInventory::Use(const FInputActionValue& Value)
+{
+	if (!CurrentGadget)
+	{
+		return;
+	}
+	RecallGadget(CurrentGadget);
+}
+
+void UPlayerInventory::InputOne(const FInputActionValue& Value)
+{
+	ChangeCurrentGadget(0);
+}
+
+void UPlayerInventory::InputTwo(const FInputActionValue& Value)
+{
+	ChangeCurrentGadget(1);
+}
+
+void UPlayerInventory::InputThree(const FInputActionValue& Value)
+{
+	ChangeCurrentGadget(2);
+}
+
+void UPlayerInventory::InputFore(const FInputActionValue& Value)
+{
+	ChangeCurrentGadget(3);
+}
+
+void UPlayerInventory::ChangeCurrentGadget(int32 NewValue)
+{
+	if (HardRefGadgets.IsValidIndex(NewValue))
+	{
+		int32 OldValue = CurrentGadgetIndex;
+
+		
+		if (CurrentGadget && CurrentGadget->GetIsTaking())
+		{
+			CurrentGadget->SetActorLocation(FVector(0.0f, 0.0f, 0.0f));
+			CurrentGadget->SetActorRotation(GetOwner()->GetActorRotation());
+			CurrentGadget->SetNoPhysicObject();
+			CurrentGadget->TakeGadget(); 
+			UpdateWidget.Broadcast(false, OldValue);
+			if (OldValue == NewValue)
+			{
+				return;
+			}
+		}
+
+		CurrentGadgetIndex = NewValue;
+		CurrentGadget = HardRefGadgets[NewValue];
+
+		CurrentGadget->SetActorLocation(GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 100.f);
+		CurrentGadget->SetActorRotation(GetOwner()->GetActorRotation());
+		CurrentGadget->SetNoPhysicObject();
+
+		CurrentGadget->TakeGadget();
+		UpdateWidget.Broadcast(CurrentGadget->GetIsTaking(), NewValue); // true = pris
+	}
+}
+
+
+UGadget* UPlayerInventory::FindDataAssets(FString Name)
+{
+	if (AllDataAssets.IsEmpty())
+	{
+		return nullptr;
+	}
+	for (auto Data : AllDataAssets)
+	{
+		if (Data->GetName().Contains(CleanName(Name)))
+		{
+			return Data;
+		}
+	}
+	return nullptr;
+}
+
+FString UPlayerInventory::CleanName(const FString& InputName)
+{
+	FString Result = InputName;
+
+	if (Result.StartsWith(TEXT("BP_")))
+	{
+		Result = Result.RightChop(3);
+	}
+	int32 Index;
+	if (Result.FindChar('_', Index))
+	{
+		if (Result.Mid(Index, 3) == "_C_")
+		{
+			Result = Result.Left(Index);
+		}
+	}
+
+	return Result;
+}
 

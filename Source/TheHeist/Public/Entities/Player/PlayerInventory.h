@@ -61,6 +61,8 @@ private:
 	UPROPERTY(EditAnywhere)
 	TArray<UGadget*> AllDataAssets;
 
+	int32 CurrentGadgetIndex;
+
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -147,5 +149,6 @@ public:
 
 	FString CleanName(const FString& InputName);
 
+	UPROPERTY(EditAnywhere, BlueprintAssignable)
 	FUpdateWidget UpdateWidget;
 };

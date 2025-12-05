@@ -32,29 +32,27 @@ void AGadgets::CooldownTimer()
 		false              
 	);
 }
-
 float AGadgets::TakeGadget()
 {
-	if (!DA_Gadget)
+	bIsTaking = !bIsTaking;
+
+	if (!DA_Gadget || !DA_Gadget->GadgetStruct.EffectGadget.AnimationGadget)
 	{
 		return 0.0f;
 	}
-	if (!DA_Gadget->GadgetStruct.EffectGadget.AnimationGadget)
-	{
-		return 0.0f;
-	}
-	
-	if (!bIsTaking)
-	{
-		return PlayMontage(DA_Gadget->GadgetStruct.EffectGadget.AnimationGadget);
-	}
+
 	if (bIsTaking)
 	{
+		// On prend le gadget
+		return PlayMontage(DA_Gadget->GadgetStruct.EffectGadget.AnimationGadget);
+	}
+	else
+	{
+		// On repose le gadget
 		return PlayMontage(DA_Gadget->GadgetStruct.EffectGadget.AnimationGadget, -1);
 	}
-	
-	return 0.0f;
 }
+
 
 void AGadgets::SetNoPhysicObject()
 {

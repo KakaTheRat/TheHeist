@@ -22,6 +22,10 @@ struct FGeneralGadget
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "General")
 	UTexture2D* Icon = nullptr;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "General")
+	UMaterialInterface* IconMaterial = nullptr;
+	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "General")
 	UStaticMesh* Mesh = nullptr;
