@@ -9,7 +9,8 @@ public class PuzzleKeyPad : ModuleRules
         PublicDependencyModuleNames.AddRange(
             [
                 "Core",
-                "UMG"  
+                "UMG",
+                "EnhancedInput"
             ]
         );
 
@@ -18,6 +19,7 @@ public class PuzzleKeyPad : ModuleRules
                 "CoreUObject",
                 "Engine",
                 "Puzzle",
+                "TheHeist",
             ]
         );
     }

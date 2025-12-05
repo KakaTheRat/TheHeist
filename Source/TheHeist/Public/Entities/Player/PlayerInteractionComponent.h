@@ -59,6 +59,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USceneComponent* InteractionTarget;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FTransform TargetTransform;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bEnableHandIK = false;

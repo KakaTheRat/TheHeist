@@ -1,6 +1,10 @@
 ﻿#include "PuzzleKeyPad.h"
 
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Entities/EntitiesInterface.h"
+#include "Kismet/GameplayStatics.h"
 
 #pragma region Initialization
 
@@ -43,6 +47,30 @@ void APuzzleKeyPad::InitializeComponents()
     }
 }
 
+void APuzzleKeyPad::StartKeypadInteraction(AActor* Interactor)
+{
+	if (!bFirst) return;
+	bFirst = false;
+
+	
+	User = Interactor;
+	UserSkeletalMesh = IEntitiesInterface::Execute_GetSkeletalMeshComponent(User);
+	UserController = IEntitiesInterface::Execute_GetPlayerController(User);
+
+	if (UserController)
+	{
+		UserController->SetIgnoreMoveInput(true);
+		UserController->SetIgnoreLookInput(true);
+		ActivateKeyPadInput(true);
+	}
+
+	ClearCode();
+
+	CurrentKeyIndex = 0;
+	
+	ManageMaterial(CurrentKeyIndex, true);
+}
+
 #pragma endregion
 
 #pragma region Public Interface
@@ -60,7 +88,19 @@ void APuzzleKeyPad::ReceiveInput(FString Value)
        return;
     }
 
-    AppendToCode(Value);
+	if (Value == DeleteString) 
+	{
+		
+		if (CurrentCode.Len() > 0)
+		{
+			CurrentCode.LeftChopInline(1);
+		}
+	}
+	else
+	{
+		AppendToCode(Value);
+	}
+    
 
     UpdateDisplay();
 
@@ -147,6 +187,7 @@ void APuzzleKeyPad::RequestValidation()
 
 #pragma region Observer Implementation
 
+
 /**
  * Called when the puzzle is successfully solved
  */
@@ -157,7 +198,16 @@ void APuzzleKeyPad::OnPuzzleSolved()
        DisplayManager->ShowValidationResult(true);
     }
 
+	if (UserController)
+	{
+		ActivateKeyPadInput(false);
+		UserController->ResetIgnoreMoveInput();
+		UserController->ResetIgnoreLookInput();
+	}
+	
+	ManageMaterial(CurrentKeyIndex, false);
     OnPuzzleSolvedEvent();
+	bFirst = true;
 }
 
 /**
@@ -199,3 +249,126 @@ void APuzzleKeyPad::ResetAfterError()
 }
 
 #pragma endregion
+
+#pragma region Inputs
+
+/**
+ * Move the current index cursor around the key pad
+ */
+
+void APuzzleKeyPad::MoveAround(const FInputActionValue& Value)
+{
+	float CurrentTime = GetWorld()->GetTimeSeconds();
+	if (CurrentTime - LastMoveTime < MoveCooldown)
+		return;
+    
+	LastMoveTime = CurrentTime;
+	// get the Vector2D move axis
+	FVector2D MovementVector = Value.Get<FVector2D>();
+
+	int NewIndex = CurrentKeyIndex;
+
+	//Horizontal movemnt
+	if (MovementVector.X < 0)      
+	{
+	
+		if (CurrentKeyIndex % columns != 0)
+			NewIndex = CurrentKeyIndex - 1;
+	}
+	else if (MovementVector.X > 0)   
+	{
+		
+		if (CurrentKeyIndex % columns != columns - 1)
+			NewIndex = CurrentKeyIndex + 1;
+	}
+
+	//Vertical movement
+	if (MovementVector.Y > 0)       
+	{
+		if (CurrentKeyIndex - columns >= 0)
+			NewIndex = CurrentKeyIndex - columns;
+	}
+	else if (MovementVector.Y < 0)   
+	{
+		if (CurrentKeyIndex + columns < Keys.Num())
+			NewIndex = CurrentKeyIndex + columns;
+	}
+
+	
+	if (NewIndex == CurrentKeyIndex)
+		return;
+
+	//Materials management
+	ManageMaterial(CurrentKeyIndex, false);
+	CurrentKeyIndex = NewIndex;
+	ManageMaterial(CurrentKeyIndex, true);
+}
+
+/**
+ * Activate/deactivate keypad inputs (true activates)
+ */
+
+void APuzzleKeyPad::ActivateKeyPadInput(bool bShouldActivate)
+{
+	if (!UserController || !KeyPadInputContext) return;
+    
+	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = 
+		ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(
+			UserController->GetLocalPlayer()))
+	{
+		if (bShouldActivate)
+		{
+			Subsystem->AddMappingContext(KeyPadInputContext, KeyPadInputPriority);
+			SetupInputs();
+		}
+		else
+		{
+			Subsystem->RemoveMappingContext(KeyPadInputContext);
+			
+			if (UEnhancedInputComponent* EnhancedInput = 
+				Cast<UEnhancedInputComponent>(UserController->InputComponent))
+			{
+				for (uint32 Handle : InputBindingHandles)
+				{
+					EnhancedInput->RemoveBindingByHandle(Handle);
+				}
+				InputBindingHandles.Empty();
+			}
+		}
+	}
+	
+}
+
+/**
+ * Binds input actions
+ */
+
+void APuzzleKeyPad::SetupInputs()
+{
+	// Setup input bindings
+	if (UEnhancedInputComponent* EnhancedInput = 
+		Cast<UEnhancedInputComponent>(UserController->InputComponent))
+	{
+		uint32 MoveHandle = EnhancedInput->BindAction(MoveAroundAction, 
+			ETriggerEvent::Triggered, this, &APuzzleKeyPad::MoveAround).GetHandle();
+        
+		uint32 InteractHandle = EnhancedInput->BindAction(InteractAction, 
+			ETriggerEvent::Started, this, &APuzzleKeyPad::InteractWithKey).GetHandle();
+        
+		InputBindingHandles.Add(MoveHandle);
+		InputBindingHandles.Add(InteractHandle);
+	}
+}
+
+void APuzzleKeyPad::ManageMaterial(int KeyIndex, bool bShouldActivate)
+{
+	if (UStaticMeshComponent* Key = Keys[KeyIndex])
+	{
+		Key->SetOverlayMaterial(bShouldActivate ? KeyMaterialInstance : nullptr);
+	}
+}
+
+
+#pragma endregion
+
+

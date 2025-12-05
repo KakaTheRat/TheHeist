@@ -29,6 +29,10 @@ class THEHEIST_API IEntitiesInterface
 	//Returns the skeletal mesh
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Entities")
 	USkeletalMeshComponent* GetSkeletalMeshComponent();
+
+	//Returns the player controller
+	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Entities")
+	APlayerController* GetPlayerController();
 	
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Entities")
 	void MoveAndLookEntity(USceneComponent* Position, USceneComponent* LookTarget);
@@ -38,4 +42,7 @@ class THEHEIST_API IEntitiesInterface
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Entities")
 	void LookAtTarget(USceneComponent* Target, float BlendTime);
+	
+	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Entities")
+	void SetIKTarget(FName BoneName, FTransform IKTarget, bool bEnable);
 };
