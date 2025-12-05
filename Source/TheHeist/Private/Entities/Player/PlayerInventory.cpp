@@ -158,7 +158,7 @@ void UPlayerInventory::AddItem(TSubclassOf<AGadgets> ItemClass)
 
 		UE_LOG(LogTemp, Warning, TEXT("%s used, remaining: %d"), *ItemClass->GetName(), Slot.Quantity);
 	}
-}
+}*/
 
 AGadgets* UPlayerInventory::FindActor(TSubclassOf<AGadgets> ItemClass)
 {
@@ -191,7 +191,7 @@ AGadgets* UPlayerInventory::FindActor(TSubclassOf<AGadgets> ItemClass)
 	}
 
 	return SpawnAndCacheGadget(ItemClass);
-}*/
+}
 
 
 AGadgets* UPlayerInventory::SpawnAndCacheGadget(TSubclassOf<AGadgets> ItemClass)
@@ -366,7 +366,7 @@ void UPlayerInventory::ChangeCurrentGadget(int32 NewValue)
 		CurrentGadget->SetNoPhysicObject();
 
 		CurrentGadget->TakeGadget();
-		UpdateWidget.Broadcast(CurrentGadget->GetIsTaking(), NewValue); // true = pris
+		UpdateWidget.Broadcast(CurrentGadget->GetIsTaking(), NewValue);
 	}
 }
 

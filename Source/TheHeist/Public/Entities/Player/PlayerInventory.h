@@ -99,8 +99,8 @@ public:
 	void AddItem(TSubclassOf<AGadgets> ItemClass);
 
 	//Called when gadget's use input pressed
-	UFUNCTION(BlueprintCallable)
-	void StartUseItem();
+	//UFUNCTION(BlueprintCallable)
+	//void StartUseItem();
 
 	//Called when gadget's use input released
 	UFUNCTION(BlueprintCallable)
