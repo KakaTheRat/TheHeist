@@ -68,7 +68,8 @@ protected:
 	/** Keys array (jsp quoi dire d'autre mais lucie va me frapper si je commente pas) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Puzzle State")
 	TArray<UStaticMeshComponent*> Keys;
-	
+
+	/** The string used to delete the last character */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Puzzle")
 	FString DeleteString;
 
@@ -101,7 +102,8 @@ protected:
 	/* Called when puzzle validation fails */
 	virtual void OnPuzzleFailed() override;
 
-
+	//User Info//
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	AActor* User = nullptr;
 
@@ -125,6 +127,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Puzzle")
 	int columns;
 
+	/** Overlay material instance for key highlight */
 	UPROPERTY(EditAnywhere, Category = "Puzzle")
 	UMaterialInstance* KeyMaterialInstance;
 	
@@ -162,29 +165,34 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Puzzle State")
 	UInputAction* InteractAction;
 
+	/** Input mapping context for keypad interactions */
 	UPROPERTY(EditAnywhere, Category = "Puzzle State")
 	UInputMappingContext* KeyPadInputContext;
 
 	/**Activates the keypad input and changes the input mapping */
 	void ActivateKeyPadInput(bool bShouldActivate);
 
+	/** Sets up input bindings */
 	void SetupInputs();
 	
 	UPROPERTY(EditAnywhere, Category = "Input")
 	int32 KeyPadInputPriority = 1;
-	
+
+	/** Animation montage for key interaction */
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UAnimMontage* KeyInteractionMontage;
 
+	/** Sound played on key interaction */
 	UPROPERTY(EditAnywhere, Category = "Input")
 	USoundBase* InteractionSound;
-	
+
+	/** Name of the notify in the animation montage to trigger interaction */
 	UPROPERTY(EditAnywhere, Category = "Input")
 	FName InteractionNotifyName;
-
+	
+ 	/** Stores input binding handles for cleanup */
 	TArray<uint32> InputBindingHandles;
-
-	UPROPERTY()
+	
 	float LastMoveTime = 0.f;
 
 	UPROPERTY(EditAnywhere, Category = "KeyPad")
