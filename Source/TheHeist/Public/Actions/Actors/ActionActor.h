@@ -25,7 +25,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SmartObject")
 	UStaticMeshComponent* MeshComponent;
 
-	UPROPERTY(VisibleAnywhere,Category="SmartObject")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SmartObject")
 	TArray<AActor*> RegisteredActors;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "SmartObject")
