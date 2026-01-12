@@ -5,10 +5,8 @@ UActivableData::UActivableData()
 	InteractText = "ON";
 }
 
-void UActivableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, EInteractionContext Context, AActor* InteractingActor)
+void UActivableData::StartInteraction()
 {
-	Super::ExecuteInteraction(Owner, Target, Context, nullptr);
-
 	switch (ActivationType)
 	{
 	case EActivableType::Light:
@@ -26,7 +24,7 @@ void UActivableData::ExecuteInteraction(AActor* Owner, USceneComponent* Target, 
 	EndOfInteraction();
 }
 
-void UActivableData::ActivateLight(const AActor* Owner)
+void UActivableData::ActivateLight(const AActor* m_Owner)
 {
 	if (!Owner) return;
 
@@ -47,7 +45,7 @@ void UActivableData::ActivateLight(const AActor* Owner)
 	
 }
 
-void UActivableData::ActivateSound(const AActor* Owner)
+void UActivableData::ActivateSound(const AActor* m_Owner)
 {
 	if (!Owner) return;
 

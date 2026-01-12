@@ -22,6 +22,46 @@ void AGadgets::BeginPlay()
 	
 }
 
+void AGadgets::CooldownTimer()
+{
+	GetWorld()->GetTimerManager().SetTimer(
+		TimerHandle,          
+		this,                
+		&AGadgets::ChangeCanBeUsed, 
+		Cooldown,        
+		false              
+	);
+}
+float AGadgets::TakeGadget()
+{
+	bIsTaking = !bIsTaking;
+
+	if (!DA_Gadget || !DA_Gadget->GadgetStruct.EffectGadget.AnimationGadget)
+	{
+		return 0.0f;
+	}
+
+	if (bIsTaking)
+	{
+		// On prend le gadget
+		return PlayMontage(DA_Gadget->GadgetStruct.EffectGadget.AnimationGadget);
+	}
+	else
+	{
+		// On repose le gadget
+		return PlayMontage(DA_Gadget->GadgetStruct.EffectGadget.AnimationGadget, -1);
+	}
+}
+
+
+void AGadgets::SetNoPhysicObject()
+{
+	StaticMesh->SetEnableGravity(false);
+	StaticMesh->SetPhysicsLinearVelocity(FVector::ZeroVector);
+	StaticMesh->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+}
+
+
 // Called every frame
 void AGadgets::Tick(float DeltaTime)
 {
