@@ -45,4 +45,7 @@ class THEHEIST_API IEntitiesInterface
 	
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Entities")
 	void SetIKTarget(FName BoneName, FTransform IKTarget, bool bEnable);
+
+	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Entities")
+	void SetAnimationState(bool bShouldActivate);
 };
