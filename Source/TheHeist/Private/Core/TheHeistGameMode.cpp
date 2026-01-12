@@ -1,6 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "TheHeistGameMode.h"
+#include "Core/TheHeistGameMode.h"
 
 ATheHeistGameMode::ATheHeistGameMode()
 {

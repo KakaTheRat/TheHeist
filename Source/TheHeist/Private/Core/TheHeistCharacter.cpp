@@ -1,6 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "TheHeistCharacter.h"
+#include "Core/TheHeistCharacter.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -8,7 +8,7 @@
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "TheHeist.h"
+#include "Core/TheHeist.h"
 
 ATheHeistCharacter::ATheHeistCharacter()
 {

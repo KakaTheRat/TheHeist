@@ -5,10 +5,10 @@
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
 #include "InputMappingContext.h"
-#include "TheHeistCameraManager.h"
+#include "Core/TheHeistCameraManager.h"
 #include "HorrorCharacter.h"
 #include "HorrorUI.h"
-#include "TheHeist.h"
+#include "Core/TheHeist.h"
 #include "Widgets/Input/SVirtualJoystick.h"
 
 AHorrorPlayerController::AHorrorPlayerController()
