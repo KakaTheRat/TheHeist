@@ -1,4 +1,4 @@
-﻿#include "SecurityCamera.h"
+﻿#include "Pawn/SecurityCamera/SecurityCamera.h"
 
 #include "Kismet/GameplayStatics.h"
 #include "Math/UnrealMathUtility.h"

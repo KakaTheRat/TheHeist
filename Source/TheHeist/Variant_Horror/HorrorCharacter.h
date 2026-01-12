@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "TheHeistCharacter.h"
+#include "Core/TheHeistCharacter.h"
 #include "HorrorCharacter.generated.h"
 
 class USpotLightComponent;

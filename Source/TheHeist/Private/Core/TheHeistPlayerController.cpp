@@ -1,13 +1,13 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 
-#include "TheHeistPlayerController.h"
+#include "Core/TheHeistPlayerController.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
 #include "InputMappingContext.h"
-#include "TheHeistCameraManager.h"
+#include "Core/TheHeistCameraManager.h"
 #include "Blueprint/UserWidget.h"
-#include "TheHeist.h"
+#include "Core/TheHeist.h"
 #include "Widgets/Input/SVirtualJoystick.h"
 
 ATheHeistPlayerController::ATheHeistPlayerController()

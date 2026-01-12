@@ -4,8 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
-#include "TheHeistCharacter.h"
-#include "Kismet/GameplayStatics.h"
 #include "GuardAIC.generated.h"
 
 /**
