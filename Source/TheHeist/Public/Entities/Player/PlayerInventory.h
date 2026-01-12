@@ -121,6 +121,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
 	UInputAction* USeAction;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UInputAction* DropAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
 	UInputAction* GadgetOne;
@@ -135,6 +138,8 @@ public:
 	UInputAction* GadgetFor;
 
 	void Use(const FInputActionValue& Value);
+	
+	void Drop();
 	
 	void InputOne(const FInputActionValue& Value);
 	void InputTwo(const FInputActionValue& Value);

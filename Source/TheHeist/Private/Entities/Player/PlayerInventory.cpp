@@ -229,10 +229,9 @@ void UPlayerInventory::RecallGadget(AGadgets* Gadget)
 
 	Gadget->OnUsePressed();
 	Gadget->ChangeCanBeUsed();
-	Gadget->CooldownTimer();
+	//Gadget->CooldownTimer();
 	UE_LOG(LogTemp, Warning, TEXT("%s recalled"), *Gadget->GetName());
 }
-
 
 
 void UPlayerInventory::RelaseUseItem()
@@ -318,9 +317,18 @@ void UPlayerInventory::Use(const FInputActionValue& Value)
 	RecallGadget(CurrentGadget);
 }
 
+void UPlayerInventory::Drop()
+{
+	if (!CurrentGadget)
+	{
+		return;
+	}
+	CurrentGadget->OnDropPressed();
+}
+
 void UPlayerInventory::InputOne(const FInputActionValue& Value)
 {
-	ChangeCurrentGadget(0);
+	ChangeCurrentGadget(0); 
 }
 
 void UPlayerInventory::InputTwo(const FInputActionValue& Value)
