@@ -22,8 +22,14 @@ void UPlayerInventory::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-	Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	ACharacter* Char = Cast<ACharacter>(Pawn);
+	AActor* OwnerActor = GetOwner();
+		
+	ArmsMesh = nullptr;
+	Char = Cast<ACharacter>(GetOwner());
+	if (Char)
+	{
+		ArmsMesh = Char->FindComponentByClass<USkeletalMeshComponent>();
+	}
 	for (auto Gadget : InventoryGadgets)
 	{
 		AGadgets* Tmp = FindActor(Gadget);
@@ -79,6 +85,8 @@ void UPlayerInventory::BeginPlay()
 			EnhancedInput->BindAction(GadgetFor, ETriggerEvent::Started, this, &UPlayerInventory::InputFore);
 		}
 	}
+
+	
 }
 
 
@@ -305,14 +313,7 @@ void UPlayerInventory::ChangeCurrentGadget(int32 NewValue)
 	{
 		int32 OldValue = CurrentGadgetIndex;
 
-		AActor* OwnerActor = GetOwner();
 		
-		USkeletalMeshComponent* ArmsMesh = nullptr;
-
-		if (ACharacter* Char = Cast<ACharacter>(GetOwner()))
-		{
-			ArmsMesh = Char->FindComponentByClass<USkeletalMeshComponent>();
-		}
 		if (CurrentGadget && CurrentGadget->GetIsTaking())
 		{
 			CurrentGadget->DetachFromActor(
