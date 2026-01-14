@@ -59,6 +59,8 @@ void AGadgets::SetNoPhysicObject()
 	StaticMesh->SetEnableGravity(false);
 	StaticMesh->SetPhysicsLinearVelocity(FVector::ZeroVector);
 	StaticMesh->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+	StaticMesh->SetSimulatePhysics(false);
+	StaticMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 

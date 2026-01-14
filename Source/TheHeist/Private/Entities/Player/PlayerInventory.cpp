@@ -305,9 +305,19 @@ void UPlayerInventory::ChangeCurrentGadget(int32 NewValue)
 	{
 		int32 OldValue = CurrentGadgetIndex;
 
+		AActor* OwnerActor = GetOwner();
 		
+		USkeletalMeshComponent* ArmsMesh = nullptr;
+
+		if (ACharacter* Char = Cast<ACharacter>(GetOwner()))
+		{
+			ArmsMesh = Char->FindComponentByClass<USkeletalMeshComponent>();
+		}
 		if (CurrentGadget && CurrentGadget->GetIsTaking())
 		{
+			CurrentGadget->DetachFromActor(
+				FDetachmentTransformRules::KeepWorldTransform
+			);
 			CurrentGadget->SetActorLocation(FVector(0.0f, 0.0f, 0.0f));
 			CurrentGadget->SetActorRotation(GetOwner()->GetActorRotation());
 			CurrentGadget->SetNoPhysicObject();
@@ -321,10 +331,15 @@ void UPlayerInventory::ChangeCurrentGadget(int32 NewValue)
 
 		CurrentGadgetIndex = NewValue;
 		CurrentGadget = HardRefGadgets[NewValue];
-
-		CurrentGadget->SetActorLocation(GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 100.f);
-		CurrentGadget->SetActorRotation(GetOwner()->GetActorRotation());
 		CurrentGadget->SetNoPhysicObject();
+		CurrentGadget->AttachToComponent(
+			ArmsMesh,
+			FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+			TEXT("weapon_right")
+		);
+		/*CurrentGadget->SetActorLocation(GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 100.f);
+		CurrentGadget->SetActorRotation(GetOwner()->GetActorRotation());*/
+		
 
 		CurrentGadget->TakeGadget();
 		UpdateWidget.Broadcast(CurrentGadget->GetIsTaking(), NewValue);
