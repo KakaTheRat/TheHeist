@@ -58,6 +58,10 @@ void UPlayerInventory::BeginPlay()
 			EnhancedInput->BindAction(USeAction, ETriggerEvent::Started, this, &UPlayerInventory::Use);
 			EnhancedInput->BindAction(USeAction, ETriggerEvent::Completed, this, &UPlayerInventory::RelaseUseItem);
 		}
+		if (DropAction)
+		{
+			EnhancedInput->BindAction(DropAction, ETriggerEvent::Started, this, &UPlayerInventory::Drop);
+		}
 		if (GadgetOne)
 		{
 			EnhancedInput->BindAction(GadgetOne, ETriggerEvent::Started, this, &UPlayerInventory::InputOne);
@@ -108,57 +112,6 @@ void UPlayerInventory::AddItem(TSubclassOf<AGadgets> ItemClass)
 		OnInventoryUpdated.Broadcast(Items);
 	}
 }
-
-/*void UPlayerInventory::StartUseItem()
-{
-	FInventorySlot& Slot = Items[CurrentItemIndex];
-	TSubclassOf<AGadgets> ItemClass = Slot.ItemClass;
-
-	if (!ItemClass)
-		return;
-
-	if (Slot.Quantity <= 0)
-	{
-		return;
-	}
-	if (FindActor(ItemClass))
-	{
-		RecallGadget(FindActor(ItemClass));
-		UE_LOG(LogTemp, Warning, TEXT("%s is already spawned, recalling it by cash"), *ItemClass->GetName());
-		if (!Slot.bIsStack)
-		{
-			Slot.Quantity--;
-		}
-		return;
-	}
-
-	UWorld* World = GetWorld();
-	if (!World) return;
-
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = GetOwner();
-	SpawnParams.Instigator = Cast<APawn>(GetOwner());
-
-	AGadgets* SpawnedGadget = World->SpawnActor<AGadgets>(
-		ItemClass,
-		GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 100.f,
-		GetOwner()->GetActorRotation(),
-		SpawnParams
-	);
-
-	if (SpawnedGadget)
-	{
-		SpawnedGadgets.Add(ItemClass, SpawnedGadget);
-		CurrentGadget = SpawnedGadget;
-		CurrentGadget->OnUsePressed();
-		CurrentGadget->ChangeCanBeUsed();
-		CurrentGadget->CooldownTimer();
-
-		Slot.Quantity--;
-
-		UE_LOG(LogTemp, Warning, TEXT("%s used, remaining: %d"), *ItemClass->GetName(), Slot.Quantity);
-	}
-}*/
 
 AGadgets* UPlayerInventory::FindActor(TSubclassOf<AGadgets> ItemClass)
 {
@@ -229,10 +182,9 @@ void UPlayerInventory::RecallGadget(AGadgets* Gadget)
 
 	Gadget->OnUsePressed();
 	Gadget->ChangeCanBeUsed();
-	Gadget->CooldownTimer();
+	//Gadget->CooldownTimer();
 	UE_LOG(LogTemp, Warning, TEXT("%s recalled"), *Gadget->GetName());
 }
-
 
 
 void UPlayerInventory::RelaseUseItem()
@@ -318,9 +270,18 @@ void UPlayerInventory::Use(const FInputActionValue& Value)
 	RecallGadget(CurrentGadget);
 }
 
+void UPlayerInventory::Drop()
+{
+	if (!CurrentGadget)
+	{
+		return;
+	}
+	CurrentGadget->OnDropPressed();
+}
+
 void UPlayerInventory::InputOne(const FInputActionValue& Value)
 {
-	ChangeCurrentGadget(0);
+	ChangeCurrentGadget(0); 
 }
 
 void UPlayerInventory::InputTwo(const FInputActionValue& Value)

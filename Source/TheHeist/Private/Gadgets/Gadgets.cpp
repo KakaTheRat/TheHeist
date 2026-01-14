@@ -78,3 +78,7 @@ void AGadgets::OnUseReleased_Implementation()
 }
 
 
+void AGadgets::OnDropPressed_Implementation()
+{
+}
+
