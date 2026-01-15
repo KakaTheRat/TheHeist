@@ -189,7 +189,9 @@ void AGuardAIC::CreateDetectionWidget()
     {
         DetectionWidget->AddToViewport(100);
         DetectionWidget->UpdatePercent(0.f);
+        DetectionWidget->SetTrackedPlayer(TrackedPlayer);
     }
+    DetectionWidget->OnHalfDetectionReached.AddDynamic(this, &AGuardAIC::HandleHalfDetection);
 }
 
 /*

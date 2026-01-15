@@ -4,6 +4,8 @@
 #include "Blueprint/UserWidget.h"
 #include "DetectionMeterWidget.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHalfDetectionReached, FVector, PlayerLocation);
+
 class UCanvasPanel;
 class UProgressBar;
 class UWidgetAnimation;
@@ -36,6 +38,12 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Detection")
     void SetPulseSpeed(float Speed);
 
+    UPROPERTY(BlueprintAssignable, Category = "Detection")
+    FOnHalfDetectionReached OnHalfDetectionReached;
+
+    // Fonction pour définir la référence au joueur tracké
+    UFUNCTION(BlueprintCallable, Category = "Detection")
+    void SetTrackedPlayer(AActor* Player);
 protected:
 
     UPROPERTY(meta = (BindWidget))
@@ -59,6 +67,7 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Juice")
     float ShakeFrequency = 10.0f;
 
+
 private:
     
     float CurrentPercent;
@@ -73,4 +82,9 @@ private:
     
     void UpdatePulseEffect(float DeltaTime);
     void UpdateShakeEffect(float DeltaTime);
+
+    bool bHalfDetectionTriggered;   
+    
+    UPROPERTY()
+    AActor* TrackedPlayer;
 };
