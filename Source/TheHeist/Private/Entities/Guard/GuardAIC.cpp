@@ -8,6 +8,8 @@
 #include "Widget/DetectionMeter/DetectionMeterWidget.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Sound/SoundBase.h"
+#include "Sound/Heartbeat/HeartbeatComponent.h"
 
 #pragma region Initialize
 
@@ -28,6 +30,7 @@ AGuardAIC::AGuardAIC()
     AlertThreshold = 0.7f;
 
     CurrentDetectionLevel = 0;
+    PreviousDetectionLevel = 0;
     bPlayerVisible = false;
 
     AIPerceptionComponent = nullptr;
@@ -38,6 +41,22 @@ AGuardAIC::AGuardAIC()
     
     OutlineMaterialBase = nullptr;
     OutlineMaterialInstance = nullptr;
+
+    bPlayedStartSound = false;
+    bPlayedSuspicionSound = false;
+    bPlayedAlertSound = false;
+    bIsBreathing = false;
+
+    DetectionSoundVolume = 1.0f;
+    AmbientSoundVolume = 0.7f;
+    FootstepSoundVolume = 0.5f;
+    BreathingSoundVolume = 0.6f;
+    CustomSoundAttenuation = nullptr;
+
+    bEnableAmbientSounds = true;
+    bEnableBreathingSounds = true;
+    AmbientSoundMinInterval = 8.0f;
+    AmbientSoundMaxInterval = 20.0f;
 }
 
 void AGuardAIC::BeginPlay()
@@ -48,6 +67,11 @@ void AGuardAIC::BeginPlay()
     if (OutlineMaterialBase)
     {
         OutlineMaterialInstance = UMaterialInstanceDynamic::Create(OutlineMaterialBase, this);
+    }
+
+    if (bEnableAmbientSounds && AmbientIdleSounds.Num() > 0)
+    {
+        ScheduleNextAmbientSound();
     }
 }
 
@@ -61,7 +85,30 @@ void AGuardAIC::Tick(float DeltaTime)
     }
 }
 
+void AGuardAIC::UpdatePlayerHeartbeat()
+{
+    APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    if (!PC || !PC->GetPawn())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("GuardAIC: No player controller or pawn"));
+        return;
+    }
+
+    UHeartbeatComponent* HeartbeatComp = PC->GetPawn()->FindComponentByClass<UHeartbeatComponent>();
+    if (!HeartbeatComp)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("GuardAIC: No HeartbeatComponent found on player"));
+        return;
+    }
+
+    float StressLevel = static_cast<float>(CurrentDetectionLevel) / MaxDetectionLevel;
+    
+    HeartbeatComp->SetStressLevel(StressLevel);
+}
+
 #pragma endregion
+
+#pragma region Perception
 
 void AGuardAIC::SetupPerception()
 {
@@ -159,12 +206,21 @@ void AGuardAIC::OnPlayerLost()
     }
 }
 
+#pragma endregion
+
+#pragma region Detection
+
 void AGuardAIC::DetectionLoop()
 {
+    PreviousDetectionLevel = CurrentDetectionLevel;
     CurrentDetectionLevel += bPlayerVisible ? 1 : -1;
     CurrentDetectionLevel = FMath::Clamp(CurrentDetectionLevel, 0, MaxDetectionLevel);
 
     UpdateGuardOutline();
+
+    CheckDetectionThresholds();
+
+    UpdatePlayerHeartbeat();
 
     if (DetectionWidget)
     {
@@ -175,6 +231,8 @@ void AGuardAIC::DetectionLoop()
     if (CurrentDetectionLevel == MaxDetectionLevel)
     {
         GetWorldTimerManager().ClearTimer(DetectionTimerHandle);
+        
+        PlayRandomSound(SoundsDetectionFull, DetectionSoundVolume);
         
         if (DetectionWidget)
         {
@@ -189,6 +247,55 @@ void AGuardAIC::DetectionLoop()
         PlayerDetectionLost();
     }
 }
+
+void AGuardAIC::CheckDetectionThresholds()
+{
+    float DetectionPercent = static_cast<float>(CurrentDetectionLevel) / MaxDetectionLevel;
+    float PreviousPercent = static_cast<float>(PreviousDetectionLevel) / MaxDetectionLevel;
+
+    if (!bPlayedStartSound && DetectionPercent > 0.0f && PreviousPercent == 0.0f)
+    {
+        bPlayedStartSound = true;
+        PlayRandomSound(SoundsDetectionStart, DetectionSoundVolume);
+    }
+
+    if (!bPlayedSuspicionSound && DetectionPercent >= SuspicionThreshold && PreviousPercent < SuspicionThreshold)
+    {
+        bPlayedSuspicionSound = true;
+        PlayRandomSound(SoundsDetectionSuspicion, DetectionSoundVolume);
+    }
+
+    if (!bPlayedAlertSound && DetectionPercent >= AlertThreshold && PreviousPercent < AlertThreshold)
+    {
+        bPlayedAlertSound = true;
+        PlayRandomSound(SoundsDetectionAlert, DetectionSoundVolume);
+        
+        if (bEnableBreathingSounds && !bIsBreathing)
+        {
+            StartBreathingSounds();
+        }
+    }
+
+    if (DetectionPercent < SuspicionThreshold)
+    {
+        bPlayedStartSound = false;
+        bPlayedSuspicionSound = false;
+    }
+    
+    if (DetectionPercent < AlertThreshold)
+    {
+        bPlayedAlertSound = false;
+        
+        if (bIsBreathing)
+        {
+            StopBreathingSounds();
+        }
+    }
+}
+
+#pragma endregion
+
+#pragma region Outline
 
 void AGuardAIC::UpdateGuardOutline()
 {
@@ -274,6 +381,10 @@ void AGuardAIC::RemoveGuardOutline()
     }
 }
 
+#pragma endregion
+
+#pragma region UI
+
 void AGuardAIC::CreateDetectionWidget()
 {
     if (!DetectionWidgetClass)
@@ -333,6 +444,10 @@ void AGuardAIC::UpdateWidgetAngle()
     DetectionWidget->UpdateAngle(Yaw);
 }
 
+#pragma endregion
+
+#pragma region Detection Events
+
 void AGuardAIC::PlayerFullyDetected(AActor* Target)
 {
    //TODO : Logique de gameplay lors de la détection complète du joueur
@@ -347,6 +462,17 @@ void AGuardAIC::PlayerDetectionLost()
 {
     RemoveDetectionWidget();
     
+    PlayRandomSound(SoundsDetectionLost, DetectionSoundVolume);
+    
+    if (bIsBreathing)
+    {
+        StopBreathingSounds();
+    }
+    
+    bPlayedStartSound = false;
+    bPlayedSuspicionSound = false;
+    bPlayedAlertSound = false;
+    
     if (OutlineFadeDuration <= 0.f)
     {
         RemoveGuardOutline();
@@ -354,3 +480,122 @@ void AGuardAIC::PlayerDetectionLost()
     
     TrackedPlayer = nullptr;
 }
+
+#pragma endregion
+
+#pragma region Audio System
+
+void AGuardAIC::PlayRandomSound(const TArray<USoundBase*>& SoundArray, float Volume)
+{
+    if (SoundArray.Num() == 0)
+    {
+        return;
+    }
+
+    int32 RandomIndex = FMath::RandRange(0, SoundArray.Num() - 1);
+    USoundBase* SelectedSound = SoundArray[RandomIndex];
+
+    if (SelectedSound && GetPawn())
+    {
+        UGameplayStatics::SpawnSoundAtLocation(
+            GetWorld(),
+            SelectedSound,
+            GetPawn()->GetActorLocation(),
+            GetPawn()->GetActorRotation(),
+            Volume,
+            1.0f,
+            0.0f, 
+            nullptr, 
+            nullptr,
+            false   
+        );
+    }
+}
+
+void AGuardAIC::PlayRandomFootstep()
+{
+    PlayRandomSound(FootstepSounds, FootstepSoundVolume);
+}
+
+void AGuardAIC::PlayAmbientSound()
+{
+    if (!bEnableAmbientSounds || AmbientIdleSounds.Num() == 0)
+    {
+        return;
+    }
+
+    if (CurrentDetectionLevel == 0)
+    {
+        PlayRandomSound(AmbientIdleSounds, AmbientSoundVolume);
+    }
+
+    ScheduleNextAmbientSound();
+}
+
+void AGuardAIC::ScheduleNextAmbientSound()
+{
+    if (!bEnableAmbientSounds || AmbientIdleSounds.Num() == 0)
+    {
+        return;
+    }
+
+    float RandomDelay = FMath::RandRange(AmbientSoundMinInterval, AmbientSoundMaxInterval);
+
+    GetWorldTimerManager().SetTimer(
+        AmbientSoundTimerHandle,
+        this,
+        &AGuardAIC::PlayAmbientSound,
+        RandomDelay,
+        false
+    );
+}
+
+void AGuardAIC::PlayBreathingSound()
+{
+    if (!bEnableBreathingSounds || BreathingSounds.Num() == 0)
+    {
+        return;
+    }
+
+    if (CurrentDetectionLevel >= AlertThreshold * MaxDetectionLevel)
+    {
+        PlayRandomSound(BreathingSounds, BreathingSoundVolume);
+    }
+}
+
+void AGuardAIC::StartBreathingSounds()
+{
+    if (!bEnableBreathingSounds || BreathingSounds.Num() == 0 || bIsBreathing)
+    {
+        return;
+    }
+
+    bIsBreathing = true;
+
+    float BreathingInterval = FMath::RandRange(2.0f, 4.0f);
+
+    GetWorldTimerManager().SetTimer(
+        BreathingSoundTimerHandle,
+        this,
+        &AGuardAIC::PlayBreathingSound,
+        BreathingInterval,
+        true
+    );
+}
+
+void AGuardAIC::StopBreathingSounds()
+{
+    if (!bIsBreathing)
+    {
+        return;
+    }
+
+    bIsBreathing = false;
+
+    if (GetWorldTimerManager().IsTimerActive(BreathingSoundTimerHandle))
+    {
+        GetWorldTimerManager().ClearTimer(BreathingSoundTimerHandle);
+    }
+}
+
+#pragma endregion
