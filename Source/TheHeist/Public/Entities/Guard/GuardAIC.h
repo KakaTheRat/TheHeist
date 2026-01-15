@@ -10,6 +10,7 @@ class UAISenseConfig_Sight;
 struct FAIStimulus;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMaxLevelStress);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHalfDetection, FVector, PlayerLocation);
 
 /**
  * Guard AI Controller class to manage guard behavior and detection of the player.
@@ -61,6 +62,15 @@ protected:
     UPROPERTY()
     UAISenseConfig_Sight* SightConfig;
 
+    UPROPERTY(BlueprintReadOnly)
+    UDetectionMeterWidget* DetectionWidget;
+
+    UPROPERTY(BlueprintAssignable, Category = "Detection")
+    FOnHalfDetection OnHalfDetection;
+
+    UFUNCTION(BlueprintImplementableEvent)
+    void HandleHalfDetection(FVector PlayerLocation);
+    
 private:
     
     void SetupPerception();
@@ -81,9 +91,9 @@ private:
 
     int32 CurrentDetectionLevel;
     bool bPlayerVisible;
+
+    bool bHalfDetectionTriggered;
     
-    UPROPERTY()
-    UDetectionMeterWidget* DetectionWidget;
     
     UPROPERTY()
     AActor* TrackedPlayer;

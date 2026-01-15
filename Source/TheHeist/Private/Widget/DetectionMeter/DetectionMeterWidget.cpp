@@ -16,8 +16,10 @@ void UDetectionMeterWidget::NativeConstruct()
 
     PulseTime = 0.0f;
     CurrentPulseSpeed = BasePulseSpeed;
-    CurrentGlowIntensity = 0.0f;
 
+    bHalfDetectionTriggered = false;
+    TrackedPlayer = nullptr;
+    
     ShakeOffset = FVector2D::ZeroVector;
 
     if (RootCanvas)
@@ -46,6 +48,11 @@ void UDetectionMeterWidget::NativeTick(const FGeometry& MyGeometry, float InDelt
     UpdateShakeEffect(InDeltaTime);
 }
 
+void UDetectionMeterWidget::SetTrackedPlayer(AActor* Player)
+{
+    TrackedPlayer = Player;
+}
+
 void UDetectionMeterWidget::UpdatePercent(float NewPercent)
 {
     PreviousPercent = CurrentPercent;
@@ -57,6 +64,24 @@ void UDetectionMeterWidget::UpdatePercent(float NewPercent)
     }
 
     DetectionProgressBar->SetPercent(CurrentPercent);
+
+    // Vérification à 50% lors de la montée
+    if (!bHalfDetectionTriggered && CurrentPercent >= 0.5f && PreviousPercent < 0.5f)
+    {
+        bHalfDetectionTriggered = true;
+        
+        if (TrackedPlayer)
+        {
+            FVector PlayerLocation = TrackedPlayer->GetActorLocation();
+            OnHalfDetectionReached.Broadcast(PlayerLocation);
+            
+        }
+    }
+    // Reset du flag si on redescend en dessous de 50%
+    else if (bHalfDetectionTriggered && CurrentPercent < 0.5f)
+    {
+        bHalfDetectionTriggered = false;
+    }
 
     FLinearColor BarColor;
 
