@@ -142,13 +142,26 @@ public:
 		return bIsTaking;
 	}
 
-	UAnimMontage* GetAnimation()
+	UAnimMontage* GetAnimationUse()
 	{
 		if (DA_Gadget)
 		{
 			if (DA_Gadget->GadgetStruct.EffectGadget.AnimationGadgetUse)
 			{
 				return DA_Gadget->GadgetStruct.EffectGadget.AnimationGadgetUse;
+			}
+			return nullptr;
+		}
+		return nullptr;
+	}
+
+	UAnimMontage* GetAnimationDrop()
+	{
+		if (DA_Gadget)
+		{
+			if (DA_Gadget->GadgetStruct.EffectGadget.AnimationGadgetDrop)
+			{
+				return DA_Gadget->GadgetStruct.EffectGadget.AnimationGadgetDrop;
 			}
 			return nullptr;
 		}

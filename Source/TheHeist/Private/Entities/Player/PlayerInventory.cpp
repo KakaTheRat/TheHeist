@@ -201,9 +201,9 @@ void UPlayerInventory::RelaseUseItem()
 	if (CurrentGadget)
 	{
 		//CurrentGadget->OnUseReleased();
-		Char->GetMesh()->GetAnimInstance()->Montage_Play(CurrentGadget->GetAnimation());
+		Char->GetMesh()->GetAnimInstance()->Montage_Play(CurrentGadget->GetAnimationUse());
 		UpdateWidget.Broadcast(false, CurrentItemIndex);
-		CurrentGadget = nullptr;
+		//CurrentGadget = nullptr;
 	}
 }
 
@@ -285,7 +285,7 @@ void UPlayerInventory::Drop()
 	{
 		return;
 	}
-	CurrentGadget->OnDropPressed();
+	Char->GetMesh()->GetAnimInstance()->Montage_Play(CurrentGadget->GetAnimationDrop());
 }
 
 void UPlayerInventory::InputOne(const FInputActionValue& Value)
@@ -333,6 +333,7 @@ void UPlayerInventory::ChangeCurrentGadget(int32 NewValue)
 		}
 
 		CurrentGadgetIndex = NewValue;
+		UE_LOG(LogTemp, Warning, TEXT("Nombre = %d"), CurrentGadgetIndex);
 		CurrentGadget = HardRefGadgets[NewValue];
 		CurrentGadget->SetNoPhysicObject();
 		CurrentGadget->OnAttachGadget(ArmsMesh);

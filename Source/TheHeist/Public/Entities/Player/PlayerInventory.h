@@ -54,8 +54,26 @@ protected:
 	TMap<TSubclassOf<AGadgets>, FTimerHandle> CooldownTimers;
 
 	//Index to determine the item currently being used
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Inventory")
-	int CurrentItemIndex = 0;
+	UPROPERTY(BlueprintReadWrite, Category="Inventory")
+	int CurrentItemIndex;
+
+	UFUNCTION(BlueprintCallable, Category="Use")
+	void CurrentGadgetUse()
+	{
+		CurrentGadget->OnUseReleased();
+	}
+	
+	UFUNCTION(BlueprintCallable, Category="Drop")
+	void CurrentGadgetDrop()
+	{
+		CurrentGadget->OnDropPressed();
+	}
+	
+	UFUNCTION(BlueprintCallable, Category="Current Gadget")
+	void SetCUrrentGadget(AGadgets* Value)
+	{
+		CurrentGadget = Value;
+	}
 
 private:
 	UPROPERTY(EditAnywhere)

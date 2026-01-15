@@ -91,6 +91,12 @@ struct FEffectGadget
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect")
 	class UAnimMontage* AnimationGadgetUse = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect")
+	bool CanDrop = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect", meta = (EditCondition = "CanDrop", EditConditionHides))
+	class UAnimMontage* AnimationGadgetDrop = nullptr;
 };
 
 USTRUCT(BlueprintType)
