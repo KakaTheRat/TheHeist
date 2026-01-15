@@ -9,7 +9,6 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Sound/SoundBase.h"
-#include "Sound/Heartbeat/HeartbeatComponent.h"
 
 #pragma region Initialize
 
@@ -93,17 +92,8 @@ void AGuardAIC::UpdatePlayerHeartbeat()
         UE_LOG(LogTemp, Warning, TEXT("GuardAIC: No player controller or pawn"));
         return;
     }
-
-    UHeartbeatComponent* HeartbeatComp = PC->GetPawn()->FindComponentByClass<UHeartbeatComponent>();
-    if (!HeartbeatComp)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("GuardAIC: No HeartbeatComponent found on player"));
-        return;
-    }
-
-    float StressLevel = static_cast<float>(CurrentDetectionLevel) / MaxDetectionLevel;
     
-    HeartbeatComp->SetStressLevel(StressLevel);
+    float StressLevel = static_cast<float>(CurrentDetectionLevel) / MaxDetectionLevel;
 }
 
 #pragma endregion
