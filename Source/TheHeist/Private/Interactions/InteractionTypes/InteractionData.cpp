@@ -38,6 +38,9 @@ void UInteractionData::PostInitProperties()
             OwnerActor = Comp->GetOwner();
         }
     }
+
+    InteractingActor = nullptr;
+    
 }
 
 
@@ -100,12 +103,14 @@ void UInteractionData::ExecuteInteraction(AActor* m_Owner, USceneComponent* m_Ta
                     Targ = s;
                 }
             }
-                
-            IEntitiesInterface::Execute_MoveAndLookEntity(InteractingActor, BestPoint, Targ );
-            IEntitiesInterface::Execute_CheckClosest(InteractingActor, In, Out);
+
+            if (InteractingActor->GetClass()->ImplementsInterface(UEntitiesInterface::StaticClass()))
+            {
+                IEntitiesInterface::Execute_MoveAndLookEntity(InteractingActor, BestPoint, Targ );
+            }
         }
     }
-    
+        
     if (InteractionMontage)
     {
         PlayAnimation(AnimationMontageToPlay());
@@ -168,10 +173,27 @@ void UInteractionData::OnMontageNotifyBegin(FName NotifyName, const FBranchingPo
     }
 }
 
+void UInteractionData::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+    if (InteractingActor && InteractingActor->GetClass()->ImplementsInterface(UEntitiesInterface::StaticClass()))
+    {
+        IEntitiesInterface::Execute_SetAnimationState(InteractingActor, false);
+        
+        UAnimInstance* Anim = IEntitiesInterface::Execute_GetSkeletalMeshComponent(InteractingActor)->GetAnimInstance();
+        if (Anim)
+        {
+            Anim->OnPlayMontageNotifyBegin.RemoveDynamic(this, &UInteractionData::OnMontageNotifyBegin);
+            Anim->OnMontageEnded.RemoveDynamic(this, &UInteractionData::OnMontageEnded);
+        }
+    }
+}
+
 UAnimMontage* UInteractionData::AnimationMontageToPlay()
 {
     return InteractionMontage;
 }
+
+
 
 
 void UInteractionData::TriggerAlert(AActor* SourceActor, TSubclassOf<UAISense> Sense)
@@ -220,8 +242,14 @@ void UInteractionData::PlayAnimation(UAnimMontage* Animation)
 
         if (Anim)
         {
+            IEntitiesInterface::Execute_SetAnimationState(InteractingActor, true);
+            
             Anim->OnPlayMontageNotifyBegin.RemoveDynamic(this, &UInteractionData::OnMontageNotifyBegin);
+            Anim->OnMontageEnded.RemoveDynamic(this, &UInteractionData::OnMontageEnded);
+            
+            
             Anim->OnPlayMontageNotifyBegin.AddDynamic(this, &UInteractionData::OnMontageNotifyBegin);
+            Anim->OnMontageEnded.AddDynamic(this, &UInteractionData::OnMontageEnded);
             Anim->Montage_Play(Animation, PlayRate);
         }
     }

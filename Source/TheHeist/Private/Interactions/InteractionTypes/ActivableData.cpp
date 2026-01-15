@@ -60,7 +60,13 @@ void UActivableData::ActivateSound(const AActor* m_Owner)
 		{
 			AudioComp->SetSound(Sound);
 			AudioComp->Play();
-			TriggerAlert(OwnerActor,UAISense_Hearing::StaticClass());
+			UAISense_Hearing::ReportNoiseEvent(
+			   GetWorld(),
+			   Owner->GetActorLocation(), // Position du bruit
+			   1.0f,                      // Loudness
+			   Owner,                     // Instigator
+			   1500.f                     // Range
+		   );
 		}
 		bIsActivated = !bIsActivated;
 		

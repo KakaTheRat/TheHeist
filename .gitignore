@@ -5,6 +5,8 @@
 # Prerequisites
 *.d
 
+*Content/SICKA_mansion
+
 # Compiled Object files
 *.slo
 *.lo
