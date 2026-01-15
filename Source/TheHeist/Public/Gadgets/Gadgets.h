@@ -82,6 +82,9 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Gadget")
 	void OnUsePressed();
 	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Gadget")
+	void OnDropPressed();
+	
 	//Event to use every gadget. Called when button released. Must be overrided.
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Gadget")
 	void OnUseReleased();
