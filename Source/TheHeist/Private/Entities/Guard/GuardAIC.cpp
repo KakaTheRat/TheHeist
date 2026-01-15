@@ -6,6 +6,8 @@
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "Widget/DetectionMeter/DetectionMeterWidget.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 #pragma region Initialize
 
@@ -21,6 +23,10 @@ AGuardAIC::AGuardAIC()
     LoseSightRadius = 2500.f;
     PeripheralVisionAngleDegrees = 90.f;
 
+    OutlineFadeDuration = 2.0f;
+    SuspicionThreshold = 0.3f;
+    AlertThreshold = 0.7f;
+
     CurrentDetectionLevel = 0;
     bPlayerVisible = false;
 
@@ -29,12 +35,20 @@ AGuardAIC::AGuardAIC()
 
     DetectionWidget = nullptr;
     TrackedPlayer = nullptr;
+    
+    OutlineMaterialBase = nullptr;
+    OutlineMaterialInstance = nullptr;
 }
 
 void AGuardAIC::BeginPlay()
 {
     Super::BeginPlay();
     SetupPerception();
+    
+    if (OutlineMaterialBase)
+    {
+        OutlineMaterialInstance = UMaterialInstanceDynamic::Create(OutlineMaterialBase, this);
+    }
 }
 
 void AGuardAIC::Tick(float DeltaTime)
@@ -108,6 +122,11 @@ void AGuardAIC::OnPlayerDetected(AActor* DetectedPlayer)
     TrackedPlayer = DetectedPlayer;
     bPlayerVisible = true;
 
+    if (GetWorldTimerManager().IsTimerActive(OutlineFadeTimerHandle))
+    {
+        GetWorldTimerManager().ClearTimer(OutlineFadeTimerHandle);
+    }
+
     if (!DetectionWidget)
     {
         CreateDetectionWidget();
@@ -131,6 +150,16 @@ void AGuardAIC::OnPlayerLost()
 {
     bPlayerVisible = false;
 
+    if (OutlineFadeDuration > 0.f && TrackedPlayer)
+    {
+        GetWorldTimerManager().SetTimer(
+            OutlineFadeTimerHandle,
+            this,
+            &AGuardAIC::RemoveGuardOutline,
+            OutlineFadeDuration,
+            false);
+    }
+
     if (!GetWorldTimerManager().IsTimerActive(DetectionTimerHandle))
     {
         GetWorldTimerManager().SetTimer(
@@ -150,6 +179,8 @@ void AGuardAIC::DetectionLoop()
     CurrentDetectionLevel += bPlayerVisible ? 1 : -1;
     CurrentDetectionLevel = FMath::Clamp(CurrentDetectionLevel, 0, MaxDetectionLevel);
 
+    UpdateGuardOutline();
+
     if (DetectionWidget)
     {
         DetectionWidget->UpdatePercent(
@@ -159,12 +190,105 @@ void AGuardAIC::DetectionLoop()
     if (CurrentDetectionLevel == MaxDetectionLevel)
     {
         GetWorldTimerManager().ClearTimer(DetectionTimerHandle);
-        PlayerFullyDetected();
+        //PlayerFullyDetected(TODO);
     }
     else if (CurrentDetectionLevel == 0)
     {
         GetWorldTimerManager().ClearTimer(DetectionTimerHandle);
         PlayerDetectionLost();
+    }
+}
+
+/*
+ * Update guard outline based on detection level
+ */
+void AGuardAIC::UpdateGuardOutline()
+{
+    if (!TrackedPlayer)
+    {
+        return;
+    }
+
+    float DetectionPercent = static_cast<float>(CurrentDetectionLevel) / MaxDetectionLevel;
+    
+    FLinearColor OutlineColor;
+    float OutlineWidth = 1.0f;
+
+    if (DetectionPercent >= AlertThreshold)
+    {
+        OutlineColor = FLinearColor(1.0f, 0.0f, 0.0f, 1.0f);
+    }
+    else if (DetectionPercent >= SuspicionThreshold)
+    {
+        float LerpAlpha = (DetectionPercent - SuspicionThreshold) / (AlertThreshold - SuspicionThreshold);
+        OutlineColor = FLinearColor::LerpUsingHSV(
+            FLinearColor(1.0f, 0.6f, 0.0f, 1.0f),
+            FLinearColor(1.0f, 0.0f, 0.0f, 1.0f),
+            LerpAlpha
+        );
+    }
+    else if (DetectionPercent > 0.0f)
+    {
+        OutlineColor = FLinearColor(1.0f, 1.0f, 0.0f, 1.0f);
+    }
+    else
+    {
+        RemoveGuardOutline();
+        return;
+    }
+
+    ApplyOutlineToGuard(OutlineColor, OutlineWidth);
+}
+
+/*
+ * Apply outline effect to GUARD using Overlay Material
+ */
+void AGuardAIC::ApplyOutlineToGuard(FLinearColor OutlineColor, float OutlineWidth)
+{
+    APawn* GuardPawn = GetPawn();
+    if (!GuardPawn)
+    {
+        return;
+    }
+
+    USkeletalMeshComponent* GuardMesh = GuardPawn->FindComponentByClass<USkeletalMeshComponent>();
+    if (!GuardMesh)
+    {
+        return;
+    }
+
+    if (!OutlineMaterialInstance && OutlineMaterialBase)
+    {
+        OutlineMaterialInstance = UMaterialInstanceDynamic::Create(OutlineMaterialBase, this);
+    }
+    
+    if (OutlineMaterialInstance)
+    {
+        OutlineMaterialInstance->SetVectorParameterValue(FName("OutlineColor"), OutlineColor);
+        OutlineMaterialInstance->SetScalarParameterValue(FName("OutlineWidth"), OutlineWidth);
+        
+        GuardMesh->SetOverlayMaterial(OutlineMaterialInstance);
+    }
+}
+
+/*
+ * Remove outline effect from GUARD
+ */
+void AGuardAIC::RemoveGuardOutline()
+{
+    APawn* GuardPawn = GetPawn();
+    if (!GuardPawn)
+        return;
+
+    USkeletalMeshComponent* GuardMesh = GuardPawn->FindComponentByClass<USkeletalMeshComponent>();
+    if (!GuardMesh)
+        return;
+
+    GuardMesh->SetOverlayMaterial(nullptr);
+
+    if (GetWorldTimerManager().IsTimerActive(OutlineFadeTimerHandle))
+    {
+        GetWorldTimerManager().ClearTimer(OutlineFadeTimerHandle);
     }
 }
 
@@ -192,6 +316,7 @@ void AGuardAIC::CreateDetectionWidget()
         DetectionWidget->SetTrackedPlayer(TrackedPlayer);
     }
     DetectionWidget->OnHalfDetectionReached.AddDynamic(this, &AGuardAIC::HandleHalfDetection);
+    DetectionWidget->OnMaxDetectionReached.AddDynamic(this, &AGuardAIC::PlayerFullyDetected);
 }
 
 /*
@@ -201,6 +326,7 @@ void AGuardAIC::RemoveDetectionWidget()
 {
     if (DetectionWidget)
     {
+        DetectionWidget->ResetDetection();
         DetectionWidget->RemoveFromParent();
         DetectionWidget = nullptr;
     }
@@ -235,11 +361,12 @@ void AGuardAIC::UpdateWidgetAngle()
 /*
  * Detection max
  */
-void AGuardAIC::PlayerFullyDetected()
+void AGuardAIC::PlayerFullyDetected(AActor* Target)
 {
     if (DetectionWidget)
     {
-        DetectionWidget->BlinkIcon();
+        //DetectionWidget->BlinkIcon();
+        RemoveDetectionWidget();
     }
 
     OnMaxLevelStress.Broadcast();
@@ -251,5 +378,11 @@ void AGuardAIC::PlayerFullyDetected()
 void AGuardAIC::PlayerDetectionLost()
 {
     RemoveDetectionWidget();
+    
+    if (OutlineFadeDuration <= 0.f)
+    {
+        RemoveGuardOutline();
+    }
+    
     TrackedPlayer = nullptr;
 }

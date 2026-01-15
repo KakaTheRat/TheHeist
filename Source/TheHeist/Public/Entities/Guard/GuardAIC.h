@@ -44,6 +44,15 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
     float WidgetScreenOffset;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
+    float OutlineFadeDuration;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+    float SuspicionThreshold;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+    float AlertThreshold;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Perception")
     float SightRadius;
 
@@ -70,6 +79,15 @@ protected:
 
     UFUNCTION(BlueprintImplementableEvent)
     void HandleHalfDetection(FVector PlayerLocation);
+
+    UFUNCTION(BlueprintImplementableEvent)
+    void HandleMaxDetection(AActor* Target);
+
+    UFUNCTION()
+    void PlayerFullyDetected(AActor* Target);
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Outline")
+    UMaterialInterface* OutlineMaterialBase;
     
 private:
     
@@ -86,17 +104,22 @@ private:
     void RemoveDetectionWidget();
     void UpdateWidgetAngle();
     
-    void PlayerFullyDetected();
     void PlayerDetectionLost();
-
+    
     int32 CurrentDetectionLevel;
     bool bPlayerVisible;
-
     bool bHalfDetectionTriggered;
-    
     
     UPROPERTY()
     AActor* TrackedPlayer;
     
     FTimerHandle DetectionTimerHandle;
+    FTimerHandle OutlineFadeTimerHandle;
+
+    UPROPERTY()
+    UMaterialInstanceDynamic* OutlineMaterialInstance;
+    
+    void ApplyOutlineToGuard(FLinearColor OutlineColor, float OutlineWidth);
+    void RemoveGuardOutline();
+    void UpdateGuardOutline();
 };
