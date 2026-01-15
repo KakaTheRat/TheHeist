@@ -36,9 +36,6 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Detection")
     void SetPulseSpeed(float Speed);
 
-    UFUNCTION(BlueprintCallable, Category = "Detection")
-    void SetGlowIntensity(float Intensity);
-
 protected:
 
     UPROPERTY(meta = (BindWidget))
