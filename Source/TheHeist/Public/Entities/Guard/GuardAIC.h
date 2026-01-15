@@ -106,6 +106,9 @@ private:
     
     void PlayerDetectionLost();
     
+    UFUNCTION()
+    void OnBlinkCompleted();
+    
     int32 CurrentDetectionLevel;
     bool bPlayerVisible;
     bool bHalfDetectionTriggered;

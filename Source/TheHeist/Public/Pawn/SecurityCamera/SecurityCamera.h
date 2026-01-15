@@ -108,4 +108,8 @@ private:
     
     void PlayerFullyDetected();
     void PlayerDetectionLost();
+    
+    UFUNCTION()
+    void OnBlinkCompleted();
+    
 };

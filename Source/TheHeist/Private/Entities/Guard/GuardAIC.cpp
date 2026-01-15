@@ -63,9 +63,6 @@ void AGuardAIC::Tick(float DeltaTime)
 
 #pragma endregion
 
-/*
- * Setup AI Perception Component with Sight Sense
- */
 void AGuardAIC::SetupPerception()
 {
     AIPerceptionComponent = GetPerceptionComponent();
@@ -93,9 +90,6 @@ void AGuardAIC::SetupPerception()
         this, &AGuardAIC::OnTargetPerceptionUpdated);
 }
 
-/*
- * Perception callback
- */
 void AGuardAIC::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
     if (!Actor)
@@ -114,9 +108,6 @@ void AGuardAIC::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
         : OnPlayerLost();
 }
 
-/*
- * Player detected
- */
 void AGuardAIC::OnPlayerDetected(AActor* DetectedPlayer)
 {
     TrackedPlayer = DetectedPlayer;
@@ -143,9 +134,6 @@ void AGuardAIC::OnPlayerDetected(AActor* DetectedPlayer)
     }
 }
 
-/*
- * Player lost
- */
 void AGuardAIC::OnPlayerLost()
 {
     bPlayerVisible = false;
@@ -171,9 +159,6 @@ void AGuardAIC::OnPlayerLost()
     }
 }
 
-/*
- * Detection progression loop
- */
 void AGuardAIC::DetectionLoop()
 {
     CurrentDetectionLevel += bPlayerVisible ? 1 : -1;
@@ -190,7 +175,13 @@ void AGuardAIC::DetectionLoop()
     if (CurrentDetectionLevel == MaxDetectionLevel)
     {
         GetWorldTimerManager().ClearTimer(DetectionTimerHandle);
-        //PlayerFullyDetected(TODO);
+        
+        if (DetectionWidget)
+        {
+            DetectionWidget->BlinkIcon();
+        }
+        
+        OnMaxLevelStress.Broadcast();
     }
     else if (CurrentDetectionLevel == 0)
     {
@@ -199,9 +190,6 @@ void AGuardAIC::DetectionLoop()
     }
 }
 
-/*
- * Update guard outline based on detection level
- */
 void AGuardAIC::UpdateGuardOutline()
 {
     if (!TrackedPlayer)
@@ -240,9 +228,6 @@ void AGuardAIC::UpdateGuardOutline()
     ApplyOutlineToGuard(OutlineColor, OutlineWidth);
 }
 
-/*
- * Apply outline effect to GUARD using Overlay Material
- */
 void AGuardAIC::ApplyOutlineToGuard(FLinearColor OutlineColor, float OutlineWidth)
 {
     APawn* GuardPawn = GetPawn();
@@ -271,9 +256,6 @@ void AGuardAIC::ApplyOutlineToGuard(FLinearColor OutlineColor, float OutlineWidt
     }
 }
 
-/*
- * Remove outline effect from GUARD
- */
 void AGuardAIC::RemoveGuardOutline()
 {
     APawn* GuardPawn = GetPawn();
@@ -292,9 +274,6 @@ void AGuardAIC::RemoveGuardOutline()
     }
 }
 
-/*
- * UI creation
- */
 void AGuardAIC::CreateDetectionWidget()
 {
     if (!DetectionWidgetClass)
@@ -314,14 +293,13 @@ void AGuardAIC::CreateDetectionWidget()
         DetectionWidget->AddToViewport(100);
         DetectionWidget->UpdatePercent(0.f);
         DetectionWidget->SetTrackedPlayer(TrackedPlayer);
+        
+        DetectionWidget->OnHalfDetectionReached.AddDynamic(this, &AGuardAIC::HandleHalfDetection);
+        DetectionWidget->OnMaxDetectionReached.AddDynamic(this, &AGuardAIC::PlayerFullyDetected);
+        DetectionWidget->OnBlinkAnimationFinished.AddDynamic(this, &AGuardAIC::OnBlinkCompleted);
     }
-    DetectionWidget->OnHalfDetectionReached.AddDynamic(this, &AGuardAIC::HandleHalfDetection);
-    DetectionWidget->OnMaxDetectionReached.AddDynamic(this, &AGuardAIC::PlayerFullyDetected);
 }
 
-/*
- * UI cleanup
- */
 void AGuardAIC::RemoveDetectionWidget()
 {
     if (DetectionWidget)
@@ -332,9 +310,6 @@ void AGuardAIC::RemoveDetectionWidget()
     }
 }
 
-/*
- * Widget orientation
- */
 void AGuardAIC::UpdateWidgetAngle()
 {
     if (!TrackedPlayer)
@@ -358,23 +333,16 @@ void AGuardAIC::UpdateWidgetAngle()
     DetectionWidget->UpdateAngle(Yaw);
 }
 
-/*
- * Detection max
- */
 void AGuardAIC::PlayerFullyDetected(AActor* Target)
 {
-    if (DetectionWidget)
-    {
-        //DetectionWidget->BlinkIcon();
-        RemoveDetectionWidget();
-    }
-
-    OnMaxLevelStress.Broadcast();
+   //TODO : Logique de gameplay lors de la détection complète du joueur
 }
 
-/*
- * Detection lost
- */
+void AGuardAIC::OnBlinkCompleted()
+{
+    RemoveDetectionWidget();
+}
+
 void AGuardAIC::PlayerDetectionLost()
 {
     RemoveDetectionWidget();

@@ -5,6 +5,8 @@
 #include "DetectionMeterWidget.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHalfDetectionReached, FVector, PlayerLocation);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxDetectionReached, AActor*, Player);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBlinkAnimationFinished);
 
 class UCanvasPanel;
 class UProgressBar;
@@ -41,9 +43,18 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Detection")
     FOnHalfDetectionReached OnHalfDetectionReached;
 
-    // Fonction pour définir la référence au joueur tracké
+    UPROPERTY(BlueprintAssignable, Category = "Detection")
+    FOnMaxDetectionReached OnMaxDetectionReached;
+    
+    UPROPERTY(BlueprintAssignable, Category = "Detection")
+    FOnBlinkAnimationFinished OnBlinkAnimationFinished;
+    
     UFUNCTION(BlueprintCallable, Category = "Detection")
     void SetTrackedPlayer(AActor* Player);
+    
+    UFUNCTION(BlueprintCallable, Category = "Detection")
+    void ResetDetection();
+
 protected:
 
     UPROPERTY(meta = (BindWidget))
@@ -66,7 +77,9 @@ protected:
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Juice")
     float ShakeFrequency = 10.0f;
-
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Juice")
+    float BlinkAnimationDuration = 1.5f;
 
 private:
     
@@ -87,4 +100,8 @@ private:
     
     UPROPERTY()
     AActor* TrackedPlayer;
+    
+    FTimerHandle BlinkFinishedTimerHandle;
+    
+    void OnBlinkFinished();
 };
