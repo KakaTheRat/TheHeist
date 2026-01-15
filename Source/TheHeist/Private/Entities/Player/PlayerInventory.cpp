@@ -285,6 +285,7 @@ void UPlayerInventory::Drop()
 	{
 		return;
 	}
+	UE_LOG(LogTemp, Warning, TEXT("%s dddddddddddd"), *CurrentGadget->GetName());
 	Char->GetMesh()->GetAnimInstance()->Montage_Play(CurrentGadget->GetAnimationDrop());
 }
 

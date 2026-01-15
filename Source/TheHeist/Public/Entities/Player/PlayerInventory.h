@@ -66,6 +66,7 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Drop")
 	void CurrentGadgetDrop()
 	{
+		UE_LOG(LogTemp, Warning, TEXT("%s dddddddddddd"), *CurrentGadget->GetName());
 		CurrentGadget->OnDropPressed();
 	}
 	
