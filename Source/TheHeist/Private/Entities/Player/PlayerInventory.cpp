@@ -200,8 +200,8 @@ void UPlayerInventory::RelaseUseItem()
 {
 	if (CurrentGadget)
 	{
-		CurrentGadget->OnUseReleased();
-		CurrentGadget->TakeGadget(); 
+		//CurrentGadget->OnUseReleased();
+		Char->GetMesh()->GetAnimInstance()->Montage_Play(CurrentGadget->GetAnimation());
 		UpdateWidget.Broadcast(false, CurrentItemIndex);
 		CurrentGadget = nullptr;
 	}
@@ -320,6 +320,7 @@ void UPlayerInventory::ChangeCurrentGadget(int32 NewValue)
 			CurrentGadget->DetachFromActor(
 				FDetachmentTransformRules::KeepWorldTransform
 			);
+			//CurrentGadget->OnAttachGadget();
 			CurrentGadget->SetActorLocation(FVector(0.0f, 0.0f, 0.0f));
 			CurrentGadget->SetActorRotation(GetOwner()->GetActorRotation());
 			CurrentGadget->SetNoPhysicObject();
@@ -334,6 +335,7 @@ void UPlayerInventory::ChangeCurrentGadget(int32 NewValue)
 		CurrentGadgetIndex = NewValue;
 		CurrentGadget = HardRefGadgets[NewValue];
 		CurrentGadget->SetNoPhysicObject();
+		CurrentGadget->OnAttachGadget(ArmsMesh);
 		CurrentGadget->AttachToComponent(
 			ArmsMesh,
 			FAttachmentTransformRules::SnapToTargetNotIncludingScale,

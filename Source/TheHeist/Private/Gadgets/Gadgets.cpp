@@ -54,7 +54,6 @@ float AGadgets::TakeGadget()
 	}
 }
 
-
 void AGadgets::SetNoPhysicObject()
 {
 	UProjectileMovementComponent* ProjComp = FindComponentByClass<UProjectileMovementComponent>();
@@ -64,6 +63,7 @@ void AGadgets::SetNoPhysicObject()
 		ProjComp->Deactivate();
 		ProjComp->Velocity = FVector::ZeroVector;
 	}
+	SetActorHiddenInGame(false);
 	StaticMesh->SetEnableGravity(false);
 	StaticMesh->SetSimulatePhysics(false);
 	StaticMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -90,3 +90,10 @@ void AGadgets::OnDropPressed_Implementation()
 {
 }
 
+void AGadgets::OnAttachGadget_Implementation(USkeletalMeshComponent* SkeletalMesh)
+{
+}
+
+void AGadgets::OnDettachGadget_Implementation()
+{
+}
