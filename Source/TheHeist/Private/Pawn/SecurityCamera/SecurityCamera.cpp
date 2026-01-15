@@ -198,7 +198,13 @@ void ASecurityCamera::DetectionLoop()
     if (CurrentDetectionLevel == MaxDetectionLevel)
     {
         GetWorldTimerManager().ClearTimer(DetectionTimerHandle);
-        PlayerFullyDetected();
+        
+        if (DetectionWidget)
+        {
+            DetectionWidget->BlinkIcon();
+        }
+        
+        OnPlayerDetectedEvent.Broadcast();
     }
     else if (CurrentDetectionLevel == 0)
     {
@@ -228,6 +234,9 @@ void ASecurityCamera::CreateDetectionWidget()
     {
         DetectionWidget->AddToViewport(100);
         DetectionWidget->UpdatePercent(0.f);
+        DetectionWidget->SetTrackedPlayer(TrackedPlayer);
+        
+        DetectionWidget->OnBlinkAnimationFinished.AddDynamic(this, &ASecurityCamera::OnBlinkCompleted);
     }
 }
 
@@ -238,6 +247,7 @@ void ASecurityCamera::RemoveDetectionWidget()
 {
     if (DetectionWidget)
     {
+        DetectionWidget->ResetDetection();
         DetectionWidget->RemoveFromParent();
         DetectionWidget = nullptr;
     }
@@ -269,12 +279,15 @@ void ASecurityCamera::UpdateWidgetAngle()
  */
 void ASecurityCamera::PlayerFullyDetected()
 {
-    if (DetectionWidget)
-    {
-        DetectionWidget->BlinkIcon();
-    }
+    //TODO : ajouter des effets sonores ou visuels ici et logique de gameplay
+}
 
-    OnPlayerDetectedEvent.Broadcast();
+/*
+ * Callback when blink animation is completed
+ */
+void ASecurityCamera::OnBlinkCompleted()
+{
+    RemoveDetectionWidget();
 }
 
 /*

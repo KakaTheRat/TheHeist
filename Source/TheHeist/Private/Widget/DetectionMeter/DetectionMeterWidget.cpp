@@ -5,6 +5,7 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Animation/WidgetAnimation.h"
 #include "Engine/World.h"
+#include "TimerManager.h"
 
 void UDetectionMeterWidget::NativeConstruct()
 {
@@ -65,7 +66,6 @@ void UDetectionMeterWidget::UpdatePercent(float NewPercent)
 
     DetectionProgressBar->SetPercent(CurrentPercent);
 
-    // Vérification à 50% lors de la montée
     if (!bHalfDetectionTriggered && CurrentPercent >= 0.5f && PreviousPercent < 0.5f)
     {
         bHalfDetectionTriggered = true;
@@ -74,10 +74,13 @@ void UDetectionMeterWidget::UpdatePercent(float NewPercent)
         {
             FVector PlayerLocation = TrackedPlayer->GetActorLocation();
             OnHalfDetectionReached.Broadcast(PlayerLocation);
-            
         }
     }
-    // Reset du flag si on redescend en dessous de 50%
+
+    if (CurrentPercent >= 1.0f)
+    {
+        OnMaxDetectionReached.Broadcast(TrackedPlayer);
+    }
     else if (bHalfDetectionTriggered && CurrentPercent < 0.5f)
     {
         bHalfDetectionTriggered = false;
@@ -161,7 +164,23 @@ void UDetectionMeterWidget::BlinkIcon()
     if (BlinkAnimation)
     {
         PlayAnimation(BlinkAnimation);
+        
+        if (GetWorld())
+        {
+            GetWorld()->GetTimerManager().SetTimer(
+                BlinkFinishedTimerHandle,
+                this,
+                &UDetectionMeterWidget::OnBlinkFinished,
+                BlinkAnimationDuration,
+                false
+            );
+        }
     }
+}
+
+void UDetectionMeterWidget::OnBlinkFinished()
+{
+    OnBlinkAnimationFinished.Broadcast();
 }
 
 void UDetectionMeterWidget::SetPulseSpeed(float Speed)
@@ -212,4 +231,22 @@ void UDetectionMeterWidget::UpdateShakeEffect(float DeltaTime)
         FMath::Sin(Time * Speed) * Magnitude,
         FMath::Cos(Time * Speed * 1.3f) * Magnitude
     );
+}
+
+void UDetectionMeterWidget::ResetDetection()
+{
+    bHalfDetectionTriggered = false;
+    CurrentPercent = 0.0f;
+    PreviousPercent = 0.0f;
+    
+    if (GetWorld() && GetWorld()->GetTimerManager().IsTimerActive(BlinkFinishedTimerHandle))
+    {
+        GetWorld()->GetTimerManager().ClearTimer(BlinkFinishedTimerHandle);
+    }
+    
+    if (DetectionProgressBar)
+    {
+        DetectionProgressBar->SetPercent(0.0f);
+        DetectionProgressBar->SetFillColorAndOpacity(FLinearColor::Green);
+    }
 }
