@@ -89,6 +89,12 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Gadget")
 	void OnUseReleased();
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Gadget")
+	void OnAttachGadget(USkeletalMeshComponent* SkeletalMesh);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Gadget")
+	void OnDettachGadget();
+
 	//returns the cooldown duration
 	UFUNCTION(BlueprintCallable, Category="Gadget")
 	float GetCooldown(){return CooldownDuration;}
@@ -134,5 +140,31 @@ public:
 	bool GetIsTaking()
 	{
 		return bIsTaking;
+	}
+
+	UAnimMontage* GetAnimationUse()
+	{
+		if (DA_Gadget)
+		{
+			if (DA_Gadget->GadgetStruct.EffectGadget.AnimationGadgetUse)
+			{
+				return DA_Gadget->GadgetStruct.EffectGadget.AnimationGadgetUse;
+			}
+			return nullptr;
+		}
+		return nullptr;
+	}
+
+	UAnimMontage* GetAnimationDrop()
+	{
+		if (DA_Gadget)
+		{
+			if (DA_Gadget->GadgetStruct.EffectGadget.AnimationGadgetDrop)
+			{
+				return DA_Gadget->GadgetStruct.EffectGadget.AnimationGadgetDrop;
+			}
+			return nullptr;
+		}
+		return nullptr;
 	}
 };

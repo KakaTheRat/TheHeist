@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 
 
+
 // Sets default values for this component's properties
 UPlayerInventory::UPlayerInventory()
 {
@@ -22,8 +23,14 @@ void UPlayerInventory::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-	Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	ACharacter* Char = Cast<ACharacter>(Pawn);
+	AActor* OwnerActor = GetOwner();
+		
+	ArmsMesh = nullptr;
+	Char = Cast<ACharacter>(GetOwner());
+	if (Char)
+	{
+		ArmsMesh = Char->FindComponentByClass<USkeletalMeshComponent>();
+	}
 	for (auto Gadget : InventoryGadgets)
 	{
 		AGadgets* Tmp = FindActor(Gadget);
@@ -79,6 +86,8 @@ void UPlayerInventory::BeginPlay()
 			EnhancedInput->BindAction(GadgetFor, ETriggerEvent::Started, this, &UPlayerInventory::InputFore);
 		}
 	}
+
+	
 }
 
 
@@ -191,10 +200,10 @@ void UPlayerInventory::RelaseUseItem()
 {
 	if (CurrentGadget)
 	{
-		CurrentGadget->OnUseReleased();
-		CurrentGadget->TakeGadget(); 
+		//CurrentGadget->OnUseReleased();
+		Char->GetMesh()->GetAnimInstance()->Montage_Play(CurrentGadget->GetAnimationUse());
 		UpdateWidget.Broadcast(false, CurrentItemIndex);
-		CurrentGadget = nullptr;
+		//CurrentGadget = nullptr;
 	}
 }
 
@@ -276,7 +285,8 @@ void UPlayerInventory::Drop()
 	{
 		return;
 	}
-	CurrentGadget->OnDropPressed();
+	UE_LOG(LogTemp, Warning, TEXT("%s dddddddddddd"), *CurrentGadget->GetName());
+	Char->GetMesh()->GetAnimInstance()->Montage_Play(CurrentGadget->GetAnimationDrop());
 }
 
 void UPlayerInventory::InputOne(const FInputActionValue& Value)
@@ -308,6 +318,10 @@ void UPlayerInventory::ChangeCurrentGadget(int32 NewValue)
 		
 		if (CurrentGadget && CurrentGadget->GetIsTaking())
 		{
+			CurrentGadget->DetachFromActor(
+				FDetachmentTransformRules::KeepWorldTransform
+			);
+			//CurrentGadget->OnAttachGadget();
 			CurrentGadget->SetActorLocation(FVector(0.0f, 0.0f, 0.0f));
 			CurrentGadget->SetActorRotation(GetOwner()->GetActorRotation());
 			CurrentGadget->SetNoPhysicObject();
@@ -320,11 +334,18 @@ void UPlayerInventory::ChangeCurrentGadget(int32 NewValue)
 		}
 
 		CurrentGadgetIndex = NewValue;
+		UE_LOG(LogTemp, Warning, TEXT("Nombre = %d"), CurrentGadgetIndex);
 		CurrentGadget = HardRefGadgets[NewValue];
-
-		CurrentGadget->SetActorLocation(GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 100.f);
-		CurrentGadget->SetActorRotation(GetOwner()->GetActorRotation());
 		CurrentGadget->SetNoPhysicObject();
+		CurrentGadget->OnAttachGadget(ArmsMesh);
+		CurrentGadget->AttachToComponent(
+			ArmsMesh,
+			FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+			TEXT("weapon_right")
+		);
+		/*CurrentGadget->SetActorLocation(GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 100.f);
+		CurrentGadget->SetActorRotation(GetOwner()->GetActorRotation());*/
+		
 
 		CurrentGadget->TakeGadget();
 		UpdateWidget.Broadcast(CurrentGadget->GetIsTaking(), NewValue);
