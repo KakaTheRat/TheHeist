@@ -233,7 +233,7 @@
     	virtual void PostInitProperties() override;
 
     	UFUNCTION()
-    	void PlayAnimation(UAnimMontage* Animation);
+        bool PlayAnimation(UAnimMontage* Animation);
     	
     };
 

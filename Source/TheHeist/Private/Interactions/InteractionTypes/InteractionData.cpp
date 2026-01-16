@@ -57,11 +57,10 @@ void UInteractionData::ExecuteInteraction(AActor* m_Owner, USceneComponent* m_Ta
 
     if (OutPosition != "none" || InPosition != "none")
     {
-        // Récupération des components
+       
         TArray<USceneComponent*> Components;
         Owner->GetComponents<USceneComponent>(Components);
 
-        // Trouver les bons components
         for (USceneComponent* Comp : Components)
         {
             if (Comp->GetName() == InPosition)
@@ -78,7 +77,7 @@ void UInteractionData::ExecuteInteraction(AActor* m_Owner, USceneComponent* m_Ta
 
         USceneComponent* BestPoint = nullptr;
 
-        // Si on a les deux
+    
         if (In && Out)
         {
             float InDist = FVector::Dist(PlayerLoc, In->GetComponentLocation());
@@ -111,11 +110,11 @@ void UInteractionData::ExecuteInteraction(AActor* m_Owner, USceneComponent* m_Ta
         }
     }
         
-    if (InteractionMontage)
+    if (PlayAnimation(AnimationMontageToPlay()))
     {
-        PlayAnimation(AnimationMontageToPlay());
         return;
     }
+    
     StartInteraction();
 }
 
@@ -144,7 +143,10 @@ void UInteractionData::OnMontageNotifyBegin(FName NotifyName, const FBranchingPo
         f->bEnableHandIK = false;
         f->InteractionTarget = nullptr;
         
-        
+        UE_LOG(LogTemp, Warning, TEXT("Interaction class: %s"),
+    *GetClass()->GetName());
+
+        UE_LOG(LogTemp, Warning, TEXT("Interaction address: %p"), this);
         StartInteraction();
     }
     if (NotifyName == "Start")
@@ -182,8 +184,8 @@ void UInteractionData::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
         UAnimInstance* Anim = IEntitiesInterface::Execute_GetSkeletalMeshComponent(InteractingActor)->GetAnimInstance();
         if (Anim)
         {
-            Anim->OnPlayMontageNotifyBegin.RemoveDynamic(this, &UInteractionData::OnMontageNotifyBegin);
-            Anim->OnMontageEnded.RemoveDynamic(this, &UInteractionData::OnMontageEnded);
+       //     Anim->OnPlayMontageNotifyBegin.RemoveDynamic(this, &UInteractionData::OnMontageNotifyBegin);
+         //   Anim->OnMontageEnded.RemoveDynamic(this, &UInteractionData::OnMontageEnded);
         }
     }
 }
@@ -231,9 +233,9 @@ void UInteractionData::ClearAlert(AActor* SourceActor, TSubclassOf<UAISense> Sen
 }
 
 
-void UInteractionData::PlayAnimation(UAnimMontage* Animation)
+bool UInteractionData::PlayAnimation(UAnimMontage* Animation)
 {
-    if (InteractionMontage && InteractingActor && InteractingActor->GetClass()->ImplementsInterface(UEntitiesInterface::StaticClass()))
+    if (Animation && InteractingActor && InteractingActor->GetClass()->ImplementsInterface(UEntitiesInterface::StaticClass()))
     {
         USkeletalMeshComponent* Mesh = IEntitiesInterface::Execute_GetSkeletalMeshComponent(InteractingActor);
         
@@ -242,16 +244,26 @@ void UInteractionData::PlayAnimation(UAnimMontage* Animation)
 
         if (Anim)
         {
+            if (Anim->IsAnyMontagePlaying())
+            {
+                Anim->StopAllMontages(0.1f);
+            }
+            
             IEntitiesInterface::Execute_SetAnimationState(InteractingActor, true);
-            
-            Anim->OnPlayMontageNotifyBegin.RemoveDynamic(this, &UInteractionData::OnMontageNotifyBegin);
-            Anim->OnMontageEnded.RemoveDynamic(this, &UInteractionData::OnMontageEnded);
-            
+
+            Anim->OnPlayMontageNotifyBegin.Clear(); 
+            Anim->OnMontageEnded.Clear();
             
             Anim->OnPlayMontageNotifyBegin.AddDynamic(this, &UInteractionData::OnMontageNotifyBegin);
             Anim->OnMontageEnded.AddDynamic(this, &UInteractionData::OnMontageEnded);
+            
             Anim->Montage_Play(Animation, PlayRate);
+
+            return true;
         }
+
+        
     }
+    return false;
 }
 
