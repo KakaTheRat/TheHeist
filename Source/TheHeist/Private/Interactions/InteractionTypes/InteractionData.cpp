@@ -13,7 +13,7 @@ TArray<FName> UInteractionData::GetAvailableStates()
 
 void UInteractionData::EndOfInteraction()
 {
-    if (InteractingActor && InteractingActor->GetClass()->ImplementsInterface(UEntitiesInterface::StaticClass()))
+        if (InteractingActor && InteractingActor->GetClass()->ImplementsInterface(UEntitiesInterface::StaticClass()))
     {
         UAnimInstance* Anim = IEntitiesInterface::Execute_GetSkeletalMeshComponent(InteractingActor)->GetAnimInstance();
         if (Anim)
