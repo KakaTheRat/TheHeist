@@ -396,7 +396,7 @@ void AGuardAIC::CreateDetectionWidget()
         DetectionWidget->SetTrackedPlayer(TrackedPlayer);
         
         DetectionWidget->OnHalfDetectionReached.AddDynamic(this, &AGuardAIC::HandleHalfDetection);
-        DetectionWidget->OnMaxDetectionReached.AddDynamic(this, &AGuardAIC::PlayerFullyDetected);
+        DetectionWidget->OnMaxDetectionReached.AddDynamic(this, &AGuardAIC::HandleMaxDetection);
         DetectionWidget->OnBlinkAnimationFinished.AddDynamic(this, &AGuardAIC::OnBlinkCompleted);
     }
 }
