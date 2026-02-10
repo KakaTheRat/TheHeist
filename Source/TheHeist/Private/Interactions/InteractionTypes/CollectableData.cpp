@@ -35,7 +35,7 @@ void UCollectableData::StartInteraction()
 	FAttachmentTransformRules::SnapToTargetIncludingScale,
 	FName("HandGrip_R")
 );
- 		Inventory->AddItem(GadgetClass);
+ 		//Inventory->AddItem(GadgetClass);
  		
  	}
  	else
@@ -43,5 +43,7 @@ void UCollectableData::StartInteraction()
  		UE_LOG(LogTemp, Warning, TEXT("No Inventory found on %s"), *PlayerRef->GetName());
  	}
 
+	
 	EndOfInteraction();
+	Owner->Destroy();
  }
