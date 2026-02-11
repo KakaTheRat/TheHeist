@@ -6,7 +6,7 @@
 *.d
 
 *Content/SICKA_mansion
-*Content/Historical Museum
+*Content/HistoricalMuseum
 
 # Compiled Object files
 *.slo
