@@ -70,6 +70,9 @@ private:
 	
 	UPROPERTY()
 	TArray<ALightPointActor*> CurrentLineLights;
+	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ALightPointActor> LightSub;
 
 	UPROPERTY(EditAnywhere)
 	float LightSpacing = 150.f;
@@ -82,4 +85,6 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float LightRadius = 300.f;
+	
+	FHitResult LastRaycastHit;
 };

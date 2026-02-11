@@ -46,13 +46,15 @@ bool AStatue::VerrifyAngle()
 
 bool AStatue::Raycast()
 {
+	UE_LOG(LogTemp, Warning, TEXT("Raycast() CALLED"));
+
 	FVector Start = GetActorLocation();
 	FVector End = Start + GetActorForwardVector() * 10000.f;
 
-	FHitResult Hit;
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(this);
 
+	FHitResult Hit;
 	bool bHit = GetWorld()->LineTraceSingleByChannel(
 		Hit,
 		Start,
@@ -61,25 +63,31 @@ bool AStatue::Raycast()
 		Params
 	);
 
-	DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 2.f, 0, 5.f);
-	
 	if (!bHit)
 	{
-		bIsHitStatue = false;
-		UE_LOG(LogTemp, Warning, TEXT("Raycast n'a touché aucun acteur"));
+		UE_LOG(LogTemp, Warning, TEXT("Raycast: NO HIT"));
 		return false;
 	}
 
 	AActor* HitActor = Hit.GetActor();
-	if (!IsValid(HitActor))
+	if (!HitActor)
 	{
-		bIsHitStatue = false;
+		UE_LOG(LogTemp, Warning, TEXT("Raycast: HIT but no actor"));
 		return false;
 	}
 
-	bIsHitStatue = HitActor->ActorHasTag("Statue");
-	return bIsHitStatue;
+	UE_LOG(LogTemp, Warning, TEXT("Raycast HIT actor: %s"), *HitActor->GetName());
+
+	bool bIsStatue = HitActor->ActorHasTag("Statue");
+
+	UE_LOG(LogTemp, Warning, TEXT("Has tag Statue: %s"), bIsStatue ? TEXT("TRUE") : TEXT("FALSE"));
+
+	LastRaycastHit = Hit;
+
+	return bIsStatue;
 }
+
+
 
 void AStatue::UpdateRotation()
 {
@@ -97,9 +105,24 @@ void AStatue::UpdateRotation()
 
 	if (Alpha >= 1.f)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("=== ROTATION FINIE ==="));
+
 		GetWorld()->GetTimerManager().ClearTimer(RotationTimerHandle);
-		
-		RaycastAfterRotation();
+
+		bool bHitStatue = Raycast();
+
+		UE_LOG(LogTemp, Warning, TEXT("Raycast returned: %s"), bHitStatue ? TEXT("TRUE") : TEXT("FALSE"));
+
+		if (bHitStatue)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Calling SpawnLightsBetween"));
+
+			SpawnLightsBetween(
+				GetActorLocation(),
+				LastRaycastHit.ImpactPoint,
+				false
+			);
+		}
 	}
 }
 
@@ -152,7 +175,7 @@ void AStatue::RaycastAfterRotation()
 	);
 	
 	bIsHitStatue = false;
-	UE_LOG(LogTemp, Warning, TEXT("Raycast n'a touché aucun acteur"));
+	UE_LOG(LogTemp, Warning, TEXT("Raycast n'a touché  acteur"));
 	if (!bHit)
 		return;
 
@@ -171,24 +194,53 @@ void AStatue::RaycastAfterRotation()
 
 void AStatue::SpawnLightsBetween(const FVector& Start, const FVector& End, bool bStrong)
 {
+	UKismetSystemLibrary::PrintString(
+		this,
+		FString::Printf(TEXT("SpawnLightsBetween CALLED | Start: %s | End: %s"), 
+			*Start.ToString(), *End.ToString()),
+		true, true, FColor::Green, 2.f
+	);
+
 	float Distance = FVector::Distance(Start, End);
 
-	float DynamicSpacing = Distance / FMath::Clamp(FMath::CeilToInt(Distance / 150.f), 1, 50); 
+	UKismetSystemLibrary::PrintString(
+		this,
+		FString::Printf(TEXT("Distance = %.2f"), Distance),
+		true, true, FColor::Yellow, 2.f
+	);
+
+	float DynamicSpacing = Distance / FMath::Clamp(FMath::CeilToInt(Distance / 150.f), 1, 50);
 	DynamicSpacing = FMath::Clamp(DynamicSpacing, 100.f, 300.f);
 
 	int32 Count = FMath::FloorToInt(Distance / DynamicSpacing);
-	if (Count <= 0) return;
+
+	UKismetSystemLibrary::PrintString(
+		this,
+		FString::Printf(TEXT("Spacing = %.2f | Count = %d"), DynamicSpacing, Count),
+		true, true, FColor::Cyan, 2.f
+	);
+
+	if (Count <= 0)
+	{
+		UKismetSystemLibrary::PrintString(this, TEXT("COUNT <= 0 -> EXIT"), true, true, FColor::Red, 2.f);
+		return;
+	}
 
 	FVector Direction = (End - Start).GetSafeNormal();
 
-	CurrentLineLights.Empty(); // On commence une nouvelle ligne
+	CurrentLineLights.Empty();
 
 	for (int32 i = 1; i <= Count; i++)
 	{
 		FVector Pos = Start + Direction * DynamicSpacing * i;
-		Pos.Z = FMath::Lerp(Start.Z, End.Z, (DynamicSpacing * i) / Distance);
+		Pos.Z = 200;
 
-		// Vérifier si un acteur light existe déjà
+		UKismetSystemLibrary::PrintString(
+			this,
+			FString::Printf(TEXT("Light %d Position: %s"), i, *Pos.ToString()),
+			true, true, FColor::White, 1.f
+		);
+
 		TArray<AActor*> FoundLights;
 		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALightPointActor::StaticClass(), FoundLights);
 
@@ -205,21 +257,35 @@ void AStatue::SpawnLightsBetween(const FVector& Start, const FVector& End, bool 
 
 		if (LightActor)
 		{
+			UKismetSystemLibrary::PrintString(this, TEXT("Existing light found"), true, true, FColor::Blue, 1.f);
+
 			LightActor->SetActive(true);
 			LightActor->SetLightIntensity(bStrong ? StrongIntensity : WeakIntensity);
 		}
 		else
 		{
+			UKismetSystemLibrary::PrintString(this, TEXT("Spawning NEW light"), true, true, FColor::Orange, 1.f);
+
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.Owner = this;
-			LightActor = GetWorld()->SpawnActor<ALightPointActor>(ALightPointActor::StaticClass(), Pos, FRotator::ZeroRotator, SpawnParams);
+
+			LightActor = GetWorld()->SpawnActor<ALightPointActor>(
+				LightSub,
+				Pos,
+				FRotator::ZeroRotator,
+				SpawnParams
+			);
+
 			if (LightActor)
 			{
 				LightActor->SetLightIntensity(bStrong ? StrongIntensity : WeakIntensity);
 			}
+			else
+			{
+				UKismetSystemLibrary::PrintString(this, TEXT("SPAWN FAILED"), true, true, FColor::Red, 2.f);
+			}
 		}
 
-		// Ajouter la light à la ligne courante
 		if (LightActor)
 		{
 			CurrentLineLights.Add(LightActor);
