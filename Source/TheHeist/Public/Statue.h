@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Components/PointLightComponent.h"
+#include "LightPointActor.h"
 #include "Statue.generated.h"
 
 UCLASS()
@@ -25,9 +27,17 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool VerrifyAngle();
 	
+	bool GetIsHitStatue() {return bIsHitStatue;}
+	
+	bool GetIsGreateAngle() {return bIsGreateAngle;}
+	
+	bool GetIsAvailableStatue() {return bIsAvailableStatue;}
+	
 private: 
-	UFUNCTION(BlueprintCallable)
-	bool Raycast(); 
+	bool Raycast();
+	void RaycastAfterRotation();
+	void SpawnLightsBetween(const FVector& Start, const FVector& End, bool bStrong);
+ 
 	UFUNCTION(BlueprintCallable)
 	void UpdateRotation();
 	
@@ -51,4 +61,25 @@ private:
 	
 	float ElapsedTime = 0.f;
 	
+	
+	bool bIsHitStatue;
+	
+	bool bIsAvailableStatue;
+	
+	bool bIsGreateAngle;
+	
+	UPROPERTY()
+	TArray<ALightPointActor*> CurrentLineLights;
+
+	UPROPERTY(EditAnywhere)
+	float LightSpacing = 150.f;
+
+	UPROPERTY(EditAnywhere)
+	float StrongIntensity = 8000.f;
+
+	UPROPERTY(EditAnywhere)
+	float WeakIntensity = 1500.f;
+
+	UPROPERTY(EditAnywhere)
+	float LightRadius = 300.f;
 };
