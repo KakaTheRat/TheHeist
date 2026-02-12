@@ -63,6 +63,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
     UAIPerceptionComponent* AIPerceptionComponent;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    USceneComponent* RotationPivot;
+
     UPROPERTY(BlueprintAssignable, Category = "Camera")
     FOnHackCamera OnHackCamera;
 
