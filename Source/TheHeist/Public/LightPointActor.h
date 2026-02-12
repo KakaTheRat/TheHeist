@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/PointLightComponent.h"
+#include "Components/SpotLightComponent.h"
 #include "LightPointActor.generated.h"
 
 UCLASS()
@@ -28,7 +29,10 @@ public:
 	void SetActive(bool bActive);
 	
 private:
-	UPROPERTY(VisibleAnywhere)
-	UPointLightComponent* PointLight;
+	UPROPERTY(EditAnywhere)
+	USpotLightComponent* SpotLight;
+
+	UPROPERTY(VisibleAnywhere, Category = "Root")
+	USceneComponent* SceneRoot;
 
 };

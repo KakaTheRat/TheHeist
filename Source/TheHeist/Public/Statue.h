@@ -34,15 +34,16 @@ public:
 	bool GetIsAvailableStatue() {return bIsAvailableStatue;}
 	
 private: 
-	bool Raycast();
+	void Raycast();
 	void RaycastAfterRotation();
 	void SpawnLightsBetween(const FVector& Start, const FVector& End, bool bStrong);
  
-	UFUNCTION(BlueprintCallable)
 	void UpdateRotation();
 	
 	UFUNCTION(BlueprintCallable)
 	void RotateRight();
+
+	ALightPointActor* FindClosestLight(const FVector& Position,const TArray<AActor*>& Lights);
 	FRotator InitalRotator;
 	UPROPERTY(EditAnywhere)
 	TArray<float> Angles;
@@ -63,7 +64,8 @@ private:
 	
 	
 	bool bIsHitStatue;
-	
+
+	UPROPERTY(EditAnywhere)
 	bool bIsAvailableStatue;
 	
 	bool bIsGreateAngle;
@@ -81,10 +83,14 @@ private:
 	float StrongIntensity = 8000.f;
 
 	UPROPERTY(EditAnywhere)
-	float WeakIntensity = 1500.f;
+	float WeakIntensity = 1000.f;
 
 	UPROPERTY(EditAnywhere)
 	float LightRadius = 300.f;
 	
 	FHitResult LastRaycastHit;
+
+	AStatue* HitStatue;
+
+	FTimerHandle RaycastTimerHandle;	
 };
