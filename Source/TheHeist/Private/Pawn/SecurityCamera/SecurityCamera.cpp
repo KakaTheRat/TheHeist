@@ -14,7 +14,12 @@ ASecurityCamera::ASecurityCamera()
 {
     PrimaryActorTick.bCanEverTick = true;
 
-    AIPerceptionComponent = nullptr;
+    USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+    RootComponent = Root;
+
+    RotationPivot = CreateDefaultSubobject<USceneComponent>(TEXT("RotationPivot"));
+    RotationPivot->SetupAttachment(RootComponent);
+
     SightConfig = nullptr;
 
     CurrentDetectionLevel = 0;
@@ -28,8 +33,11 @@ ASecurityCamera::ASecurityCamera()
 void ASecurityCamera::BeginPlay()
 {
     Super::BeginPlay();
-
-    InitialRotation = GetActorRotation();
+    if (RotationPivot)
+    {
+        InitialRotation = RotationPivot->GetComponentRotation();
+    }
+    
     SetupPerception();
 }
 
@@ -37,7 +45,7 @@ void ASecurityCamera::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    if (bIsMoving && !bCameraHacked)
+    if (bIsMoving && !bCameraHacked && RotationPivot)
     {
         const float DeltaRotation = RotationSpeed * DeltaTime;
 
@@ -54,9 +62,10 @@ void ASecurityCamera::Tick(float DeltaTime)
             bRotatingRight = true;
         }
 
+        // Rotation du pivot plutôt que de l'acteur entier
         FRotator NewRotation = InitialRotation;
         NewRotation.Yaw += CurrentRotation;
-        SetActorRotation(NewRotation);
+        RotationPivot->SetWorldRotation(NewRotation);
     }
 
     if (DetectionWidget && IsValid(DetectionWidget))
