@@ -6,6 +6,9 @@
 *.d
 
 *Content/SICKA_mansion
+*Content/HistoricalMuseum
+*Content/NationalMaritimeMuseum
+*Content/Deko_MatrixDemo
 
 # Compiled Object files
 *.slo
