@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "Statue.h"
 #include "TheHeistGameMode.generated.h"
 
 /**
@@ -16,6 +17,16 @@ class ATheHeistGameMode : public AGameModeBase
 
 public:
 	ATheHeistGameMode();
+	
+	void virtual BeginPlay() override;
+	
+	private:
+	UFUNCTION()
+	void VerrifyStatue();
+	UPROPERTY()
+	TArray<AStatue*> Statues;
+	
+	bool bIsGoodStatue = true;
 };
 
 
