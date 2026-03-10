@@ -7,6 +7,7 @@
 #include "Components/PointLightComponent.h"
 #include "LightPointActor.h"
 #include "Statue.generated.h"
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnActiveStatue);
 
 UCLASS()
 class THEHEIST_API AStatue : public AActor
@@ -24,14 +25,16 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	UFUNCTION(BlueprintCallable)
-	bool VerrifyAngle();
+	/*UFUNCTION(BlueprintCallable)
+	bool VerrifyAngle();*/
 	
 	bool GetIsHitStatue() {return bIsHitStatue;}
 	
-	bool GetIsGreateAngle() {return bIsGreateAngle;}
+	bool GetbIsGreateStatue() {return bIsGreateStatue;}
 	
 	bool GetIsAvailableStatue() {return bIsAvailableStatue;}
+	
+	FOnActiveStatue OnActiveStatue;
 	
 private: 
 	void Raycast();
@@ -68,7 +71,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	bool bIsAvailableStatue;
 	
-	bool bIsGreateAngle;
+	bool bIsGreateStatue;
 	
 	UPROPERTY()
 	TArray<ALightPointActor*> CurrentLineLights;
@@ -90,6 +93,7 @@ private:
 	
 	FHitResult LastRaycastHit;
 
+	UPROPERTY()
 	AStatue* HitStatue;
 
 	FTimerHandle RaycastTimerHandle;	

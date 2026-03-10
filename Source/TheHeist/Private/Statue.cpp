@@ -13,6 +13,7 @@ AStatue::AStatue()
 	PrimaryActorTick.bCanEverTick = true;
 	CurrentBaseRotation = GetActorRotation();
 	TargetRotation = CurrentBaseRotation;
+	bIsGreateStatue = true;
 
 }
 
@@ -30,7 +31,7 @@ void AStatue::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-bool AStatue::VerrifyAngle()
+/*bool AStatue::VerrifyAngle()
 {
 	bIsGreateAngle = false;
 
@@ -44,10 +45,11 @@ bool AStatue::VerrifyAngle()
 	}
 
 	return bIsGreateAngle;
-}
+}*/
 
 void AStatue::Raycast()
 {
+	OnActiveStatue.Broadcast();
 	FVector Start = GetActorLocation() + FVector(0, 0, 200);
 	FVector End = Start + (GetActorForwardVector() * 1000.f);
 
@@ -76,6 +78,14 @@ void AStatue::Raycast()
 				Hit.ImpactPoint,
 				HitStatue->GetIsAvailableStatue()
 			);
+			/*if (HitStatue->GetIsAvailableStatue())
+			{
+				bIsGreateStatue = true;
+			}
+			else
+			{
+				bIsGreateStatue = false;
+			}*/
 		}
 	}
 }
