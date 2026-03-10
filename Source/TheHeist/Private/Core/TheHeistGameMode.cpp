@@ -48,4 +48,8 @@ void ATheHeistGameMode::VerrifyStatue()
 			bIsGoodStatue = true;
 		}
 	}
+	if (bIsGoodStatue)
+	{
+		OnAllActivatedStatue.Broadcast();
+	}
 }

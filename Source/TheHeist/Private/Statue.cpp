@@ -139,7 +139,7 @@ void AStatue::RotateRight()
 
 	HitStatue = nullptr;
 	StartRotation = GetActorRotation();
-	TargetRotation.Yaw = StartRotation.Yaw + 90.f;
+	TargetRotation.Yaw = StartRotation.Yaw + 22.5f;
 	TargetRotation.Yaw = FMath::Fmod(TargetRotation.Yaw, 360.f);
 	if (TargetRotation.Yaw < 0.f)
 		TargetRotation.Yaw += 360.f;
