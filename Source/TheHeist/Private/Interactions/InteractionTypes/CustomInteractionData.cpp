@@ -2,8 +2,6 @@
 
 
 #include "Interactions/InteractionTypes/CustomInteractionData.h"
-
-#include "BaseGizmos/GizmoElementShared.h"
 #include "Interactions/InteractionInterface.h"
 
 void UCustomInteractionData::StartInteraction()

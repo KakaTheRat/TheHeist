@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 
 
+
 // Sets default values for this component's properties
 UPlayerInventory::UPlayerInventory()
 {
@@ -22,8 +23,14 @@ void UPlayerInventory::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-	Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	ACharacter* Char = Cast<ACharacter>(Pawn);
+	AActor* OwnerActor = GetOwner();
+		
+	ArmsMesh = nullptr;
+	Char = Cast<ACharacter>(GetOwner());
+	if (Char)
+	{
+		ArmsMesh = Char->FindComponentByClass<USkeletalMeshComponent>();
+	}
 	for (auto Gadget : InventoryGadgets)
 	{
 		AGadgets* Tmp = FindActor(Gadget);
@@ -58,6 +65,10 @@ void UPlayerInventory::BeginPlay()
 			EnhancedInput->BindAction(USeAction, ETriggerEvent::Started, this, &UPlayerInventory::Use);
 			EnhancedInput->BindAction(USeAction, ETriggerEvent::Completed, this, &UPlayerInventory::RelaseUseItem);
 		}
+		if (DropAction)
+		{
+			EnhancedInput->BindAction(DropAction, ETriggerEvent::Started, this, &UPlayerInventory::Drop);
+		}
 		if (GadgetOne)
 		{
 			EnhancedInput->BindAction(GadgetOne, ETriggerEvent::Started, this, &UPlayerInventory::InputOne);
@@ -75,6 +86,8 @@ void UPlayerInventory::BeginPlay()
 			EnhancedInput->BindAction(GadgetFor, ETriggerEvent::Started, this, &UPlayerInventory::InputFore);
 		}
 	}
+
+	
 }
 
 
@@ -108,57 +121,6 @@ void UPlayerInventory::AddItem(TSubclassOf<AGadgets> ItemClass)
 		OnInventoryUpdated.Broadcast(Items);
 	}
 }
-
-/*void UPlayerInventory::StartUseItem()
-{
-	FInventorySlot& Slot = Items[CurrentItemIndex];
-	TSubclassOf<AGadgets> ItemClass = Slot.ItemClass;
-
-	if (!ItemClass)
-		return;
-
-	if (Slot.Quantity <= 0)
-	{
-		return;
-	}
-	if (FindActor(ItemClass))
-	{
-		RecallGadget(FindActor(ItemClass));
-		UE_LOG(LogTemp, Warning, TEXT("%s is already spawned, recalling it by cash"), *ItemClass->GetName());
-		if (!Slot.bIsStack)
-		{
-			Slot.Quantity--;
-		}
-		return;
-	}
-
-	UWorld* World = GetWorld();
-	if (!World) return;
-
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = GetOwner();
-	SpawnParams.Instigator = Cast<APawn>(GetOwner());
-
-	AGadgets* SpawnedGadget = World->SpawnActor<AGadgets>(
-		ItemClass,
-		GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 100.f,
-		GetOwner()->GetActorRotation(),
-		SpawnParams
-	);
-
-	if (SpawnedGadget)
-	{
-		SpawnedGadgets.Add(ItemClass, SpawnedGadget);
-		CurrentGadget = SpawnedGadget;
-		CurrentGadget->OnUsePressed();
-		CurrentGadget->ChangeCanBeUsed();
-		CurrentGadget->CooldownTimer();
-
-		Slot.Quantity--;
-
-		UE_LOG(LogTemp, Warning, TEXT("%s used, remaining: %d"), *ItemClass->GetName(), Slot.Quantity);
-	}
-}*/
 
 AGadgets* UPlayerInventory::FindActor(TSubclassOf<AGadgets> ItemClass)
 {
@@ -229,20 +191,19 @@ void UPlayerInventory::RecallGadget(AGadgets* Gadget)
 
 	Gadget->OnUsePressed();
 	Gadget->ChangeCanBeUsed();
-	Gadget->CooldownTimer();
+	//Gadget->CooldownTimer();
 	UE_LOG(LogTemp, Warning, TEXT("%s recalled"), *Gadget->GetName());
 }
-
 
 
 void UPlayerInventory::RelaseUseItem()
 {
 	if (CurrentGadget)
 	{
-		CurrentGadget->OnUseReleased();
-		CurrentGadget->TakeGadget(); 
+		//CurrentGadget->OnUseReleased();
+		Char->GetMesh()->GetAnimInstance()->Montage_Play(CurrentGadget->GetAnimationUse());
 		UpdateWidget.Broadcast(false, CurrentItemIndex);
-		CurrentGadget = nullptr;
+		//CurrentGadget = nullptr;
 	}
 }
 
@@ -318,9 +279,19 @@ void UPlayerInventory::Use(const FInputActionValue& Value)
 	RecallGadget(CurrentGadget);
 }
 
+void UPlayerInventory::Drop()
+{
+	if (!CurrentGadget)
+	{
+		return;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("%s dddddddddddd"), *CurrentGadget->GetName());
+	Char->GetMesh()->GetAnimInstance()->Montage_Play(CurrentGadget->GetAnimationDrop());
+}
+
 void UPlayerInventory::InputOne(const FInputActionValue& Value)
 {
-	ChangeCurrentGadget(0);
+	ChangeCurrentGadget(0); 
 }
 
 void UPlayerInventory::InputTwo(const FInputActionValue& Value)
@@ -347,6 +318,10 @@ void UPlayerInventory::ChangeCurrentGadget(int32 NewValue)
 		
 		if (CurrentGadget && CurrentGadget->GetIsTaking())
 		{
+			CurrentGadget->DetachFromActor(
+				FDetachmentTransformRules::KeepWorldTransform
+			);
+			//CurrentGadget->OnAttachGadget();
 			CurrentGadget->SetActorLocation(FVector(0.0f, 0.0f, 0.0f));
 			CurrentGadget->SetActorRotation(GetOwner()->GetActorRotation());
 			CurrentGadget->SetNoPhysicObject();
@@ -359,11 +334,18 @@ void UPlayerInventory::ChangeCurrentGadget(int32 NewValue)
 		}
 
 		CurrentGadgetIndex = NewValue;
+		UE_LOG(LogTemp, Warning, TEXT("Nombre = %d"), CurrentGadgetIndex);
 		CurrentGadget = HardRefGadgets[NewValue];
-
-		CurrentGadget->SetActorLocation(GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 100.f);
-		CurrentGadget->SetActorRotation(GetOwner()->GetActorRotation());
 		CurrentGadget->SetNoPhysicObject();
+		CurrentGadget->OnAttachGadget(ArmsMesh);
+		CurrentGadget->AttachToComponent(
+			ArmsMesh,
+			FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+			TEXT("weapon_right")
+		);
+		/*CurrentGadget->SetActorLocation(GetOwner()->GetActorLocation() + GetOwner()->GetActorForwardVector() * 100.f);
+		CurrentGadget->SetActorRotation(GetOwner()->GetActorRotation());*/
+		
 
 		CurrentGadget->TakeGadget();
 		UpdateWidget.Broadcast(CurrentGadget->GetIsTaking(), NewValue);

@@ -54,8 +54,27 @@ protected:
 	TMap<TSubclassOf<AGadgets>, FTimerHandle> CooldownTimers;
 
 	//Index to determine the item currently being used
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Inventory")
-	int CurrentItemIndex = 0;
+	UPROPERTY(BlueprintReadWrite, Category="Inventory")
+	int CurrentItemIndex;
+
+	UFUNCTION(BlueprintCallable, Category="Use")
+	void CurrentGadgetUse()
+	{
+		CurrentGadget->OnUseReleased();
+	}
+	
+	UFUNCTION(BlueprintCallable, Category="Drop")
+	void CurrentGadgetDrop()
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s dddddddddddd"), *CurrentGadget->GetName());
+		CurrentGadget->OnDropPressed();
+	}
+	
+	UFUNCTION(BlueprintCallable, Category="Current Gadget")
+	void SetCUrrentGadget(AGadgets* Value)
+	{
+		CurrentGadget = Value;
+	}
 
 private:
 	UPROPERTY(EditAnywhere)
@@ -63,6 +82,10 @@ private:
 
 	int32 CurrentGadgetIndex;
 
+
+	USkeletalMeshComponent* ArmsMesh;
+
+	ACharacter* Char;
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -121,6 +144,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
 	UInputAction* USeAction;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UInputAction* DropAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
 	UInputAction* GadgetOne;
@@ -135,6 +161,8 @@ public:
 	UInputAction* GadgetFor;
 
 	void Use(const FInputActionValue& Value);
+	
+	void Drop();
 	
 	void InputOne(const FInputActionValue& Value);
 	void InputTwo(const FInputActionValue& Value);

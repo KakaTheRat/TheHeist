@@ -2,6 +2,7 @@
 
 
 #include "Gadgets/Gadgets.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 
 // Sets default values
 AGadgets::AGadgets()
@@ -53,12 +54,19 @@ float AGadgets::TakeGadget()
 	}
 }
 
-
 void AGadgets::SetNoPhysicObject()
 {
+	UProjectileMovementComponent* ProjComp = FindComponentByClass<UProjectileMovementComponent>();
+	if (ProjComp)
+	{
+		ProjComp->StopMovementImmediately();
+		ProjComp->Deactivate();
+		ProjComp->Velocity = FVector::ZeroVector;
+	}
+	SetActorHiddenInGame(false);
 	StaticMesh->SetEnableGravity(false);
-	StaticMesh->SetPhysicsLinearVelocity(FVector::ZeroVector);
-	StaticMesh->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+	StaticMesh->SetSimulatePhysics(false);
+	StaticMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 
@@ -78,3 +86,14 @@ void AGadgets::OnUseReleased_Implementation()
 }
 
 
+void AGadgets::OnDropPressed_Implementation()
+{
+}
+
+void AGadgets::OnAttachGadget_Implementation(USkeletalMeshComponent* SkeletalMesh)
+{
+}
+
+void AGadgets::OnDettachGadget_Implementation()
+{
+}

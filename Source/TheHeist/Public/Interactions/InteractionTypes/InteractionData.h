@@ -96,24 +96,6 @@
     	
     	TArray<FName> GetAvailableComponents() const
     	{
-    		/*UE_LOG(LogTemp, Warning, TEXT("HIHIHIHIH"));
-    		TArray<FName> Result;
-
-    		if (!OwnerActor) return Result;
-
-    		TArray<USceneComponent*> Components;
-    		OwnerActor->GetComponents<USceneComponent>(Components);
-
-    		for (USceneComponent* Comp : Components)
-    		{
-    			if (Comp)
-    			{
-    				UE_LOG(LogTemp, Warning, TEXT("%s"), *Comp->GetName());
-    				Result.Add(Comp->GetFName());
-    			}
-    		}
-
-    		return Result;*/
     		TArray<FName> Result;
 
     		// Détermine sur quel acteur on travaille
@@ -179,7 +161,10 @@
     	FName OutPosition ="none";
 
     	UFUNCTION()
-    	virtual UAnimMontage* AnimationMontageToPlay(); 
+    	virtual UAnimMontage* AnimationMontageToPlay();
+
+    	UFUNCTION()
+    	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
     	UPROPERTY()
     	AActor* Owner;
@@ -248,7 +233,7 @@
     	virtual void PostInitProperties() override;
 
     	UFUNCTION()
-    	void PlayAnimation(UAnimMontage* Animation);
+        bool PlayAnimation(UAnimMontage* Animation);
     	
     };
 
