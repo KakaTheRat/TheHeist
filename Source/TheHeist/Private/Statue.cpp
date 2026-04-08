@@ -50,16 +50,8 @@ void AStatue::Tick(float DeltaTime)
 void AStatue::Raycast()
 {
 	OnActiveStatue.Broadcast();
-
-	FVector Origin;
-	FVector BoxExtent;
-	GetActorBounds(true, Origin, BoxExtent);
-
-	// Start au centre de l'objet
-	FVector Start = Origin;
-
-	// Direction vers l'avant
-	FVector End = Start + (GetActorForwardVector() * 10000.f);
+	FVector Start = GetActorLocation() + FVector(0, 0, 200);
+	FVector End = Start + (GetActorForwardVector() * 1000.f);
 
 	FHitResult Hit;
 	FCollisionQueryParams Params;
@@ -82,7 +74,7 @@ void AStatue::Raycast()
 		if (HitStatue)
 		{
 			SpawnLightsBetween(
-				Start,
+				GetActorLocation(),
 				Hit.ImpactPoint,
 				HitStatue->GetIsAvailableStatue()
 			);
@@ -147,7 +139,7 @@ void AStatue::RotateRight()
 
 	HitStatue = nullptr;
 	StartRotation = GetActorRotation();
-	TargetRotation.Yaw = StartRotation.Yaw + 22.5f;
+	TargetRotation.Yaw = StartRotation.Yaw + 90.f;
 	TargetRotation.Yaw = FMath::Fmod(TargetRotation.Yaw, 360.f);
 	if (TargetRotation.Yaw < 0.f)
 		TargetRotation.Yaw += 360.f;

@@ -40,16 +40,12 @@ void ATheHeistGameMode::VerrifyStatue()
 	{
 		if (Statue->GetIsAvailableStatue())
 		{
-			/*if (!Statue->GetbIsGreateStatue())
+			if (!Statue->GetbIsGreateStatue())
 			{
 				bIsGoodStatue = false;
 				break;
 			}
-			bIsGoodStatue = true;*/
+			bIsGoodStatue = true;
 		}
-	}
-	if (bIsGoodStatue)
-	{
-		OnAllActivatedStatue.Broadcast();
 	}
 }
