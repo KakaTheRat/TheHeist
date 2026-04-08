@@ -9,8 +9,8 @@
 #pragma region Initialization
 
 APuzzleKeyPad::APuzzleKeyPad()
-    : CurrentCode("")
-    , ErrorDisplayDuration(1.5f)
+: ErrorDisplayDuration(1.5f),
+  CurrentCode("")
 {
     PrimaryActorTick.bCanEverTick = false;
 
