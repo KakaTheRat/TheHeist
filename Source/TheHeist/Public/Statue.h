@@ -36,6 +36,10 @@ public:
 	
 	FOnActiveStatue OnActiveStatue;
 	
+	AStatue* GetHitStatue() const { return HitStatue; }
+	void SetIsBeingWatched(bool bValue) { bIsBeingWatched = bValue; }
+	bool GetIsBeingWatched() const { return bIsBeingWatched; }
+
 private: 
 	void Raycast();
 	void RaycastAfterRotation();
@@ -95,6 +99,8 @@ private:
 
 	UPROPERTY()
 	AStatue* HitStatue;
+	
+	bool bIsBeingWatched = false;
 
 	FTimerHandle RaycastTimerHandle;	
 };
