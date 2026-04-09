@@ -49,16 +49,23 @@ void AStatue::Tick(float DeltaTime)
 
 void AStatue::Raycast()
 {
-	OnActiveStatue.Broadcast();
+	
+
+	// Reset au début de chaque raycast
+	bIsHitStatue = false;  // <- ajout
+
+	if (HitStatue)
+	{
+		HitStatue->SetIsBeingWatched(false);
+	}
+	HitStatue = nullptr;
+	bIsGreateStatue = false;
 
 	FVector Origin;
 	FVector BoxExtent;
 	GetActorBounds(true, Origin, BoxExtent);
 
-	// Start au centre de l'objet
 	FVector Start = Origin;
-
-	// Direction vers l'avant
 	FVector End = Start + (GetActorForwardVector() * 10000.f);
 
 	FHitResult Hit;
@@ -66,39 +73,40 @@ void AStatue::Raycast()
 	Params.AddIgnoredActor(this);
 
 	bool bHit = GetWorld()->LineTraceSingleByChannel(
-		Hit,
-		Start,
-		End,
-		ECC_Visibility,
-		Params
+		Hit, Start, End, ECC_Visibility, Params
 	);
 
 	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.f);
 
 	if (bHit && Hit.GetActor())
 	{
-		HitStatue = Cast<AStatue>(Hit.GetActor());
+		AStatue* TargetStatue = Cast<AStatue>(Hit.GetActor());
 
-		if (HitStatue)
+		if (TargetStatue)
 		{
-			SpawnLightsBetween(
-				Start,
-				Hit.ImpactPoint,
-				HitStatue->GetIsAvailableStatue()
-			);
-			/*if (HitStatue->GetIsAvailableStatue())
+			if (TargetStatue->GetIsBeingWatched())
 			{
-				bIsGreateStatue = true;
+				UE_LOG(LogTemp, Warning, TEXT("%s regarde %s mais elle est déjà regardée !"),
+					*GetName(), *TargetStatue->GetName());
+				SpawnLightsBetween(Start, Hit.ImpactPoint, false);
+				return;
 			}
-			else
-			{
-				bIsGreateStatue = false;
-			}*/
+
+			bIsHitStatue = true;
+			HitStatue = TargetStatue;
+			HitStatue->SetIsBeingWatched(true);
+
+			bool bMutual = (HitStatue->GetHitStatue() == this);
+			bIsGreateStatue = bMutual && HitStatue->GetIsAvailableStatue();
+
+			SpawnLightsBetween(Start, Hit.ImpactPoint, HitStatue->GetIsAvailableStatue());
+			OnActiveStatue.Broadcast();
+			UE_LOG(LogTemp, Warning, TEXT("%s regarde %s | Réciprocité : %s"),
+				*GetName(), *HitStatue->GetName(),
+				bMutual ? TEXT("OUI") : TEXT("NON"));
 		}
 	}
 }
-
-
 
 void AStatue::UpdateRotation()
 {
