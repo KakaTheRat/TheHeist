@@ -133,7 +133,11 @@ void AGuardAIC::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
     {
         return;
     }
+    
+    HandlePerception(Actor, Stimulus,UAIPerceptionSystem::GetSenseClassForStimulus(GetWorld(), Stimulus));
 
+    if (Stimulus.Type != UAISense::GetSenseID<UAISense_Sight>()) return;
+    
     APawn* DetectedPawn = Cast<APawn>(Actor);
     if (!DetectedPawn || !Cast<APlayerController>(DetectedPawn->GetController()))
     {
@@ -203,13 +207,52 @@ void AGuardAIC::OnPlayerLost()
 void AGuardAIC::DetectionLoop()
 {
     PreviousDetectionLevel = CurrentDetectionLevel;
-    CurrentDetectionLevel += bPlayerVisible ? 1 : -1;
+
+    if (bPlayerVisible && TrackedPlayer)
+    {
+        FVector GuardLocation = GetPawn()->GetActorLocation();
+        FVector PlayerLocation = TrackedPlayer->GetActorLocation();
+        FVector ToPlayer = (PlayerLocation - GuardLocation);
+
+        float Distance = ToPlayer.Size();
+        float Angle = FMath::Abs(FMath::RadiansToDegrees(
+            FMath::Acos(FVector::DotProduct(
+                GetPawn()->GetActorForwardVector(),
+                ToPlayer.GetSafeNormal()
+            ))
+        ));
+
+        if (Distance <= ImmediateDetectionRange && Angle <= ImmediateDetectionAngle)
+        {
+            ForceFullDetection(TrackedPlayer);
+            return;
+        }
+
+        float DistanceFactor = FMath::GetMappedRangeValueClamped(
+            FVector2D(ImmediateDetectionRange, SightRadius),
+            FVector2D(1.f, 0.1f),
+            Distance
+        );
+        DistanceFactor = FMath::Pow(DistanceFactor, DistanceCurveExponent);
+
+        float AngleFactor = FMath::GetMappedRangeValueClamped(
+            FVector2D(0.f, PeripheralVisionAngleDegrees),
+            FVector2D(1.f, 0.3f),
+            Angle
+        );
+
+        float FillSpeed = BaseFillSpeed * DistanceFactor * AngleFactor;
+        CurrentDetectionLevel += FMath::RoundToInt(FillSpeed);
+    }
+    else
+    {
+        CurrentDetectionLevel -= 1;
+    }
+
     CurrentDetectionLevel = FMath::Clamp(CurrentDetectionLevel, 0, MaxDetectionLevel);
 
     UpdateGuardOutline();
-
     CheckDetectionThresholds();
-
     UpdatePlayerHeartbeat();
 
     if (DetectionWidget)
@@ -221,7 +264,6 @@ void AGuardAIC::DetectionLoop()
     if (CurrentDetectionLevel == MaxDetectionLevel)
     {
         GetWorldTimerManager().ClearTimer(DetectionTimerHandle);
-        
         PlayRandomSound(SoundsDetectionFull, DetectionSoundVolume);
         
         if (DetectionWidget)
@@ -236,6 +278,24 @@ void AGuardAIC::DetectionLoop()
         GetWorldTimerManager().ClearTimer(DetectionTimerHandle);
         PlayerDetectionLost();
     }
+}
+
+void AGuardAIC::ForceFullDetection(AActor* Player)
+{
+    TrackedPlayer = Player;
+    bPlayerVisible = true;
+    
+    CurrentDetectionLevel = MaxDetectionLevel;
+    
+    if (!DetectionWidget)
+    {
+        CreateDetectionWidget();
+    }
+    
+    DetectionWidget->UpdatePercent(1.f);
+    DetectionWidget->BlinkIcon();
+    
+    OnMaxLevelStress.Broadcast();
 }
 
 void AGuardAIC::CheckDetectionThresholds()

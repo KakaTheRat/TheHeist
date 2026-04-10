@@ -4,6 +4,7 @@
 #include "AIController.h"
 #include "GuardAIC.generated.h"
 
+class UAISense;
 class UDetectionMeterWidget;
 class UAIPerceptionComponent;
 class UAISenseConfig_Sight;
@@ -39,6 +40,18 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
     float DetectionTickDelay;
+    
+    UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Detection")
+    float BaseFillSpeed = 1;
+
+    UPROPERTY(EditAnywhere, Category = "Detection")
+    float DistanceCurveExponent = 0.5f;
+
+    UPROPERTY(EditAnywhere, Category = "Detection")
+    float ImmediateDetectionRange = 300.f;
+
+    UPROPERTY(EditAnywhere, Category = "Detection")
+    float ImmediateDetectionAngle = 45.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
     float BlinkDuration;
@@ -82,8 +95,11 @@ protected:
     UFUNCTION(BlueprintImplementableEvent)
     void HandleHalfDetection(FVector PlayerLocation);
 
-    UFUNCTION(BlueprintImplementableEvent)
+    UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
     void HandleMaxDetection(AActor* Target);
+
+    UFUNCTION(BlueprintImplementableEvent)
+    void HandlePerception(AActor* Target,FAIStimulus Stimulus,  TSubclassOf<UAISense> SenseClass);
 
     UFUNCTION()
     void PlayerFullyDetected(AActor* Target);
@@ -151,10 +167,14 @@ private:
     
     UFUNCTION()
     void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
-    
+
+    UFUNCTION(BlueprintCallable)
     void OnPlayerDetected(AActor* DetectedPlayer);
+
+    UFUNCTION(BlueprintCallable)
     void OnPlayerLost();
     void DetectionLoop();
+    void ForceFullDetection(AActor* Player);
     
     void CreateDetectionWidget();
     void RemoveDetectionWidget();

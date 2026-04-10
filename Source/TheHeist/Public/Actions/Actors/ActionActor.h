@@ -7,6 +7,8 @@
 #include "Interactions/InteractableComponent.h"
 #include "ActionActor.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnActionDone);
+
 UCLASS()
 class THEHEIST_API AActionActor : public AActor
 {
@@ -30,6 +32,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "SmartObject")
 	int MaxUsers;
+
+	UPROPERTY(BlueprintAssignable, Category = "ActionActor")
+	FOnActionDone OnActionDone;
+	
+	UFUNCTION(BlueprintCallable, Category = "ActionActor")
+	void BroadcastActionDone();
 	
 protected:
 	// Called when the game starts or when spawned
