@@ -25,6 +25,7 @@ public:
     ASecurityCamera();
 
 protected:
+    
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
 
@@ -75,6 +76,21 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Camera")
     void HackCamera();
     
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|Capture")
+    USceneCaptureComponent2D* SceneCaptureComponent;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Camera|Capture")
+    UTextureRenderTarget2D* RenderTarget;
+
+    UFUNCTION(BlueprintCallable, Category = "Camera|Capture")
+    UTextureRenderTarget2D* GetRenderTarget() const { return RenderTarget; }
+
+    UFUNCTION(BlueprintCallable, Category = "Camera|Capture")
+    void SetCaptureActive(bool bActive);
+    
+    void AddViewer();
+    void RemoveViewer();
+
 private:
 
     float CurrentRotation = 0.0f;
@@ -115,4 +131,6 @@ private:
     UFUNCTION()
     void OnBlinkCompleted();
     
+    int32 ViewerCount = 0;
+    void UpdateCapture();
 };
