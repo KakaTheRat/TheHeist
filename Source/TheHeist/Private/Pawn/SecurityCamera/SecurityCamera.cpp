@@ -3,6 +3,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
 #include "TimerManager.h"
+#include "Components/SceneCaptureComponent2D.h"
+#include "Engine/TextureRenderTarget2D.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AISense_Sight.h"
@@ -28,6 +30,13 @@ ASecurityCamera::ASecurityCamera()
 
     DetectionWidget = nullptr;
     TrackedPlayer = nullptr;
+    
+    SceneCaptureComponent = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("SceneCapture"));
+    SceneCaptureComponent->SetupAttachment(RotationPivot);
+    SceneCaptureComponent->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+    SceneCaptureComponent->bCaptureEveryFrame = false;
+    SceneCaptureComponent->bCaptureOnMovement = false;
+
 }
 
 void ASecurityCamera::BeginPlay()
@@ -39,6 +48,16 @@ void ASecurityCamera::BeginPlay()
     }
     
     SetupPerception();
+
+    RenderTarget = NewObject<UTextureRenderTarget2D>(this);
+    RenderTarget->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
+    RenderTarget->InitAutoFormat(512, 512);
+    RenderTarget->UpdateResourceImmediate(true);
+
+    if (SceneCaptureComponent)
+    {
+        SceneCaptureComponent->TextureTarget = RenderTarget;
+    }
 }
 
 void ASecurityCamera::Tick(float DeltaTime)
@@ -79,6 +98,16 @@ void ASecurityCamera::Tick(float DeltaTime)
 /*
  *  Setup AI Perception Component with Sight Sense
  */
+void ASecurityCamera::SetCaptureActive(bool bActive)
+{
+    if (!SceneCaptureComponent)
+    {
+        return;
+    }
+
+    SceneCaptureComponent->bCaptureEveryFrame = bActive;
+}
+
 void ASecurityCamera::SetupPerception()
 {
     AIPerceptionComponent = FindComponentByClass<UAIPerceptionComponent>();
@@ -200,8 +229,7 @@ void ASecurityCamera::DetectionLoop()
 
     if (DetectionWidget)
     {
-        DetectionWidget->UpdatePercent(
-            static_cast<float>(CurrentDetectionLevel) / MaxDetectionLevel);
+        DetectionWidget->UpdatePercent(static_cast<float>(CurrentDetectionLevel) / MaxDetectionLevel);
     }
 
     if (CurrentDetectionLevel == MaxDetectionLevel)
@@ -329,4 +357,25 @@ void ASecurityCamera::HackCamera()
     }
 
     OnHackCamera.Broadcast();
+}
+
+void ASecurityCamera::AddViewer()
+{
+    ViewerCount = FMath::Max(0, ViewerCount + 1);
+    UpdateCapture();
+}
+
+void ASecurityCamera::RemoveViewer()
+{
+    ViewerCount = FMath::Max(0, ViewerCount - 1);
+    UpdateCapture();
+}
+
+void ASecurityCamera::UpdateCapture()
+{
+    if (!SceneCaptureComponent)
+    {
+        return;
+    }
+    SceneCaptureComponent->bCaptureEveryFrame = ViewerCount > 0;
 }

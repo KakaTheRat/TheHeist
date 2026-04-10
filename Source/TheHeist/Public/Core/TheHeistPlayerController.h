@@ -6,6 +6,9 @@
 #include "GameFramework/PlayerController.h"
 #include "TheHeistPlayerController.generated.h"
 
+class AMonitorActor;
+class ASurveillanceRoomActor;
+class UInputAction;
 class UInputMappingContext;
 class UUserWidget;
 
@@ -24,6 +27,64 @@ public:
 	/** Constructor */
 	ATheHeistPlayerController();
 
+	UPROPERTY(EditAnywhere, Category = "Input|Monitor")
+	UInputMappingContext* MonitorMappingContext;
+
+	UPROPERTY(EditAnywhere, Category = "Input|Monitor")
+	UInputAction* UnfocusMonitorAction;
+
+	UFUNCTION(BlueprintCallable, Category = "Monitor")
+	void EnableMonitorInput();
+
+	UFUNCTION(BlueprintCallable, Category = "Monitor")
+	void DisableMonitorInput();
+
+	UPROPERTY(EditAnywhere, Category = "Input|Monitor")
+	UInputAction* SwipeNextAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input|Monitor")
+	UInputAction* SwipePreviousAction;
+
+	UPROPERTY()
+	ASurveillanceRoomActor* CurrentRoom = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Input|Monitor")
+	float MonitorFocusLerpSpeed = 3.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Input|Monitor")
+	float MonitorFocusDistance = 80.0f;
+
+private:
+	
+	UFUNCTION()
+	void OnUnfocusMonitor();
+
+	UFUNCTION()
+	void OnSwipeNext();
+
+	UFUNCTION()
+	void OnSwipePrevious();
+	
+	FTransform OriginalCameraTransform;
+
+	FTransform TargetCameraTransform;
+
+	bool bIsFocusing = false;
+	bool bIsUnfocusing = false;
+
+	UPROPERTY()
+	AMonitorActor* FocusedMonitorRef = nullptr;
+
+	void StartFocusCamera(AMonitorActor* Monitor);
+	void StartUnfocusCamera();
+	void TickFocusCamera(float DeltaTime);
+
+	virtual void PlayerTick(float DeltaTime) override;
+	
+	bool bOriginalUsePawnControlRotation = true;
+
+	TArray<UInputMappingContext*> DisabledContextsDuringFocus;
+	
 protected:
 
 	/** Input Mapping Contexts */
