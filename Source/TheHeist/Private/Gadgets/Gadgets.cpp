@@ -11,8 +11,8 @@ AGadgets::AGadgets()
 	PrimaryActorTick.bCanEverTick = true;
 
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
-	StaticMesh->SetupAttachment(RootComponent);
-
+	//StaticMesh->SetupAttachment(RootComponent);
+	RootComponent = StaticMesh;
 
 }
 
