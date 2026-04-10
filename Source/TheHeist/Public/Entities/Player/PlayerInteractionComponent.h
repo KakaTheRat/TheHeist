@@ -46,7 +46,7 @@ public:
 	void Hide();
 
 	// Event to handle the unhiding state of the player
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void QuitHiding();
 
 	//Returns the interaction choice widget

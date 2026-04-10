@@ -48,4 +48,7 @@ class THEHEIST_API IEntitiesInterface
 
 	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Entities")
 	void SetAnimationState(bool bShouldActivate);
+
+	UFUNCTION(BlueprintCallable,BlueprintNativeEvent, Category="Entities")
+	void FootStepTriggered(bool bShouldActivate);
 };
