@@ -1,8 +1,0 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
-#include "Core/TheHeist.h"
-#include "Modules/ModuleManager.h"
-
-IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, TheHeist, "TheHeist" );
-
-DEFINE_LOG_CATEGORY(LogTheHeist)
