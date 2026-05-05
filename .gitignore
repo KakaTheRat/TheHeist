@@ -586,3 +586,7 @@ FodyWeavers.xsd
 # Additional files built by Visual Studio
 
 # End of https://www.toptal.com/developers/gitignore/api/unrealengine,visualstudio,c++,rider
+Content/Teleportation_VFX/MAP/VR_MAP.umap
+Content/AdvancedPortalsSystemVFX/Maps/Demo.umap
+Content/Teleportation_VFX/MAP/Overview_MAP.umap
+Content/Teleportation_VFX/MAP/Update1_1_MAP.umap
