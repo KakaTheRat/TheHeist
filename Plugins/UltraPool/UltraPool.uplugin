@@ -1,0 +1,28 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "UltraPool",
+	"Description": "High-performance C++ Actor pooling system for UE5. Spawn thousands of actors with zero GC overhead. Blueprint-friendly.",
+	"Category": "Gameplay",
+	"CreatedBy": "Théo de Nanassy",
+	"CreatedByURL": "https://www.youtube.com/@UnrealExplorerFR",
+	"DocsURL": "https://vasrek.github.io/UltraPoolDoc/",
+	"MarketplaceURL": "",
+	"SupportURL": "https://discord.gg/Wu5erZJJJE",
+	"EngineVersion": "5.7.0",
+	"CanContainContent": true,
+	"Installed": true,
+	"Modules": [
+		{
+			"Name": "UltraPool",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"PlatformAllowList": [
+				"Win64",
+				"Mac",
+				"Linux"
+			]
+		}
+	]
+}
