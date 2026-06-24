@@ -1,9 +1,10 @@
 # Created by https://www.toptal.com/developers/gitignore/api/unrealengine,visualstudio,c++,rider 
 # Edit at https://www.toptal.com/developers/gitignore?templates=unrealengine,visualstudio,c++,rider
 
-
 Content/PolygonNatureBiomes*
 Content/PolygonDungeons*
+Content/Biomes/PNB_Alpine_Mountain*
+Content/Biomes/PNB_Arid_Desert*
 
 ### C++ ###
 # Prerequisites
