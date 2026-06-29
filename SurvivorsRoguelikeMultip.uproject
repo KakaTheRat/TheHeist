@@ -11,6 +11,10 @@
 		{
 			"Name": "UltraPool",
 			"Enabled": true
+		},
+		{
+			"Name": "SteamShared",
+			"Enabled": true
 		}
 	]
 }
